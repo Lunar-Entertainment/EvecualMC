@@ -64,6 +64,18 @@ public class EvecualMC implements ModInitializer {
             new Item(new Item.Settings())
     );
 
+    public static final Item UPGRADED_ENGINE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "upgraded_electric_engine"),
+            new Item(new Item.Settings())
+    );
+
+    public static final Item TRUNK_UPGRADE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "trunk_upgrade"),
+            new Item(new Item.Settings())
+    );
+
     public static final Item CAR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "car"),
@@ -216,6 +228,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(LIGHTNING_ITEM);
                 entries.add(STEEL_INGOT);
                 entries.add(ENGINE);
+                entries.add(UPGRADED_ENGINE);
+                entries.add(TRUNK_UPGRADE);
                 entries.add(CAR_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(BATTERY_ITEM);

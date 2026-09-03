@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SGS",
+    "WEW",
+    "SRS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "result": {
+    "item": "evecualmc:upgraded_electric_engine",
+    "count": 1
+  }
+}

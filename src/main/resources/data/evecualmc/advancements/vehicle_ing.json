@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:car"
+    },
+    "title": {
+      "text": "Vehicle-ing!"
+    },
+    "description": {
+      "text": "Craft a electric car"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_car": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:car"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

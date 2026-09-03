@@ -2,6 +2,7 @@ package com.evecual.evecualmc.client.render;
 
 import com.evecual.evecualmc.entity.CarEntity;
 import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -29,6 +30,23 @@ public class CarEntityRenderer extends EntityRenderer<CarEntity> {
         this.model = new CarEntityModel(context.getPart(CarEntityModel.MODEL_LAYER));
     }
 
+    public static float[] getGlassColorRgba(int glassColorId) {
+        return switch (glassColorId) {
+            case 1 -> new float[]{0.15F, 0.15F, 0.18F, 0.75F}; // Smoked Tinted Black
+            case 2 -> new float[]{0.95F, 0.95F, 0.95F, 0.55F}; // White
+            case 3 -> new float[]{0.55F, 0.55F, 0.60F, 0.60F}; // Gray
+            case 4 -> new float[]{0.95F, 0.20F, 0.20F, 0.65F}; // Red
+            case 5 -> new float[]{0.95F, 0.55F, 0.15F, 0.65F}; // Orange
+            case 6 -> new float[]{0.95F, 0.90F, 0.20F, 0.65F}; // Yellow
+            case 7 -> new float[]{0.35F, 0.90F, 0.25F, 0.65F}; // Lime / Green
+            case 8 -> new float[]{0.25F, 0.85F, 0.95F, 0.65F}; // Cyan / Light Blue
+            case 9 -> new float[]{0.15F, 0.35F, 0.95F, 0.65F}; // Blue
+            case 10 -> new float[]{0.75F, 0.20F, 0.85F, 0.65F}; // Purple / Magenta
+            case 11 -> new float[]{0.95F, 0.50F, 0.70F, 0.65F}; // Pink
+            default -> new float[]{0.85F, 0.95F, 1.0F, 0.45F}; // 0: Clear Glass
+        };
+    }
+
     @Override
     public void render(CarEntity car, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
@@ -44,8 +62,15 @@ public class CarEntityRenderer extends EntityRenderer<CarEntity> {
         // Update wheel steering angle
         this.model.setAngles(car, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
 
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(this.getTexture(car)));
+        // 1. Render Solid Car Body, Wheels, and Chassis
+        Identifier texture = this.getTexture(car);
+        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(texture));
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+
+        // 2. Render Real Transparent Colored Glass Canopy!
+        float[] glassRgba = getGlassColorRgba(car.getGlassColor());
+        VertexConsumer glassConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
+        this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
 
         matrices.pop();
         super.render(car, yaw, tickDelta, matrices, vertexConsumers, light);

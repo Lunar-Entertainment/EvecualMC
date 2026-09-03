@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "item": "evecualmc:lightning"
+    },
+    "title": {
+      "text": "Evecual"
+    },
+    "description": {
+      "text": "Welcome to the tech world."
+    },
+    "background": "minecraft:textures/block/deepslate_tiles.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "get_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:lightning",
+              "evecualmc:steel_ingot",
+              "evecualmc:wire",
+              "evecualmc:solar_panel",
+              "evecualmc:battery",
+              "evecualmc:car"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

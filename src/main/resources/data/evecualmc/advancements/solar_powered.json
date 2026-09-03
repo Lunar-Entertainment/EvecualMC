@@ -1,0 +1,43 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:solar_panel"
+    },
+    "title": {
+      "text": "Solar Powered!"
+    },
+    "description": {
+      "text": "Craft a solar panel"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "crafted_solar": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "evecualmc:solar_panel"
+      }
+    },
+    "has_solar": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:solar_panel"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "crafted_solar",
+      "has_solar"
+    ]
+  ]
+}

@@ -1,7 +1,12 @@
 package com.evecual.evecualmc.entity;
 
 import com.evecual.evecualmc.EvecualMC;
-import com.evecual.evecualmc.screen.CarTrunkScreenHandler;
+import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.GlassBlock;
+import net.minecraft.block.StainedGlassBlock;
+import net.minecraft.block.StainedGlassPaneBlock;
+import net.minecraft.block.TintedGlassBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -15,12 +20,15 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
@@ -36,14 +44,18 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 public class CarEntity extends Entity {
-    public static final int MAX_ENERGY = 1000;
+    public static final int BASE_MAX_ENERGY = 1000;
+    public static final int UPGRADED_MAX_ENERGY = 1500;
 
     private static final TrackedData<Integer> ENERGY = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> GLASS_COLOR = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Boolean> UPGRADED_ENGINE = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> TRUNK_TIER = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Float> STEERING_ANGLE = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> PLUGGED_IN = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
-    private final SimpleInventory trunk = new SimpleInventory(18);
+    private final SimpleInventory trunk = new SimpleInventory(27); // Supports up to 27 slots
     private BlockPos connectedExtensionPos = null;
 
     private boolean inputForward;
@@ -65,6 +77,9 @@ public class CarEntity extends Entity {
     protected void initDataTracker() {
         this.dataTracker.startTracking(ENERGY, 500);
         this.dataTracker.startTracking(COLOR_VARIANT, 0); // 0: Red, 1: Blue, 2: Black, 3: Lime, 4: White, 5: Yellow
+        this.dataTracker.startTracking(GLASS_COLOR, 0);    // 0: Clear, 1: Smoked, 4: Red, etc.
+        this.dataTracker.startTracking(UPGRADED_ENGINE, false);
+        this.dataTracker.startTracking(TRUNK_TIER, 0);     // 0: Standard (18), 1: Upgraded (27)
         this.dataTracker.startTracking(STEERING_ANGLE, 0.0F);
         this.dataTracker.startTracking(PLUGGED_IN, false);
     }
@@ -92,11 +107,11 @@ public class CarEntity extends Entity {
     }
 
     public void setEnergy(int energy) {
-        this.dataTracker.set(ENERGY, MathHelper.clamp(energy, 0, MAX_ENERGY));
+        this.dataTracker.set(ENERGY, MathHelper.clamp(energy, 0, getMaxEnergy()));
     }
 
     public int getMaxEnergy() {
-        return MAX_ENERGY;
+        return isUpgradedEngine() ? UPGRADED_MAX_ENERGY : BASE_MAX_ENERGY;
     }
 
     public int getColorVariant() {
@@ -107,13 +122,38 @@ public class CarEntity extends Entity {
         this.dataTracker.set(COLOR_VARIANT, MathHelper.clamp(variant, 0, 5));
     }
 
+    public int getGlassColor() {
+        return this.dataTracker.get(GLASS_COLOR);
+    }
+
+    public void setGlassColor(int glassColor) {
+        this.dataTracker.set(GLASS_COLOR, MathHelper.clamp(glassColor, 0, 11));
+    }
+
+    public boolean isUpgradedEngine() {
+        return this.dataTracker.get(UPGRADED_ENGINE);
+    }
+
+    public void setUpgradedEngine(boolean upgraded) {
+        this.dataTracker.set(UPGRADED_ENGINE, upgraded);
+    }
+
+    public int getTrunkTier() {
+        return this.dataTracker.get(TRUNK_TIER);
+    }
+
+    public void setTrunkTier(int tier) {
+        this.dataTracker.set(TRUNK_TIER, MathHelper.clamp(tier, 0, 1));
+    }
+
     public float getSteeringAngle() {
         return this.dataTracker.get(STEERING_ANGLE);
     }
 
     public int charge(int amount) {
         int current = getEnergy();
-        int canAdd = Math.min(amount, MAX_ENERGY - current);
+        int max = getMaxEnergy();
+        int canAdd = Math.min(amount, max - current);
         if (canAdd > 0) {
             setEnergy(current + canAdd);
         }
@@ -130,11 +170,31 @@ public class CarEntity extends Entity {
 
     public void openTrunk(PlayerEntity player) {
         if (!this.getWorld().isClient) {
+            boolean isExpanded = getTrunkTier() == 1;
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
-                    (syncId, playerInventory, p) -> new CarTrunkScreenHandler(syncId, playerInventory, this.trunk),
-                    Text.translatable("container.evecualmc.car_trunk")
+                    (syncId, playerInventory, p) -> isExpanded
+                            ? new GenericContainerScreenHandler(net.minecraft.screen.ScreenHandlerType.GENERIC_9X3, syncId, playerInventory, this.trunk, 3)
+                            : new GenericContainerScreenHandler(net.minecraft.screen.ScreenHandlerType.GENERIC_9X2, syncId, playerInventory, this.trunk, 2),
+                    Text.literal(isExpanded ? "Car Trunk (Expanded - 27 Slots)" : "Car Trunk (Standard - 18 Slots)")
             ));
         }
+    }
+
+    public void applyItemNbt(NbtCompound nbt) {
+        if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
+        if (nbt.contains("GlassColor")) setGlassColor(nbt.getInt("GlassColor"));
+        if (nbt.contains("UpgradedEngine")) setUpgradedEngine(nbt.getBoolean("UpgradedEngine"));
+        if (nbt.contains("TrunkTier")) setTrunkTier(nbt.getInt("TrunkTier"));
+    }
+
+    public ItemStack createCarDropItem() {
+        ItemStack stack = new ItemStack(EvecualMC.CAR_ITEM);
+        NbtCompound nbt = stack.getOrCreateNbt();
+        nbt.putInt("ColorVariant", getColorVariant());
+        nbt.putInt("GlassColor", getGlassColor());
+        nbt.putBoolean("UpgradedEngine", isUpgradedEngine());
+        nbt.putInt("TrunkTier", getTrunkTier());
+        return stack;
     }
 
     @Override
@@ -182,7 +242,50 @@ public class CarEntity extends Entity {
             }
         }
 
-        // 1. Right-click with Charger Cable in hand: attach to station and connect to car!
+        // 2. Glass Customization using Stained Glass Blocks or Panes
+        if (isGlassItem(held.getItem())) {
+            int newGlass = ElectronicCombinerBlockEntity.getGlassColorFromItem(held.getItem());
+            if (!this.getWorld().isClient) {
+                setGlassColor(newGlass);
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 1.0F, 1.2F);
+                if (!player.isCreative()) {
+                    held.decrement(1);
+                }
+                player.sendMessage(Text.literal("§b⚡ Glass canopy tinted!"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 3. Engine Upgrade Application
+        if (held.isOf(EvecualMC.UPGRADED_ENGINE) && !isUpgradedEngine()) {
+            if (!this.getWorld().isClient) {
+                setUpgradedEngine(true);
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0F, 1.4F);
+                if (!player.isCreative()) {
+                    held.decrement(1);
+                }
+                player.sendMessage(Text.literal("§b⚡ Advanced Turbo Engine Installed! (+40% Boost Speed)"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 4. Trunk Upgrade Application
+        if ((held.isOf(EvecualMC.TRUNK_UPGRADE) || held.isOf(Items.CHEST)) && getTrunkTier() == 0) {
+            if (!this.getWorld().isClient) {
+                setTrunkTier(1);
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.PLAYERS, 1.0F, 1.2F);
+                if (!player.isCreative()) {
+                    held.decrement(1);
+                }
+                player.sendMessage(Text.literal("§6📦 Trunk Expanded to 27 Slots!"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 5. Right-click with Charger Cable in hand: attach to station and connect to car!
         if (held.isOf(EvecualMC.CHARGER_CABLE)) {
             if (!this.getWorld().isClient) {
                 com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity nearbyExt = findNearbyExtension();
@@ -202,7 +305,7 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 2. Unplugging charging cable with empty hand
+        // 6. Unplugging charging cable with empty hand
         if (isPluggedIn() && held.isEmpty()) {
             if (!this.getWorld().isClient) {
                 if (connectedExtensionPos != null) {
@@ -219,7 +322,7 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 4. Sneak + Click: Pick up car & drop trunk contents
+        // 7. Sneak + Click: Pick up car & drop trunk contents
         if (player.isSneaking()) {
             if (!this.getWorld().isClient) {
                 if (isPluggedIn() && connectedExtensionPos != null) {
@@ -229,16 +332,16 @@ public class CarEntity extends Entity {
                     }
                 }
                 dropTrunkContents();
-                this.dropItem(EvecualMC.CAR_ITEM);
+                ItemEntity droppedCar = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), createCarDropItem());
+                this.getWorld().spawnEntity(droppedCar);
                 this.discard();
             }
             return ActionResult.SUCCESS;
         }
 
-        // 5. Right clicking the rear/trunk: Open trunk inventory
+        // 8. Right clicking the rear/trunk: Open trunk inventory
         Vec3d toPlayer = player.getPos().subtract(this.getPos());
         double rad = Math.toRadians(this.getYaw());
-        // Forward vector: -sin(rad), cos(rad). Rear is opposite: sin(rad), -cos(rad).
         double dotRear = toPlayer.x * Math.sin(rad) - toPlayer.z * Math.cos(rad);
 
         if (dotRear > 0.4 && !this.hasPassenger(player)) {
@@ -246,11 +349,20 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 6. Otherwise, enter car to drive
+        // 9. Otherwise, enter car to drive
         if (!this.getWorld().isClient) {
             player.startRiding(this);
         }
         return ActionResult.SUCCESS;
+    }
+
+    private boolean isGlassItem(net.minecraft.item.Item item) {
+        if (item == Items.GLASS || item == Items.GLASS_PANE || item == Items.TINTED_GLASS) return true;
+        if (item instanceof BlockItem bi) {
+            Block b = bi.getBlock();
+            return b instanceof GlassBlock || b instanceof StainedGlassBlock || b instanceof StainedGlassPaneBlock || b instanceof TintedGlassBlock;
+        }
+        return false;
     }
 
     private void dropTrunkContents() {
@@ -277,7 +389,8 @@ public class CarEntity extends Entity {
                 }
             }
             dropTrunkContents();
-            this.dropItem(EvecualMC.CAR_ITEM);
+            ItemEntity droppedCar = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), createCarDropItem());
+            this.getWorld().spawnEntity(droppedCar);
             this.discard();
         }
         return true;
@@ -302,90 +415,76 @@ public class CarEntity extends Entity {
         boolean pluggedIn = isPluggedIn();
 
         if (passenger instanceof PlayerEntity player) {
-            // Check if plugged in: cannot move!
             if (pluggedIn) {
                 currentSpeed = 0.0;
                 if ((inputForward || inputBack) && this.age % 20 == 0) {
-                    player.sendMessage(Text.literal("§c⚡ Cannot drive: Charging cable plugged in! Right-click vehicle to disconnect."), true);
+                    player.sendMessage(Text.literal("§c⚡ Cannot drive: Charging cable plugged in! Press X to disconnect."), true);
                 }
             }
 
-            // 2. Target speed calculation with CTRL Boost
+            // 2. Target speed calculation with Upgraded Engine & CTRL Boost
             double targetSpeed = 0.0;
+            double normalMax = isUpgradedEngine() ? 0.72 : 0.52;
+            double boostMax = isUpgradedEngine() ? 1.35 : 1.00;
+
             if (hasPower && !pluggedIn) {
                 if (inputForward) {
-                    targetSpeed = inputSprint ? 1.0 : 0.52;
+                    targetSpeed = inputSprint ? boostMax : normalMax;
                 } else if (inputBack) {
-                    targetSpeed = -0.25;
+                    targetSpeed = -0.28;
                 }
             }
 
-            // 3. Smooth vehicular acceleration and coasting friction
-            if (targetSpeed > currentSpeed) {
-                currentSpeed = Math.min(targetSpeed, currentSpeed + 0.04);
-            } else if (targetSpeed < currentSpeed) {
-                currentSpeed = Math.max(targetSpeed, currentSpeed - 0.06);
+            // 3. Smooth continuous acceleration & braking
+            double accel = (targetSpeed > currentSpeed) ? 0.06 : 0.12;
+            currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) targetSpeed, (float) accel);
+
+            // 4. Power consumption & Turbo Particles
+            if (Math.abs(currentSpeed) > 0.02 && !this.getWorld().isClient) {
+                int drainInterval = inputSprint ? 8 : 20;
+                if (this.age % drainInterval == 0) {
+                    setEnergy(Math.max(0, energy - 1));
+                }
+
+                if (inputSprint && this.age % 2 == 0 && this.getWorld() instanceof ServerWorld serverWorld) {
+                    double radHeading = Math.toRadians(this.getYaw());
+                    double rearX = this.getX() + Math.sin(radHeading) * 1.5;
+                    double rearY = this.getY() + 0.3;
+                    double rearZ = this.getZ() - Math.cos(radHeading) * 1.5;
+                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, rearX, rearY, rearZ, 2, 0.1, 0.05, 0.1, 0.02);
+                }
             }
 
-            // 4. Smooth Automotive Steering Physics (Continuous Damped Angular Velocity)
+            // 5. Angular Steering Physics
+            double targetAngular = 0.0;
+            if (Math.abs(currentSpeed) > 0.02) {
+                double speedFactor = Math.min(1.0, Math.abs(currentSpeed) / 0.5);
+                double baseTurnRate = 3.6 * speedFactor;
+                double turnDir = (currentSpeed < 0) ? -1.0 : 1.0;
+
+                if (inputLeft) {
+                    targetAngular = -baseTurnRate * turnDir;
+                } else if (inputRight) {
+                    targetAngular = baseTurnRate * turnDir;
+                }
+            }
+
+            angularVelocity = MathHelper.stepTowards((float) angularVelocity, (float) targetAngular, 0.8F);
+            this.prevYaw = this.getYaw();
+            this.setYaw((float) (this.getYaw() + angularVelocity));
+
+            // 6. Smooth steering wheel angle
             float targetSteer = 0.0F;
-            if (inputLeft) targetSteer -= 0.50F;
-            if (inputRight) targetSteer += 0.50F;
-
-            float currentSteer = this.getSteeringAngle();
-            currentSteer += (targetSteer - currentSteer) * 0.35F;
-            this.dataTracker.set(STEERING_ANGLE, currentSteer);
-
-            // Responsive turn rate scaling: agile steering while moving, smooth pivot when starting
-            double speedAbs = Math.abs(currentSpeed);
-            double targetTurnRate = 0.0;
-            if (speedAbs > 0.01 || inputForward || inputBack) {
-                double speedFactor = Math.min(1.0, speedAbs / 0.30);
-                double maxTurn = 3.6 + 2.8 * speedFactor; // 3.6 to 6.4 deg/tick
-                if (inputLeft) targetTurnRate -= maxTurn;
-                if (inputRight) targetTurnRate += maxTurn;
-            }
-
-            // Smooth angular acceleration & damping (automotive inertia)
-            angularVelocity += (targetTurnRate - angularVelocity) * 0.32;
-
-            if (Math.abs(angularVelocity) > 0.02) {
-                float dir = currentSpeed >= 0 ? 1.0F : -1.0F;
-                this.setYaw(this.getYaw() + (float)(angularVelocity * dir));
-            }
-
-            // 5. Energy Consumption (Server authoritative)
-            if (!this.getWorld().isClient && Math.abs(currentSpeed) > 0.04 && energy > 0) {
-                int drainTicks = inputSprint ? 1 : 3;
-                if (this.age % drainTicks == 0) {
-                    setEnergy(energy - 1);
-                }
-            }
-
-            // 6. Visual drive & boost exhaust particles
-            if (this.getWorld().isClient && Math.abs(currentSpeed) > 0.04 && energy > 0) {
-                double rad = Math.toRadians(this.getYaw());
-                if (inputSprint && inputForward) {
-                    double exhaustX = this.getX() + Math.sin(rad) * 1.5;
-                    double exhaustZ = this.getZ() - Math.cos(rad) * 1.5;
-                    this.getWorld().addParticle(ParticleTypes.FLAME, exhaustX, this.getY() + 0.35, exhaustZ, 0, 0.02, 0);
-                }
-                if (this.random.nextFloat() < 0.25F) {
-                    this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK,
-                            this.getX() + (random.nextDouble() - 0.5) * 0.8,
-                            this.getY() + 0.15,
-                            this.getZ() + (random.nextDouble() - 0.5) * 0.8,
-                            0, 0.05, 0);
-                }
-            }
+            if (inputLeft) targetSteer = -0.55F;
+            else if (inputRight) targetSteer = 0.55F;
+            float currentSteer = getSteeringAngle();
+            this.dataTracker.set(STEERING_ANGLE, MathHelper.stepTowards(currentSteer, targetSteer, 0.15F));
         } else {
-            // Decelerate smoothly when parked or no passenger
-            currentSpeed *= 0.85;
-            if (Math.abs(currentSpeed) < 0.01) {
-                currentSpeed = 0.0;
-            }
-            angularVelocity *= 0.7;
-            this.dataTracker.set(STEERING_ANGLE, 0.0F);
+            currentSpeed = MathHelper.stepTowards((float) currentSpeed, 0.0F, 0.08F);
+            angularVelocity = MathHelper.stepTowards((float) angularVelocity, 0.0F, 0.8F);
+            this.prevYaw = this.getYaw();
+            this.setYaw((float) (this.getYaw() + angularVelocity));
+            this.dataTracker.set(STEERING_ANGLE, MathHelper.stepTowards(getSteeringAngle(), 0.0F, 0.1F));
         }
 
         // 7. Apply velocity smoothly along vehicle heading
@@ -463,6 +562,15 @@ public class CarEntity extends Entity {
         if (nbt.contains("ColorVariant")) {
             setColorVariant(nbt.getInt("ColorVariant"));
         }
+        if (nbt.contains("GlassColor")) {
+            setGlassColor(nbt.getInt("GlassColor"));
+        }
+        if (nbt.contains("UpgradedEngine")) {
+            setUpgradedEngine(nbt.getBoolean("UpgradedEngine"));
+        }
+        if (nbt.contains("TrunkTier")) {
+            setTrunkTier(nbt.getInt("TrunkTier"));
+        }
         if (nbt.contains("TrunkItems")) {
             DefaultedList<ItemStack> list = DefaultedList.ofSize(trunk.size(), ItemStack.EMPTY);
             Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
@@ -476,6 +584,10 @@ public class CarEntity extends Entity {
     protected void writeCustomDataToNbt(NbtCompound nbt) {
         nbt.putInt("Energy", getEnergy());
         nbt.putInt("ColorVariant", getColorVariant());
+        nbt.putInt("GlassColor", getGlassColor());
+        nbt.putBoolean("UpgradedEngine", isUpgradedEngine());
+        nbt.putInt("TrunkTier", getTrunkTier());
+
         DefaultedList<ItemStack> list = DefaultedList.ofSize(trunk.size(), ItemStack.EMPTY);
         for (int i = 0; i < trunk.size(); ++i) {
             list.set(i, trunk.getStack(i));

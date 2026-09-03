@@ -1,0 +1,43 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:battery"
+    },
+    "title": {
+      "text": "Electrical storage!"
+    },
+    "description": {
+      "text": "Craft a battery"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "crafted_battery": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "evecualmc:battery"
+      }
+    },
+    "has_battery": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:battery"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "crafted_battery",
+      "has_battery"
+    ]
+  ]
+}

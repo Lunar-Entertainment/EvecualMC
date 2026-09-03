@@ -20,6 +20,7 @@ public class CarEntityModel extends EntityModel<CarEntity> {
     private final ModelPart wheel_fr;
     private final ModelPart wheel_rl;
     private final ModelPart wheel_rr;
+    private final ModelPart glass;
 
     public CarEntityModel(ModelPart root) {
         this.root = root;
@@ -27,13 +28,14 @@ public class CarEntityModel extends EntityModel<CarEntity> {
         this.wheel_fr = root.getChild("wheel_fr");
         this.wheel_rl = root.getChild("wheel_rl");
         this.wheel_rr = root.getChild("wheel_rr");
+        this.glass = root.getChild("glass");
     }
 
     public static TexturedModelData getTexturedModelData() {
         ModelData modelData = new ModelData();
         ModelPartData root = modelData.getRoot();
 
-        // 1. Chassis & Body - Sleek, aerodynamic sports car styling
+        // 1. Chassis & Body - Sleek sports car contours
         ModelPartBuilder body = ModelPartBuilder.create()
                 // Main floor plate: 28 wide, 2 thick, 48 long (Z: -24 to +24, Y: 16 to 18)
                 .uv(0, 0).cuboid(-14.0F, 16.0F, -24.0F, 28.0F, 2.0F, 48.0F)
@@ -86,42 +88,37 @@ public class CarEntityModel extends EntityModel<CarEntity> {
                 .uv(0, 64).cuboid(-1.0F, 10.0F, -4.0F, 2.0F, 2.0F, 2.0F)
                 // Center Steering wheel: 8 wide, 8 tall, 1 deep (X: -4 to +4, Y: 7 to 15, Z: -2)
                 .uv(0, 64).cuboid(-4.0F, 7.0F, -2.0F, 8.0F, 8.0F, 1.0F)
-                // Rearview mirror mounted from top header: 4 wide, 2 tall, 1 deep (X: -2 to +2, Y: -3 to -1, Z: -6)
+                // Rearview mirror: 4 wide, 2 tall, 1 deep
                 .uv(64, 0).cuboid(-2.0F, -3.0F, -6.0F, 4.0F, 2.0F, 1.0F)
-
-                // Wide Center Driver Bucket Seat:
+                // Low-profile ergonomic driver seat cushion and backrest
                 .uv(64, 32).cuboid(-7.0F, 14.0F, -1.0F, 14.0F, 2.0F, 10.0F)
-                .uv(64, 32).cuboid(-7.0F, 0.0F, 8.0F, 14.0F, 14.0F, 3.0F)
-                .uv(64, 32).cuboid(-4.0F, -4.0F, 8.0F, 8.0F, 4.0F, 3.0F);
+                .uv(64, 32).cuboid(-7.0F, 7.0F, 8.0F, 14.0F, 7.0F, 2.0F);
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. Panoramic Glass Canopy (Seamless front-to-roof glass window)
-        ModelPartBuilder canopy = ModelPartBuilder.create()
-                // Left Slim Pillar Strut
-                .uv(64, 0).cuboid(-14.5F, -5.0F, -8.0F, 1.0F, 13.0F, 2.0F)
-                // Right Slim Pillar Strut
-                .uv(64, 0).cuboid(13.5F, -5.0F, -8.0F, 1.0F, 13.0F, 2.0F)
-                // Left Rear Strut
-                .uv(64, 0).cuboid(-14.5F, -5.0F, 9.0F, 1.0F, 13.0F, 2.0F)
-                // Right Rear Strut
-                .uv(64, 0).cuboid(13.5F, -5.0F, 9.0F, 1.0F, 13.0F, 2.0F)
+        // 3. Canopy Pillars & Roof Rails (Aerodynamic, no rear wall!)
+        ModelPartBuilder canopyFrame = ModelPartBuilder.create()
+                // Left A-Pillar
+                .uv(64, 0).cuboid(-14.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
+                // Right A-Pillar
+                .uv(64, 0).cuboid(13.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
                 // Left Roof Rail
-                .uv(64, 0).cuboid(-14.5F, -6.0F, -8.0F, 1.0F, 1.0F, 19.0F)
+                .uv(64, 0).cuboid(-14.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F)
                 // Right Roof Rail
-                .uv(64, 0).cuboid(13.5F, -6.0F, -8.0F, 1.0F, 1.0F, 19.0F)
+                .uv(64, 0).cuboid(13.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F);
 
-                // Seamless Continuous Glass Suite:
+        root.addChild("canopy_frame", canopyFrame, ModelTransform.NONE);
+
+        // 4. Transparent Glass Canopy (Windshield & Panoramic Roof, NO rear solid wall)
+        ModelPartBuilder glassCanopy = ModelPartBuilder.create()
                 // 1) Front Windshield Glass
                 .uv(0, 96).cuboid(-13.0F, -5.0F, -7.5F, 26.0F, 13.0F, 1.0F)
                 // 2) Seamless Full Glass Panoramic Roof
-                .uv(0, 96).cuboid(-13.0F, -6.0F, -7.0F, 26.0F, 1.0F, 18.0F)
-                // 3) Rear Window Glass
-                .uv(0, 96).cuboid(-13.0F, -5.0F, 10.5F, 26.0F, 13.0F, 1.0F);
+                .uv(0, 96).cuboid(-13.0F, -6.0F, -7.0F, 26.0F, 1.0F, 17.0F);
 
-        root.addChild("canopy", canopy, ModelTransform.NONE);
+        root.addChild("glass", glassCanopy, ModelTransform.NONE);
 
-        // 4. Wheels (Tires & Alloy Rims) - Front wheels rotate dynamically when turning!
+        // 5. Wheels (Tires & Detailed Alloy Rims)
         // Front Left Wheel
         root.addChild("wheel_fl", ModelPartBuilder.create()
                 .uv(64, 64).cuboid(-4.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
@@ -147,7 +144,6 @@ public class CarEntityModel extends EntityModel<CarEntity> {
 
     @Override
     public void setAngles(CarEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        // Dynamically turn front wheels according to steering input!
         float steer = entity.getSteeringAngle();
         this.wheel_fl.yaw = steer;
         this.wheel_fr.yaw = steer;
@@ -155,6 +151,16 @@ public class CarEntityModel extends EntityModel<CarEntity> {
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-        root.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        root.getChild("body").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        root.getChild("interior").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        root.getChild("canopy_frame").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        wheel_fl.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        wheel_fr.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        wheel_rl.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        wheel_rr.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+    }
+
+    public void renderGlass(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+        glass.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 }

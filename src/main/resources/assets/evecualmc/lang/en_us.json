@@ -9,6 +9,8 @@
   "item.evecualmc.wire": "Electrical Wire",
   "item.evecualmc.steel_ingot": "Steel Ingot",
   "item.evecualmc.electric_engine": "Electric Engine",
+  "item.evecualmc.upgraded_electric_engine": "Advanced Electric Engine",
+  "item.evecualmc.trunk_upgrade": "Trunk Expansion Upgrade",
   "item.evecualmc.car": "Electric Car",
   "entity.evecualmc.car": "Electric Car",
   "block.evecualmc.electronic_combiner": "Car Fabricator",
