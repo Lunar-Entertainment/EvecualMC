@@ -35,9 +35,9 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import com.evecual.evecualmc.energy.EnergyStorage;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.minecraft.screen.NamedScreenHandlerFactory;
 
-public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedInventory, ExtendedScreenHandlerFactory, EnergyStorage {
+public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedInventory, NamedScreenHandlerFactory, EnergyStorage {
     public static final int INVENTORY_SIZE = 7;
     public static final int MAX_ENERGY = 500;
     public static final int MAX_PROGRESS = 100;
@@ -202,11 +202,6 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
         return new ElectronicCombinerScreenHandler(syncId, playerInventory, this, this.propertyDelegate);
-    }
-
-    @Override
-    public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
-        buf.writeBlockPos(this.pos);
     }
 
     public long getEnergy() {
