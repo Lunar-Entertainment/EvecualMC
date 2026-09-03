@@ -80,22 +80,29 @@ public class CarEntityModel extends EntityModel<CarEntity> {
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. High-Clearance Canopy (High Roof & Tall Windshield - Total Headroom!)
+        // 3. Panoramic Glass Canopy (Seamless front-to-roof glass window so you can see out)
         ModelPartBuilder canopy = ModelPartBuilder.create()
-                // Left A-pillar (strut from Y: 8 up to Y: -4, Z: -7 to -5, X: -14.5 to -13)
-                .uv(64, 0).cuboid(-14.5F, -4.0F, -7.0F, 1.5F, 12.0F, 2.0F)
-                // Right A-pillar (strut from Y: 8 up to Y: -4, Z: -7 to -5, X: +13 to +14.5)
-                .uv(64, 0).cuboid(13.0F, -4.0F, -7.0F, 1.5F, 12.0F, 2.0F)
-                // Windshield top header frame: 28 wide, 2 tall, 2 deep (Y: -4 to -2, Z: -7 to -5)
-                .uv(64, 0).cuboid(-14.0F, -4.0F, -7.0F, 28.0F, 2.0F, 2.0F)
-                // Transparent cutout windshield: 26 wide, 10 tall, 1 deep (Y: -2 to 8, Z: -6.5)
-                .uv(0, 96).cuboid(-13.0F, -2.0F, -6.5F, 26.0F, 10.0F, 1.0F)
-                // Left C-pillar (rear strut from Y: 8 up to Y: -4, Z: +9 to +11)
-                .uv(64, 0).cuboid(-14.5F, -4.0F, 9.0F, 1.5F, 12.0F, 2.0F)
-                // Right C-pillar (rear strut from Y: 8 up to Y: -4, Z: +9 to +11)
-                .uv(64, 0).cuboid(13.0F, -4.0F, 9.0F, 1.5F, 12.0F, 2.0F)
-                // Hardtop roof: 28 wide, 2 tall, 18 long (Y: -6 to -4, Z: -7 to +11)
-                .uv(0, 0).cuboid(-14.0F, -6.0F, -7.0F, 28.0F, 2.0F, 18.0F);
+                // Left Slim Pillar Strut: X: -14.5 to -13.5, Y: -5 to 8, Z: -8 to -6
+                .uv(64, 0).cuboid(-14.5F, -5.0F, -8.0F, 1.0F, 13.0F, 2.0F)
+                // Right Slim Pillar Strut: X: +13.5 to +14.5, Y: -5 to 8, Z: -8 to -6
+                .uv(64, 0).cuboid(13.5F, -5.0F, -8.0F, 1.0F, 13.0F, 2.0F)
+                // Left Rear Strut: X: -14.5 to -13.5, Y: -5 to 8, Z: +9 to +11
+                .uv(64, 0).cuboid(-14.5F, -5.0F, 9.0F, 1.0F, 13.0F, 2.0F)
+                // Right Rear Strut: X: +13.5 to +14.5, Y: -5 to 8, Z: +9 to +11
+                .uv(64, 0).cuboid(13.5F, -5.0F, 9.0F, 1.0F, 13.0F, 2.0F)
+
+                // Left Roof Rail (Sleek aerodynamic edge): X: -14.5 to -13.5, Y: -6 to -5, Z: -8 to +11
+                .uv(64, 0).cuboid(-14.5F, -6.0F, -8.0F, 1.0F, 1.0F, 19.0F)
+                // Right Roof Rail (Sleek aerodynamic edge): X: +13.5 to +14.5, Y: -6 to -5, Z: -8 to +11
+                .uv(64, 0).cuboid(13.5F, -6.0F, -8.0F, 1.0F, 1.0F, 19.0F)
+
+                // --- CONTINUOUS PANORAMIC GLASS SUITE ---
+                // 1) Front Windshield Glass (Z: -7.5, Y: -5 to 8, X: -13 to +13)
+                .uv(0, 96).cuboid(-13.0F, -5.0F, -7.5F, 26.0F, 13.0F, 1.0F)
+                // 2) Seamless Full Glass Panoramic Roof (Y: -6 to -5, Z: -7 to +11, X: -13 to +13)
+                .uv(0, 96).cuboid(-13.0F, -6.0F, -7.0F, 26.0F, 1.0F, 18.0F)
+                // 3) Rear Window Glass (Z: +10.5, Y: -5 to 8, X: -13 to +13)
+                .uv(0, 96).cuboid(-13.0F, -5.0F, 10.5F, 26.0F, 13.0F, 1.0F);
 
         root.addChild("canopy", canopy, ModelTransform.NONE);
 
