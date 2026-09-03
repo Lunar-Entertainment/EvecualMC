@@ -2,12 +2,22 @@ package com.evecual.evecualmc.block;
 
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.ChargerBlockEntity;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -32,5 +42,39 @@ public class ChargerBlock extends BlockWithEntity {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
         return checkType(type, EvecualMC.CHARGER_BLOCK_ENTITY, ChargerBlockEntity::tick);
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.onPlaced(world, pos, state, placer, itemStack);
+        if (!world.isClient && world instanceof ServerWorld serverWorld) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeBlockPos(pos);
+            buf.writeBoolean(true); // add waypoint
+
+            for (ServerPlayerEntity player : PlayerLookup.world(serverWorld)) {
+                ServerPlayNetworking.send(player, EvecualMC.CHARGER_WAYPOINT_PACKET_ID, buf);
+            }
+
+            if (placer instanceof PlayerEntity player) {
+                player.sendMessage(Text.literal("§e⚡ Vehicle Charger waypoint established at [" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "]"), true);
+            }
+        }
+    }
+
+    @Override
+    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.isOf(newState.getBlock())) {
+            if (!world.isClient && world instanceof ServerWorld serverWorld) {
+                PacketByteBuf buf = PacketByteBufs.create();
+                buf.writeBlockPos(pos);
+                buf.writeBoolean(false); // remove waypoint
+
+                for (ServerPlayerEntity player : PlayerLookup.world(serverWorld)) {
+                    ServerPlayNetworking.send(player, EvecualMC.CHARGER_WAYPOINT_PACKET_ID, buf);
+                }
+            }
+        }
+        super.onStateReplaced(state, world, pos, newState, moved);
     }
 }

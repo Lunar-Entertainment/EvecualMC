@@ -55,6 +55,19 @@ public class EvecualMCClient implements ClientModInitializer {
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.SOLAR_PANEL_BLOCK, RenderLayer.getCutout());
 
+        // Register Charger Waypoint Network Sync
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CHARGER_WAYPOINT_PACKET_ID, (client, handler, buf, responseSender) -> {
+            net.minecraft.util.math.BlockPos pos = buf.readBlockPos();
+            boolean add = buf.readBoolean();
+            client.execute(() -> {
+                if (add) {
+                    ChargerWaypointManager.addWaypoint(pos);
+                } else {
+                    ChargerWaypointManager.removeWaypoint(pos);
+                }
+            });
+        });
+
         // Client Tick: handle car driving inputs and 'Z' key for opening trunk
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {

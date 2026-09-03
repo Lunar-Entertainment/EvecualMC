@@ -140,6 +140,10 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements Energy
         return MAX_ENERGY;
     }
 
+    public boolean isCrafting() {
+        return this.progress > 0;
+    }
+
     @Override
     public long insertEnergy(long amount, boolean simulate) {
         long canInsert = Math.min(amount, MAX_ENERGY - energy);

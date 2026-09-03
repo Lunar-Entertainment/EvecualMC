@@ -70,11 +70,11 @@ public class EvecualMC implements ModInitializer {
             new CarItem(new Item.Settings().maxCount(1))
     );
 
-    // Blocks
+    // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "solar_panel"),
-            new SolarPanelBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(2.0f).nonOpaque().sounds(BlockSoundGroup.METAL))
+            new SolarPanelBlock(FabricBlockSettings.create().strength(0.8f).nonOpaque().sounds(BlockSoundGroup.METAL))
     );
 
     public static final Item SOLAR_PANEL_ITEM = Registry.register(
@@ -86,7 +86,7 @@ public class EvecualMC implements ModInitializer {
     public static final Block BATTERY_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "battery"),
-            new BatteryBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(3.0f).sounds(BlockSoundGroup.METAL))
+            new BatteryBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
     );
 
     public static final Item BATTERY_ITEM = Registry.register(
@@ -98,7 +98,7 @@ public class EvecualMC implements ModInitializer {
     public static final Block WIRE_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "wire"),
-            new WireBlock(FabricBlockSettings.copyOf(Blocks.COPPER_BLOCK).strength(0.5f).nonOpaque().sounds(BlockSoundGroup.COPPER))
+            new WireBlock(FabricBlockSettings.create().strength(0.3f).nonOpaque().sounds(BlockSoundGroup.COPPER))
     );
 
     public static final Item WIRE_ITEM = Registry.register(
@@ -110,7 +110,7 @@ public class EvecualMC implements ModInitializer {
     public static final Block ELECTRONIC_COMBINER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "electronic_combiner"),
-            new ElectronicCombinerBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(3.5f).sounds(BlockSoundGroup.METAL))
+            new ElectronicCombinerBlock(FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL))
     );
 
     public static final Item ELECTRONIC_COMBINER_ITEM = Registry.register(
@@ -122,7 +122,7 @@ public class EvecualMC implements ModInitializer {
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "charger"),
-            new ChargerBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(3.0f).sounds(BlockSoundGroup.METAL))
+            new ChargerBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
     );
 
     public static final Item CHARGER_ITEM = Registry.register(
@@ -203,6 +203,7 @@ public class EvecualMC implements ModInitializer {
 
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
+    public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
 
     @Override
     public void onInitialize() {
