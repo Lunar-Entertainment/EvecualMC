@@ -1,5 +1,6 @@
 package com.evecual.evecualmc;
 
+import com.evecual.evecualmc.item.LightningItem;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.item.Item;
@@ -18,18 +19,11 @@ public class EvecualMC implements ModInitializer {
     public static final String MOD_ID = "evecualmc";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    // Lightning item used as tab icon and item
+    // Lightning item that spawns lightning on right-click
     public static final Item LIGHTNING_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "lightning"),
-            new Item(new Item.Settings())
-    );
-
-    // Sample custom item
-    public static final Item EXAMPLE_ITEM = Registry.register(
-            Registries.ITEM,
-            new Identifier(MOD_ID, "example_item"),
-            new Item(new Item.Settings())
+            new LightningItem(new Item.Settings().maxCount(1))
     );
 
     // Creative Inventory Tab: "evecual" with lightning icon
@@ -43,7 +37,6 @@ public class EvecualMC implements ModInitializer {
             .displayName(Text.translatable("itemGroup.evecualmc.evecual"))
             .entries((displayContext, entries) -> {
                 entries.add(LIGHTNING_ITEM);
-                entries.add(EXAMPLE_ITEM);
             })
             .build();
 
@@ -53,7 +46,7 @@ public class EvecualMC implements ModInitializer {
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");
-        LOGGER.info("  Added 'evecual' creative tab with ⚡   ");
+        LOGGER.info("  Lightning item ready with ⚡ tab      ");
         LOGGER.info("========================================");
     }
 }
