@@ -182,29 +182,27 @@ public class CarEntity extends Entity {
             }
         }
 
-        // 2. Plugging in unholstered charging cable
-        if (com.evecual.evecualmc.block.ChargerExtensionBlock.PENDING_CABLES.containsKey(player.getUuid())) {
-            BlockPos extPos = com.evecual.evecualmc.block.ChargerExtensionBlock.PENDING_CABLES.remove(player.getUuid());
-            if (this.squaredDistanceTo(extPos.toCenterPos()) <= 100.0) {
-                BlockEntity be = this.getWorld().getBlockEntity(extPos);
-                if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity extension) {
-                    if (!this.getWorld().isClient) {
-                        extension.connectCar(this);
-                        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
-                                SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.8F);
-                        player.sendMessage(Text.literal("§a⚡ Vehicle plugged in! Charging from station... (Right-click to unplug)"), true);
+        // 1. Right-click with Charger Cable in hand: attach to station and connect to car!
+        if (held.isOf(EvecualMC.CHARGER_CABLE)) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity nearbyExt = findNearbyExtension();
+                if (nearbyExt != null) {
+                    nearbyExt.setHasCable(true);
+                    if (!player.isCreative()) {
+                        held.decrement(1);
                     }
-                    return ActionResult.SUCCESS;
+                    nearbyExt.connectCar(this);
+                    this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                            SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.8F);
+                    player.sendMessage(Text.literal("§a⚡ Charger Cable attached and plugged into car! (Press X to disconnect)"), true);
+                } else {
+                    player.sendMessage(Text.literal("§c⚡ No Vehicle Charger Extension found within 16 blocks!"), true);
                 }
-            } else {
-                if (!this.getWorld().isClient) {
-                    player.sendMessage(Text.literal("§c⚡ Too far from charging station!"), true);
-                }
-                return ActionResult.SUCCESS;
             }
+            return ActionResult.SUCCESS;
         }
 
-        // 3. Unplugging charging cable with empty hand
+        // 2. Unplugging charging cable with empty hand
         if (isPluggedIn() && held.isEmpty()) {
             if (!this.getWorld().isClient) {
                 if (connectedExtensionPos != null) {
@@ -485,5 +483,24 @@ public class CarEntity extends Entity {
         NbtCompound trunkNbt = new NbtCompound();
         Inventories.writeNbt(trunkNbt, list);
         nbt.put("TrunkItems", trunkNbt);
+    }
+
+    @Nullable
+    public com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity findNearbyExtension() {
+        BlockPos carPos = this.getBlockPos();
+        com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity best = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (BlockPos p : BlockPos.iterate(carPos.add(-16, -5, -16), carPos.add(16, 5, 16))) {
+            BlockEntity be = this.getWorld().getBlockEntity(p);
+            if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
+                double d = this.squaredDistanceTo(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = ext;
+                }
+            }
+        }
+        return best;
     }
 }

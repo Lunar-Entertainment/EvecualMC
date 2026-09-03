@@ -2,6 +2,7 @@ package com.evecual.evecualmc.block;
 
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity;
+import com.evecual.evecualmc.entity.CarEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -22,18 +23,16 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Comparator;
+import java.util.List;
 
 public class ChargerExtensionBlock extends BlockWithEntity {
     public static final BooleanProperty HAS_CABLE = BooleanProperty.of("has_cable");
     public static final BooleanProperty CONNECTED = BooleanProperty.of("connected");
-
-    public static final Map<UUID, BlockPos> PENDING_CABLES = new ConcurrentHashMap<>();
 
     public ChargerExtensionBlock(Settings settings) {
         super(settings);
@@ -68,9 +67,9 @@ public class ChargerExtensionBlock extends BlockWithEntity {
         if (!world.isClient && placer instanceof PlayerEntity player) {
             BlockState below = world.getBlockState(pos.down());
             if (!below.isOf(EvecualMC.CHARGER_BLOCK)) {
-                player.sendMessage(Text.literal("§6⚡ Note: Place the Extension directly on top of a Vehicle Charger to draw power!"), false);
+                player.sendMessage(Text.literal("§6⚡ Note: Place the Extension on or next to a Vehicle Charger Base!"), false);
             } else {
-                player.sendMessage(Text.literal("§a⚡ Extension installed! Right-click with a Charger Cable to equip it."), true);
+                player.sendMessage(Text.literal("§a⚡ Extension installed! Right-click with a Charger Cable to equip."), true);
             }
         }
     }
@@ -84,55 +83,78 @@ public class ChargerExtensionBlock extends BlockWithEntity {
 
         ItemStack held = player.getStackInHand(hand);
 
-        // 1. Right-click with Charger Cable: Attach cable to extension
+        // 1. Right-click with Charger Cable in hand
         if (held.isOf(EvecualMC.CHARGER_CABLE)) {
-            if (!be.hasCable()) {
-                if (!world.isClient) {
-                    be.setHasCable(true);
-                    world.setBlockState(pos, state.with(HAS_CABLE, true).with(CONNECTED, false), Block.NOTIFY_ALL);
-                    if (!player.isCreative()) {
-                        held.decrement(1);
-                    }
-                    world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, SoundCategory.BLOCKS, 1.0F, 1.2F);
-                    player.sendMessage(Text.literal("§a⚡ Charger Cable attached to Extension! Press X near your car to connect."), true);
+            if (!world.isClient) {
+                be.setHasCable(true);
+                if (!player.isCreative()) {
+                    held.decrement(1);
                 }
-                return ActionResult.SUCCESS;
-            } else {
-                if (!world.isClient) {
-                    player.sendMessage(Text.literal("§e⚡ A Charger Cable is already installed on this station."), true);
+                world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, SoundCategory.BLOCKS, 1.0F, 1.2F);
+
+                // Auto-connect to nearby car if parked within 16 blocks
+                CarEntity nearbyCar = findNearbyCar(world, pos);
+                if (nearbyCar != null) {
+                    be.connectCar(nearbyCar);
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.8F);
+                    player.sendMessage(Text.literal("§a⚡ Cable attached and plugged into your car! Charging... (Press X to disconnect)"), true);
+                } else {
+                    player.sendMessage(Text.literal("§a⚡ Charger Cable installed! Park your car and press X to connect."), true);
                 }
-                return ActionResult.SUCCESS;
             }
+            return ActionResult.SUCCESS;
         }
 
-        // 2. Right-click with Empty Hand: Disconnect if connected, or unholster
-        if (held.isEmpty() && hand == Hand.MAIN_HAND) {
-            if (!be.hasCable()) {
-                if (!world.isClient) {
-                    player.sendMessage(Text.literal("§c⚡ No cable installed! Right-click with a Charger Cable first."), true);
-                }
-                return ActionResult.SUCCESS;
-            }
-
-            if (be.isConnected()) {
-                if (!world.isClient) {
+        // 2. Right-click with empty hand
+        if (hand == Hand.MAIN_HAND && held.isEmpty()) {
+            if (!world.isClient) {
+                // If currently connected: disconnect!
+                if (be.isConnected()) {
                     be.disconnectCar();
-                    world.setBlockState(pos, state.with(HAS_CABLE, true).with(CONNECTED, false), Block.NOTIFY_ALL);
                     world.playSound(null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 1.0F, 0.8F);
                     player.sendMessage(Text.literal("§6⚡ Charging cable disconnected from vehicle."), true);
+                    return ActionResult.SUCCESS;
                 }
-                return ActionResult.SUCCESS;
-            } else {
-                if (!world.isClient) {
-                    PENDING_CABLES.put(player.getUuid(), pos);
-                    world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_LEATHER, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                    player.sendMessage(Text.literal("§e⚡ Charging plug in hand! Right-click an Electric Car (or press X) to connect."), true);
+
+                // If not connected:
+                if (!be.hasCable()) {
+                    // Check if player has cable in inventory
+                    if (player.getInventory().contains(new ItemStack(EvecualMC.CHARGER_CABLE))) {
+                        int slot = player.getInventory().indexOf(new ItemStack(EvecualMC.CHARGER_CABLE));
+                        if (slot != -1 && !player.isCreative()) {
+                            player.getInventory().getStack(slot).decrement(1);
+                        }
+                        be.setHasCable(true);
+                        world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, SoundCategory.BLOCKS, 1.0F, 1.2F);
+                    } else {
+                        player.sendMessage(Text.literal("§c⚡ No cable installed! Right-click with a Charger Cable first."), true);
+                        return ActionResult.SUCCESS;
+                    }
                 }
-                return ActionResult.SUCCESS;
+
+                // Now connect to nearest car
+                CarEntity nearbyCar = findNearbyCar(world, pos);
+                if (nearbyCar != null) {
+                    be.connectCar(nearbyCar);
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.8F);
+                    player.sendMessage(Text.literal("§a⚡ Cable plugged into your car! Charging... (Press X or Right-click to disconnect)"), true);
+                } else {
+                    player.sendMessage(Text.literal("§e⚡ Station ready! Park your electric car within 16 blocks and press X to connect."), true);
+                }
             }
+            return ActionResult.SUCCESS;
         }
 
         return ActionResult.PASS;
+    }
+
+    @Nullable
+    private CarEntity findNearbyCar(World world, BlockPos pos) {
+        Box box = new Box(pos).expand(16.0);
+        List<CarEntity> cars = world.getEntitiesByClass(CarEntity.class, box, c -> true);
+        if (cars.isEmpty()) return null;
+        cars.sort(Comparator.comparingDouble(c -> c.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)));
+        return cars.get(0);
     }
 
     @Override
