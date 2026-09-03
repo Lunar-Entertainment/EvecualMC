@@ -69,3 +69,11 @@ publishing {
 	repositories {
 	}
 }
+
+loom {
+	runs {
+		client {
+			property "sodium.checks.issue2561", "false"
+		}
+	}
+}
