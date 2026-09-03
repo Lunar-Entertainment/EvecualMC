@@ -35,81 +35,81 @@ public class CarEntityModel extends EntityModel<CarEntity> {
         ModelData modelData = new ModelData();
         ModelPartData root = modelData.getRoot();
 
-        // 1. Chassis & Body - Sleek sports car contours
+        // 1. Chassis & Body - Primary Car Paint (uv: 0, 0)
         ModelPartBuilder body = ModelPartBuilder.create()
                 // Main floor plate: 28 wide, 2 thick, 48 long (Z: -24 to +24, Y: 16 to 18)
                 .uv(0, 0).cuboid(-14.0F, 16.0F, -24.0F, 28.0F, 2.0F, 48.0F)
-                // Left side skirt (between wheels): X: -15.5 to -13.5, Y: 15 to 19, Z: -10 to +10
+                // Left side skirt (carbon): X: -15.5 to -13.5, Y: 15 to 19, Z: -10 to +10
                 .uv(64, 0).cuboid(-15.5F, 15.0F, -10.0F, 2.0F, 4.0F, 20.0F)
-                // Right side skirt (between wheels): X: +13.5 to +15.5, Y: 15 to 19, Z: -10 to +10
+                // Right side skirt (carbon): X: +13.5 to +15.5, Y: 15 to 19, Z: -10 to +10
                 .uv(64, 0).cuboid(13.5F, 15.0F, -10.0F, 2.0F, 4.0F, 20.0F)
-                // Front bumper: 30 wide, 4 tall, 4 long (Z: -26 to -22, Y: 14 to 18)
-                .uv(0, 32).cuboid(-15.0F, 14.0F, -26.0F, 30.0F, 4.0F, 4.0F)
+                // Front bumper (body paint): 30 wide, 4 tall, 4 long (Z: -26 to -22, Y: 14 to 18)
+                .uv(0, 0).cuboid(-15.0F, 14.0F, -26.0F, 30.0F, 4.0F, 4.0F)
                 // Front carbon splitter lip: 32 wide, 1 tall, 3 long (Z: -28 to -25, Y: 17 to 18)
                 .uv(64, 0).cuboid(-16.0F, 17.0F, -28.0F, 32.0F, 1.0F, 3.0F)
                 // Front hood (sloped down towards front): 28 wide, 6 tall, 14 long (Z: -22 to -8, Y: 10 to 16)
-                .uv(0, 32).cuboid(-14.0F, 10.0F, -22.0F, 28.0F, 6.0F, 14.0F)
-                // Left front fender / wheel arch: X: -16 to -14, Y: 10 to 17, Z: -21 to -11
+                .uv(0, 0).cuboid(-14.0F, 10.0F, -22.0F, 28.0F, 6.0F, 14.0F)
+                // Left front fender: X: -16 to -14, Y: 10 to 17, Z: -21 to -11
                 .uv(0, 0).cuboid(-16.0F, 10.0F, -21.0F, 2.0F, 7.0F, 10.0F)
-                // Right front fender / wheel arch: X: +14 to +16, Y: 10 to 17, Z: -21 to -11
+                // Right front fender: X: +14 to +16, Y: 10 to 17, Z: -21 to -11
                 .uv(0, 0).cuboid(14.0F, 10.0F, -21.0F, 2.0F, 7.0F, 10.0F)
-                // Left door / side panel: X: -16 to -13, Y: 8 to 16, Z: -8 to +10
+                // Left door panel: X: -16 to -13, Y: 8 to 16, Z: -8 to +10
                 .uv(0, 0).cuboid(-15.5F, 8.0F, -8.0F, 2.5F, 8.0F, 18.0F)
-                // Right door / side panel: X: +13 to +16, Y: 8 to 16, Z: -8 to +10
+                // Right door panel: X: +13 to +16, Y: 8 to 16, Z: -8 to +10
                 .uv(0, 0).cuboid(13.0F, 8.0F, -8.0F, 2.5F, 8.0F, 18.0F)
-                // Left side view mirror: X: -17.5 to -15.5, Y: 7 to 9, Z: -7 to -5
+                // Left side view mirror (carbon): X: -17.5 to -15.5, Y: 7 to 9, Z: -7 to -5
                 .uv(64, 0).cuboid(-18.0F, 7.0F, -7.0F, 2.5F, 2.0F, 2.0F)
-                // Right side view mirror: X: +15.5 to +17.5, Y: 7 to 9, Z: -7 to -5
+                // Right side view mirror (carbon): X: +15.5 to +17.5, Y: 7 to 9, Z: -7 to -5
                 .uv(64, 0).cuboid(15.5F, 7.0F, -7.0F, 2.5F, 2.0F, 2.0F)
-                // Rear trunk deck (accessible trunk compartment): 28 wide, 6 tall, 12 long (Z: +10 to +22, Y: 10 to 16)
-                .uv(0, 32).cuboid(-14.0F, 10.0F, 10.0F, 28.0F, 6.0F, 12.0F)
-                // Rear bumper: 30 wide, 4 tall, 3 long (Z: +22 to +25, Y: 14 to 18)
-                .uv(64, 96).cuboid(-15.0F, 14.0F, 22.0F, 30.0F, 4.0F, 3.0F)
+                // Rear trunk deck (body paint): 28 wide, 6 tall, 12 long (Z: +10 to +22, Y: 10 to 16)
+                .uv(0, 0).cuboid(-14.0F, 10.0F, 10.0F, 28.0F, 6.0F, 12.0F)
+                // Rear bumper (body paint): 30 wide, 4 tall, 3 long (Z: +22 to +25, Y: 14 to 18)
+                .uv(0, 0).cuboid(-15.0F, 14.0F, 22.0F, 30.0F, 4.0F, 3.0F)
                 // Rear carbon diffuser fins: 28 wide, 2 tall, 2 deep (Z: +24 to +26, Y: 17 to 19)
                 .uv(64, 0).cuboid(-14.0F, 17.0F, 24.0F, 28.0F, 2.0F, 2.0F)
-                // Left rear fender / wheel arch: X: -16 to -14, Y: 10 to 17, Z: +10 to +21
+                // Left rear fender: X: -16 to -14, Y: 10 to 17, Z: +10 to +21
                 .uv(0, 0).cuboid(-16.0F, 10.0F, 10.0F, 2.0F, 7.0F, 11.0F)
-                // Right rear fender / wheel arch: X: +14 to +16, Y: 10 to 17, Z: +10 to +21
+                // Right rear fender: X: +14 to +16, Y: 10 to 17, Z: +10 to +21
                 .uv(0, 0).cuboid(14.0F, 10.0F, 10.0F, 2.0F, 7.0F, 11.0F)
-                // Rear spoiler wing: 30 wide, 2 tall, 5 long (Z: +20 to +25, Y: 4 to 6)
+                // Rear carbon spoiler wing: 30 wide, 2 tall, 5 long (Z: +20 to +25, Y: 4 to 6)
                 .uv(64, 0).cuboid(-15.0F, 4.0F, 20.0F, 30.0F, 2.0F, 5.0F)
-                // Spoiler left mount
+                // Spoiler left mount (carbon)
                 .uv(64, 0).cuboid(-10.0F, 6.0F, 21.0F, 2.0F, 4.0F, 2.0F)
-                // Spoiler right mount
+                // Spoiler right mount (carbon)
                 .uv(64, 0).cuboid(8.0F, 6.0F, 21.0F, 2.0F, 4.0F, 2.0F);
 
         root.addChild("body", body, ModelTransform.NONE);
 
-        // 2. Interior (Dashboard, Steering Wheel, Bucket Seat, Rearview Mirror)
+        // 2. Interior (Dashboard, Steering Wheel, Bucket Seat, Rearview Mirror) - Carbon / Dark Trim (uv: 64, 0)
         ModelPartBuilder interior = ModelPartBuilder.create()
                 // Front dashboard: 26 wide, 6 tall, 4 deep (Z: -8 to -4, Y: 9 to 15)
-                .uv(0, 64).cuboid(-13.0F, 9.0F, -8.0F, 26.0F, 6.0F, 4.0F)
+                .uv(64, 0).cuboid(-13.0F, 9.0F, -8.0F, 26.0F, 6.0F, 4.0F)
                 // Center Steering wheel column: Z: -4 to -2, X: -1 to +1, Y: 10 to 12
-                .uv(0, 64).cuboid(-1.0F, 10.0F, -4.0F, 2.0F, 2.0F, 2.0F)
+                .uv(64, 0).cuboid(-1.0F, 10.0F, -4.0F, 2.0F, 2.0F, 2.0F)
                 // Center Steering wheel: 8 wide, 8 tall, 1 deep (X: -4 to +4, Y: 7 to 15, Z: -2)
-                .uv(0, 64).cuboid(-4.0F, 7.0F, -2.0F, 8.0F, 8.0F, 1.0F)
+                .uv(64, 0).cuboid(-4.0F, 7.0F, -2.0F, 8.0F, 8.0F, 1.0F)
                 // Rearview mirror: 4 wide, 2 tall, 1 deep
                 .uv(64, 0).cuboid(-2.0F, -3.0F, -6.0F, 4.0F, 2.0F, 1.0F)
                 // Low-profile ergonomic driver seat cushion and backrest
-                .uv(64, 32).cuboid(-7.0F, 14.0F, -1.0F, 14.0F, 2.0F, 10.0F)
-                .uv(64, 32).cuboid(-7.0F, 7.0F, 8.0F, 14.0F, 7.0F, 2.0F);
+                .uv(64, 0).cuboid(-7.0F, 14.0F, -1.0F, 14.0F, 2.0F, 10.0F)
+                .uv(64, 0).cuboid(-7.0F, 7.0F, 8.0F, 14.0F, 7.0F, 2.0F);
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. Canopy Pillars & Roof Rails (Aerodynamic, no rear wall!)
+        // 3. Canopy Pillars & Roof Rails (Clean Body Paint, uv: 0, 0)
         ModelPartBuilder canopyFrame = ModelPartBuilder.create()
                 // Left A-Pillar
-                .uv(64, 0).cuboid(-14.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
+                .uv(0, 0).cuboid(-14.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
                 // Right A-Pillar
-                .uv(64, 0).cuboid(13.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
+                .uv(0, 0).cuboid(13.0F, -5.0F, -8.0F, 1.0F, 13.0F, 1.5F)
                 // Left Roof Rail
-                .uv(64, 0).cuboid(-14.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F)
+                .uv(0, 0).cuboid(-14.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F)
                 // Right Roof Rail
-                .uv(64, 0).cuboid(13.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F);
+                .uv(0, 0).cuboid(13.0F, -6.0F, -8.0F, 1.0F, 1.0F, 18.0F);
 
         root.addChild("canopy_frame", canopyFrame, ModelTransform.NONE);
 
-        // 4. Transparent Glass Canopy (Windshield & Panoramic Roof, NO rear solid wall)
+        // 4. Transparent Glass Canopy (Windshield & Panoramic Roof, uv: 0, 96)
         ModelPartBuilder glassCanopy = ModelPartBuilder.create()
                 // 1) Front Windshield Glass
                 .uv(0, 96).cuboid(-13.0F, -5.0F, -7.5F, 26.0F, 13.0F, 1.0F)
@@ -118,35 +118,49 @@ public class CarEntityModel extends EntityModel<CarEntity> {
 
         root.addChild("glass", glassCanopy, ModelTransform.NONE);
 
-        // 5. Wheels (Tires & Detailed Alloy Rims)
-        // Front Left Wheel
+        // 5. Wheels (Symmetrical Alloy Rims, uv: 64, 64)
+        // Cuboids centered on axle: (-2 to +2 in X, -5 to +5 in Y, -5 to +5 in Z)
+        // Left wheels face -X (outwards)
         root.addChild("wheel_fl", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(-4.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                .uv(64, 64).cuboid(-2.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
                 ModelTransform.pivot(-12.5F, 19.0F, -16.0F));
 
-        // Front Right Wheel
-        root.addChild("wheel_fr", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(0.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
-                ModelTransform.pivot(12.5F, 19.0F, -16.0F));
-
-        // Rear Left Wheel
         root.addChild("wheel_rl", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(-4.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                .uv(64, 64).cuboid(-2.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
                 ModelTransform.pivot(-12.5F, 19.0F, 16.0F));
 
-        // Rear Right Wheel
+        // Right wheels rotated 180° around Y so outer rim face (-X) also points outwards (+X)
+        root.addChild("wheel_fr", ModelPartBuilder.create()
+                .uv(64, 64).cuboid(-2.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.of(12.5F, 19.0F, -16.0F, 0.0F, (float) Math.PI, 0.0F));
+
         root.addChild("wheel_rr", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(0.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
-                ModelTransform.pivot(12.5F, 19.0F, 16.0F));
+                .uv(64, 64).cuboid(-2.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.of(12.5F, 19.0F, 16.0F, 0.0F, (float) Math.PI, 0.0F));
 
         return TexturedModelData.of(modelData, 128, 128);
     }
 
     @Override
     public void setAngles(CarEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        float steer = entity.getSteeringAngle();
+        float steer = entity.getSteeringAngle(); // Steers up to 45 deg (0.785 rad)
+        float roll = entity.getWheelRoll();      // Smooth axle rolling animation
+
+        // Front Left Wheel
         this.wheel_fl.yaw = steer;
-        this.wheel_fr.yaw = steer;
+        this.wheel_fl.pitch = roll;
+
+        // Front Right Wheel (180° base Y flip)
+        this.wheel_fr.yaw = (float) Math.PI + steer;
+        this.wheel_fr.pitch = -roll;
+
+        // Rear Left Wheel
+        this.wheel_rl.yaw = 0.0F;
+        this.wheel_rl.pitch = roll;
+
+        // Rear Right Wheel (180° base Y flip)
+        this.wheel_rr.yaw = (float) Math.PI;
+        this.wheel_rr.pitch = -roll;
     }
 
     @Override

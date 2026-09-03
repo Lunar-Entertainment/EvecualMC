@@ -66,6 +66,11 @@ public class CarEntity extends Entity {
 
     private double currentSpeed = 0.0;
     private double angularVelocity = 0.0;
+    private float wheelRoll = 0.0F;
+
+    public float getWheelRoll() {
+        return this.wheelRoll;
+    }
 
     public CarEntity(EntityType<? extends CarEntity> type, World world) {
         super(type, world);
@@ -455,11 +460,11 @@ public class CarEntity extends Entity {
                 }
             }
 
-            // 5. Angular Steering Physics
+            // 5. Angular Steering Physics & Decreased Turn Radius
             double targetAngular = 0.0;
-            if (Math.abs(currentSpeed) > 0.02) {
-                double speedFactor = Math.min(1.0, Math.abs(currentSpeed) / 0.5);
-                double baseTurnRate = 3.6 * speedFactor;
+            if (Math.abs(currentSpeed) > 0.01) {
+                double turnSensitivity = Math.max(0.65, Math.min(1.0, Math.abs(currentSpeed) / 0.25));
+                double baseTurnRate = 7.5 * turnSensitivity;
                 double turnDir = (currentSpeed < 0) ? -1.0 : 1.0;
 
                 if (inputLeft) {
@@ -469,16 +474,16 @@ public class CarEntity extends Entity {
                 }
             }
 
-            angularVelocity = MathHelper.stepTowards((float) angularVelocity, (float) targetAngular, 0.8F);
+            angularVelocity = MathHelper.stepTowards((float) angularVelocity, (float) targetAngular, 1.4F);
             this.prevYaw = this.getYaw();
             this.setYaw((float) (this.getYaw() + angularVelocity));
 
-            // 6. Smooth steering wheel angle
+            // 6. Smooth steering wheel angle up to 45 degrees (0.785 rad)
             float targetSteer = 0.0F;
-            if (inputLeft) targetSteer = -0.55F;
-            else if (inputRight) targetSteer = 0.55F;
+            if (inputLeft) targetSteer = -0.785F;
+            else if (inputRight) targetSteer = 0.785F;
             float currentSteer = getSteeringAngle();
-            this.dataTracker.set(STEERING_ANGLE, MathHelper.stepTowards(currentSteer, targetSteer, 0.15F));
+            this.dataTracker.set(STEERING_ANGLE, MathHelper.stepTowards(currentSteer, targetSteer, 0.22F));
         } else {
             currentSpeed = MathHelper.stepTowards((float) currentSpeed, 0.0F, 0.08F);
             angularVelocity = MathHelper.stepTowards((float) angularVelocity, 0.0F, 0.8F);
@@ -492,6 +497,13 @@ public class CarEntity extends Entity {
         double vx = -Math.sin(rad) * currentSpeed;
         double vz = Math.cos(rad) * currentSpeed;
         this.setVelocity(vx, this.getVelocity().y, vz);
+
+        // 8. Continuous Wheel Rolling Animation around axle
+        double actualSpeed = Math.sqrt(vx * vx + vz * vz);
+        if (actualSpeed > 0.005) {
+            double dir = (currentSpeed < 0) ? -1.0 : 1.0;
+            this.wheelRoll += (float) (actualSpeed * dir * 2.5);
+        }
 
         this.move(MovementType.SELF, this.getVelocity());
     }
