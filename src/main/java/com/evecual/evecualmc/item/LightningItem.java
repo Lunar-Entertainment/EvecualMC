@@ -34,13 +34,15 @@ public class LightningItem extends Item {
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dz = -1; dz <= 1; dz++) {
                         BlockPos strikePos = targetPos.add(dx, 0, dz);
-                        LightningEntity lightning = EntityType.LIGHTNING_BOLT.create(world);
-                        if (lightning != null) {
-                            lightning.refreshPositionAfterTeleport(Vec3d.ofBottomCenter(strikePos));
-                            if (user instanceof ServerPlayerEntity serverPlayer) {
-                                lightning.setChanneler(serverPlayer);
+                        for (int strike = 0; strike < 3; strike++) {
+                            LightningEntity lightning = EntityType.LIGHTNING_BOLT.create(world);
+                            if (lightning != null) {
+                                lightning.refreshPositionAfterTeleport(Vec3d.ofBottomCenter(strikePos));
+                                if (user instanceof ServerPlayerEntity serverPlayer) {
+                                    lightning.setChanneler(serverPlayer);
+                                }
+                                world.spawnEntity(lightning);
                             }
-                            world.spawnEntity(lightning);
                         }
                     }
                 }
