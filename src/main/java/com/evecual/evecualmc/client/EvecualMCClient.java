@@ -85,6 +85,32 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register Auto-Park S2C sync
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.START_AUTO_PARK_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            int carId = buf.readInt();
+            double tx = buf.readDouble();
+            double ty = buf.readDouble();
+            double tz = buf.readDouble();
+            float tyaw = buf.readFloat();
+            double ex = buf.readDouble();
+            double ey = buf.readDouble();
+            double ez = buf.readDouble();
+            client.execute(() -> {
+                if (client.world != null && client.world.getEntityById(carId) instanceof CarEntity car) {
+                    car.startAutoPark(tx, ty, tz, tyaw, ex, ey, ez);
+                }
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CANCEL_AUTO_PARK_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            int carId = buf.readInt();
+            client.execute(() -> {
+                if (client.world != null && client.world.getEntityById(carId) instanceof CarEntity car) {
+                    car.cancelAutoPark(null);
+                }
+            });
+        });
+
         // Client Tick: handle car driving inputs and 'Z' key for opening trunk
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
@@ -96,15 +122,29 @@ public class EvecualMCClient implements ClientModInitializer {
                     boolean right = client.options.rightKey.isPressed();
                     boolean sprint = client.options.sprintKey.isPressed();
 
-                    car.setInputs(forward, back, left, right, sprint);
+                    if (car.isAutoParking()) {
+                        if (forward || back || left || right) {
+                            car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                            car.setInputs(forward, back, left, right, sprint);
+                            PacketByteBuf buf = PacketByteBufs.create();
+                            buf.writeBoolean(forward);
+                            buf.writeBoolean(back);
+                            buf.writeBoolean(left);
+                            buf.writeBoolean(right);
+                            buf.writeBoolean(sprint);
+                            ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
+                        }
+                    } else {
+                        car.setInputs(forward, back, left, right, sprint);
 
-                    PacketByteBuf buf = PacketByteBufs.create();
-                    buf.writeBoolean(forward);
-                    buf.writeBoolean(back);
-                    buf.writeBoolean(left);
-                    buf.writeBoolean(right);
-                    buf.writeBoolean(sprint);
-                    ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeBoolean(forward);
+                        buf.writeBoolean(back);
+                        buf.writeBoolean(left);
+                        buf.writeBoolean(right);
+                        buf.writeBoolean(sprint);
+                        ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
+                    }
                 }
 
                 // 2. 'Z' Key to Open Car Trunk

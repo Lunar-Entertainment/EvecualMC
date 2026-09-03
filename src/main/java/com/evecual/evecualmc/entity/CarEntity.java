@@ -595,13 +595,13 @@ public class CarEntity extends Entity {
     @Override
     public Box calculateBoundingBox() {
         double rad = Math.toRadians(this.getYaw());
-        double halfLen = 1.70; // 3.4 blocks total length (front splitter to rear diffuser)
-        double halfWid = 1.15; // 2.3 blocks total width (including side mirrors)
+        double halfLen = 1.45; // 2.9 blocks length
+        double halfWid = 0.95; // 1.9 blocks width (fits through 2-wide parking bays and garage doors)
         double extX = Math.abs(Math.cos(rad)) * halfWid + Math.abs(Math.sin(rad)) * halfLen;
         double extZ = Math.abs(Math.sin(rad)) * halfWid + Math.abs(Math.cos(rad)) * halfLen;
         return new Box(
                 this.getX() - extX, this.getY(), this.getZ() - extZ,
-                this.getX() + extX, this.getY() + 1.88, this.getZ() + extZ
+                this.getX() + extX, this.getY() + 1.85, this.getZ() + extZ
         );
     }
 

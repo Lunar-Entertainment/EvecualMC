@@ -265,6 +265,8 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
     public static final Identifier AUTO_PARK_PACKET_ID = new Identifier(MOD_ID, "auto_park");
+    public static final Identifier START_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "start_auto_park_s2c");
+    public static final Identifier CANCEL_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_auto_park_s2c");
 
     @Override
     public void onInitialize() {
@@ -381,6 +383,10 @@ public class EvecualMC implements ModInitializer {
 
                 if (car.isAutoParking()) {
                     car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                    net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                    net.minecraft.network.PacketByteBuf cancelBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                    cancelBuf.writeInt(car.getId());
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, CANCEL_AUTO_PARK_S2C_PACKET_ID, cancelBuf);
                     return;
                 }
 
@@ -428,6 +434,19 @@ public class EvecualMC implements ModInitializer {
                     float targetYaw = bestFacing.asRotation();
 
                     car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
+
+                    // Sync to client so client vehicle physics simulation executes auto-park smoothly
+                    net.minecraft.network.PacketByteBuf startBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                    startBuf.writeInt(car.getId());
+                    startBuf.writeDouble(targetX);
+                    startBuf.writeDouble(targetY);
+                    startBuf.writeDouble(targetZ);
+                    startBuf.writeFloat(targetYaw);
+                    startBuf.writeDouble(entryX);
+                    startBuf.writeDouble(entryY);
+                    startBuf.writeDouble(entryZ);
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, START_AUTO_PARK_S2C_PACKET_ID, startBuf);
+
                     player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), false);
                     player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
                 } else {
