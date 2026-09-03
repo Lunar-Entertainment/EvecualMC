@@ -88,8 +88,6 @@ public class CarEntityModel extends EntityModel<CarEntity> {
                 .uv(128, 0).cuboid(-1.0F, 10.0F, -4.0F, 2.0F, 2.0F, 2.0F)
                 // Center Steering wheel: 8 wide, 8 tall, 1 deep (X: -4 to +4, Y: 7 to 15, Z: -2)
                 .uv(128, 0).cuboid(-4.0F, 7.0F, -2.0F, 8.0F, 8.0F, 1.0F)
-                // Rearview mirror: 4 wide, 2 tall, 1 deep
-                .uv(128, 0).cuboid(-2.0F, -3.0F, -6.0F, 4.0F, 2.0F, 1.0F)
                 // Low-profile ergonomic driver seat cushion and backrest
                 .uv(128, 0).cuboid(-7.0F, 14.0F, -1.0F, 14.0F, 2.0F, 10.0F)
                 .uv(128, 0).cuboid(-7.0F, 7.0F, 8.0F, 14.0F, 7.0F, 2.0F);

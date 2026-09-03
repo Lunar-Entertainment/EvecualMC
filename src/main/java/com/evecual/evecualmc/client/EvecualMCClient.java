@@ -52,6 +52,8 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    private static boolean wasCPressed = false;
+
     @Override
     public void onInitializeClient() {
         // Register HUD tip overlay for Solar Panel, Battery, Combiner, Charger, and Car
@@ -134,8 +136,14 @@ public class EvecualMCClient implements ClientModInitializer {
                 }
 
                 // 4. 'C' Key to Auto Park Vehicle into nearest Parking Lines bay
-                while (AUTO_PARK_KEY.wasPressed()) {
-                    ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
+                boolean cDown = (client.currentScreen == null && InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_C)) || AUTO_PARK_KEY.isPressed();
+                if (cDown) {
+                    if (!wasCPressed) {
+                        wasCPressed = true;
+                        ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
+                    }
+                } else {
+                    wasCPressed = false;
                 }
             }
         });
