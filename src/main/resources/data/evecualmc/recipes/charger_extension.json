@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SWS",
+    "SRS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "evecualmc:charger_extension",
+    "count": 1
+  }
+}

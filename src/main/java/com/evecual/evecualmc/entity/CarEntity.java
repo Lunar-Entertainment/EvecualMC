@@ -2,6 +2,7 @@ package com.evecual.evecualmc.entity;
 
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.screen.CarTrunkScreenHandler;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -27,6 +28,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -39,8 +41,10 @@ public class CarEntity extends Entity {
     private static final TrackedData<Integer> ENERGY = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Float> STEERING_ANGLE = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final TrackedData<Boolean> PLUGGED_IN = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private final SimpleInventory trunk = new SimpleInventory(18);
+    private BlockPos connectedExtensionPos = null;
 
     private boolean inputForward;
     private boolean inputBack;
@@ -61,6 +65,21 @@ public class CarEntity extends Entity {
         this.dataTracker.startTracking(ENERGY, 500);
         this.dataTracker.startTracking(COLOR_VARIANT, 0); // 0: Red, 1: Blue, 2: Black, 3: Lime, 4: White, 5: Yellow
         this.dataTracker.startTracking(STEERING_ANGLE, 0.0F);
+        this.dataTracker.startTracking(PLUGGED_IN, false);
+    }
+
+    public boolean isPluggedIn() {
+        return this.dataTracker.get(PLUGGED_IN);
+    }
+
+    public void setPluggedIn(BlockPos pos) {
+        this.dataTracker.set(PLUGGED_IN, true);
+        this.connectedExtensionPos = pos;
+    }
+
+    public void unplug() {
+        this.dataTracker.set(PLUGGED_IN, false);
+        this.connectedExtensionPos = null;
     }
 
     public int getEnergy() {
@@ -158,9 +177,54 @@ public class CarEntity extends Entity {
             }
         }
 
-        // 2. Sneak + Click: Pick up car & drop trunk contents
+        // 2. Plugging in unholstered charging cable
+        if (com.evecual.evecualmc.block.ChargerExtensionBlock.PENDING_CABLES.containsKey(player.getUuid())) {
+            BlockPos extPos = com.evecual.evecualmc.block.ChargerExtensionBlock.PENDING_CABLES.remove(player.getUuid());
+            if (this.squaredDistanceTo(extPos.toCenterPos()) <= 100.0) {
+                BlockEntity be = this.getWorld().getBlockEntity(extPos);
+                if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity extension) {
+                    if (!this.getWorld().isClient) {
+                        extension.connectCar(this);
+                        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.8F);
+                        player.sendMessage(Text.literal("§a⚡ Vehicle plugged in! Charging from station... (Right-click to unplug)"), true);
+                    }
+                    return ActionResult.SUCCESS;
+                }
+            } else {
+                if (!this.getWorld().isClient) {
+                    player.sendMessage(Text.literal("§c⚡ Too far from charging station!"), true);
+                }
+                return ActionResult.SUCCESS;
+            }
+        }
+
+        // 3. Unplugging charging cable with empty hand
+        if (isPluggedIn() && held.isEmpty()) {
+            if (!this.getWorld().isClient) {
+                if (connectedExtensionPos != null) {
+                    BlockEntity be = this.getWorld().getBlockEntity(connectedExtensionPos);
+                    if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity extension) {
+                        extension.disconnectCar();
+                    }
+                }
+                unplug();
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.PLAYERS, 1.0F, 0.8F);
+                player.sendMessage(Text.literal("§6⚡ Charging cable disconnected. Vehicle ready to drive!"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 4. Sneak + Click: Pick up car & drop trunk contents
         if (player.isSneaking()) {
             if (!this.getWorld().isClient) {
+                if (isPluggedIn() && connectedExtensionPos != null) {
+                    BlockEntity be = this.getWorld().getBlockEntity(connectedExtensionPos);
+                    if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity extension) {
+                        extension.disconnectCar();
+                    }
+                }
                 dropTrunkContents();
                 this.dropItem(EvecualMC.CAR_ITEM);
                 this.discard();
@@ -168,7 +232,7 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 3. Right clicking the rear/trunk: Open trunk inventory
+        // 5. Right clicking the rear/trunk: Open trunk inventory
         Vec3d toPlayer = player.getPos().subtract(this.getPos());
         double rad = Math.toRadians(this.getYaw());
         // Forward vector: -sin(rad), cos(rad). Rear is opposite: sin(rad), -cos(rad).
@@ -179,7 +243,7 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 4. Otherwise, enter car to drive
+        // 6. Otherwise, enter car to drive
         if (!this.getWorld().isClient) {
             player.startRiding(this);
         }
@@ -203,6 +267,12 @@ public class CarEntity extends Entity {
             return false;
         }
         if (!this.getWorld().isClient && !this.isRemoved()) {
+            if (isPluggedIn() && connectedExtensionPos != null) {
+                BlockEntity be = this.getWorld().getBlockEntity(connectedExtensionPos);
+                if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity extension) {
+                    extension.disconnectCar();
+                }
+            }
             dropTrunkContents();
             this.dropItem(EvecualMC.CAR_ITEM);
             this.discard();
@@ -226,11 +296,20 @@ public class CarEntity extends Entity {
         Entity passenger = this.getFirstPassenger();
         int energy = getEnergy();
         boolean hasPower = energy > 0;
+        boolean pluggedIn = isPluggedIn();
 
-        if (passenger instanceof PlayerEntity) {
+        if (passenger instanceof PlayerEntity player) {
+            // Check if plugged in: cannot move!
+            if (pluggedIn) {
+                currentSpeed = 0.0;
+                if ((inputForward || inputBack) && this.age % 20 == 0) {
+                    player.sendMessage(Text.literal("§c⚡ Cannot drive: Charging cable plugged in! Right-click vehicle to disconnect."), true);
+                }
+            }
+
             // 2. Target speed calculation with CTRL Boost
             double targetSpeed = 0.0;
-            if (hasPower) {
+            if (hasPower && !pluggedIn) {
                 if (inputForward) {
                     targetSpeed = inputSprint ? 1.0 : 0.52;
                 } else if (inputBack) {

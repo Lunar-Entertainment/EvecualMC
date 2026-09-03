@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  S",
+    " W ",
+    "L  "
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "result": {
+    "item": "evecualmc:charger_cable",
+    "count": 1
+  }
+}

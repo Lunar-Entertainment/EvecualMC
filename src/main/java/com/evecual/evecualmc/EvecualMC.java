@@ -131,6 +131,24 @@ public class EvecualMC implements ModInitializer {
             new BlockItem(CHARGER_BLOCK, new Item.Settings())
     );
 
+    public static final Block CHARGER_EXTENSION_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "charger_extension"),
+            new com.evecual.evecualmc.block.ChargerExtensionBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
+    );
+
+    public static final Item CHARGER_EXTENSION_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "charger_extension"),
+            new BlockItem(CHARGER_EXTENSION_BLOCK, new Item.Settings())
+    );
+
+    public static final Item CHARGER_CABLE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "charger_cable"),
+            new Item(new Item.Settings().maxCount(1))
+    );
+
     // Block Entities
     public static final BlockEntityType<SolarPanelBlockEntity> SOLAR_PANEL_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
@@ -154,6 +172,12 @@ public class EvecualMC implements ModInitializer {
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "charger"),
             FabricBlockEntityTypeBuilder.create(ChargerBlockEntity::new, CHARGER_BLOCK).build()
+    );
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity> CHARGER_EXTENSION_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "charger_extension"),
+            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity::new, CHARGER_EXTENSION_BLOCK).build()
     );
 
     // Screen Handlers
@@ -198,6 +222,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(WIRE_ITEM);
                 entries.add(ELECTRONIC_COMBINER_ITEM);
                 entries.add(CHARGER_ITEM);
+                entries.add(CHARGER_EXTENSION_ITEM);
+                entries.add(CHARGER_CABLE);
             })
             .build();
 
