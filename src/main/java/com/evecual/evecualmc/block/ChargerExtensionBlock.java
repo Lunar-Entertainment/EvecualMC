@@ -15,6 +15,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -28,10 +30,19 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ChargerExtensionBlock extends BlockWithEntity {
+    public static final BooleanProperty HAS_CABLE = BooleanProperty.of("has_cable");
+    public static final BooleanProperty CONNECTED = BooleanProperty.of("connected");
+
     public static final Map<UUID, BlockPos> PENDING_CABLES = new ConcurrentHashMap<>();
 
     public ChargerExtensionBlock(Settings settings) {
         super(settings);
+        setDefaultState(this.stateManager.getDefaultState().with(HAS_CABLE, false).with(CONNECTED, false));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(HAS_CABLE, CONNECTED);
     }
 
     @Override
@@ -78,11 +89,12 @@ public class ChargerExtensionBlock extends BlockWithEntity {
             if (!be.hasCable()) {
                 if (!world.isClient) {
                     be.setHasCable(true);
+                    world.setBlockState(pos, state.with(HAS_CABLE, true).with(CONNECTED, false), Block.NOTIFY_ALL);
                     if (!player.isCreative()) {
                         held.decrement(1);
                     }
                     world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, SoundCategory.BLOCKS, 1.0F, 1.2F);
-                    player.sendMessage(Text.literal("§a⚡ Charger Cable attached to the Extension!"), true);
+                    player.sendMessage(Text.literal("§a⚡ Charger Cable attached to Extension! Press X near your car to connect."), true);
                 }
                 return ActionResult.SUCCESS;
             } else {
@@ -93,7 +105,7 @@ public class ChargerExtensionBlock extends BlockWithEntity {
             }
         }
 
-        // 2. Right-click with Empty Hand: Unholster / Disconnect cable
+        // 2. Right-click with Empty Hand: Disconnect if connected, or unholster
         if (held.isEmpty() && hand == Hand.MAIN_HAND) {
             if (!be.hasCable()) {
                 if (!world.isClient) {
@@ -105,6 +117,7 @@ public class ChargerExtensionBlock extends BlockWithEntity {
             if (be.isConnected()) {
                 if (!world.isClient) {
                     be.disconnectCar();
+                    world.setBlockState(pos, state.with(HAS_CABLE, true).with(CONNECTED, false), Block.NOTIFY_ALL);
                     world.playSound(null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 1.0F, 0.8F);
                     player.sendMessage(Text.literal("§6⚡ Charging cable disconnected from vehicle."), true);
                 }
@@ -113,7 +126,7 @@ public class ChargerExtensionBlock extends BlockWithEntity {
                 if (!world.isClient) {
                     PENDING_CABLES.put(player.getUuid(), pos);
                     world.playSound(null, pos, SoundEvents.ITEM_ARMOR_EQUIP_LEATHER, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                    player.sendMessage(Text.literal("§e⚡ Charging plug in hand! Right-click an Electric Car to plug in."), true);
+                    player.sendMessage(Text.literal("§e⚡ Charging plug in hand! Right-click an Electric Car (or press X) to connect."), true);
                 }
                 return ActionResult.SUCCESS;
             }

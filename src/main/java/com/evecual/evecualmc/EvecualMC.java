@@ -230,6 +230,7 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
+    public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
 
     @Override
     public void onInitialize() {
@@ -256,6 +257,69 @@ public class EvecualMC implements ModInitializer {
                 if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
                     car.openTrunk(player);
                 }
+            });
+        });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TOGGLE_CABLE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            server.execute(() -> {
+                CarEntity car = null;
+                if (player.getVehicle() instanceof CarEntity c) {
+                    car = c;
+                } else {
+                    net.minecraft.util.math.Box box = player.getBoundingBox().expand(6.0);
+                    java.util.List<CarEntity> cars = player.getWorld().getEntitiesByClass(CarEntity.class, box, c -> true);
+                    if (!cars.isEmpty()) {
+                        cars.sort(java.util.Comparator.comparingDouble(c -> c.squaredDistanceTo(player)));
+                        car = cars.get(0);
+                    }
+                }
+
+                if (car == null) {
+                    player.sendMessage(Text.literal("§c⚡ No electric car nearby!"), true);
+                    return;
+                }
+
+                // If car is already plugged in: unplug!
+                if (car.isPluggedIn()) {
+                    if (car.getConnectedExtensionPos() != null) {
+                        net.minecraft.block.entity.BlockEntity be = player.getWorld().getBlockEntity(car.getConnectedExtensionPos());
+                        if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
+                            ext.disconnectCar();
+                        }
+                    }
+                    car.unplug();
+                    player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
+                            net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 0.8F);
+                    player.sendMessage(Text.literal("§6⚡ Charging cable disconnected. Vehicle ready to drive!"), true);
+                    return;
+                }
+
+                // Find nearby ChargerExtensionBlockEntity within 8 blocks of car
+                net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
+                com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity foundExt = null;
+                for (net.minecraft.util.math.BlockPos p : net.minecraft.util.math.BlockPos.iterate(carPos.add(-8, -3, -8), carPos.add(8, 3, 8))) {
+                    net.minecraft.block.entity.BlockEntity be = player.getWorld().getBlockEntity(p);
+                    if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
+                        foundExt = ext;
+                        break;
+                    }
+                }
+
+                if (foundExt == null) {
+                    player.sendMessage(Text.literal("§c⚡ No Vehicle Charger Extension nearby!"), true);
+                    return;
+                }
+
+                if (!foundExt.hasCable()) {
+                    player.sendMessage(Text.literal("§c⚡ Nearby Extension has no cable! Right-click it with a Charger Cable first."), true);
+                    return;
+                }
+
+                // Connect!
+                foundExt.connectCar(car);
+                player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
+                        net.minecraft.sound.SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.8F);
+                player.sendMessage(Text.literal("§a⚡ Charging cable connected to car! (Press X to disconnect)"), true);
             });
         });
 

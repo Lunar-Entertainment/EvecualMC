@@ -31,6 +31,12 @@ public class ChargerExtensionBlockEntity extends BlockEntity {
 
     public void setHasCable(boolean hasCable) {
         this.hasCable = hasCable;
+        if (this.world != null && !this.world.isClient) {
+            BlockState state = this.world.getBlockState(this.pos);
+            if (state.isOf(EvecualMC.CHARGER_EXTENSION_BLOCK)) {
+                this.world.setBlockState(this.pos, state.with(com.evecual.evecualmc.block.ChargerExtensionBlock.HAS_CABLE, hasCable), Block.NOTIFY_ALL);
+            }
+        }
         markDirty();
         sync();
     }
@@ -46,6 +52,13 @@ public class ChargerExtensionBlockEntity extends BlockEntity {
     public void connectCar(CarEntity car) {
         this.connectedCarId = car.getId();
         car.setPluggedIn(this.pos);
+        if (this.world != null && !this.world.isClient) {
+            BlockState state = this.world.getBlockState(this.pos);
+            if (state.isOf(EvecualMC.CHARGER_EXTENSION_BLOCK)) {
+                this.world.setBlockState(this.pos, state.with(com.evecual.evecualmc.block.ChargerExtensionBlock.HAS_CABLE, true)
+                        .with(com.evecual.evecualmc.block.ChargerExtensionBlock.CONNECTED, true), Block.NOTIFY_ALL);
+            }
+        }
         markDirty();
         sync();
     }
@@ -58,6 +71,12 @@ public class ChargerExtensionBlockEntity extends BlockEntity {
             }
         }
         this.connectedCarId = -1;
+        if (this.world != null && !this.world.isClient) {
+            BlockState state = this.world.getBlockState(this.pos);
+            if (state.isOf(EvecualMC.CHARGER_EXTENSION_BLOCK)) {
+                this.world.setBlockState(this.pos, state.with(com.evecual.evecualmc.block.ChargerExtensionBlock.CONNECTED, false), Block.NOTIFY_ALL);
+            }
+        }
         markDirty();
         sync();
     }

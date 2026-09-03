@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
-      "model": "evecualmc:block/charger_extension"
+    "connected=false,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty"
+    },
+    "connected=false,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_cable"
+    },
+    "connected=true,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty"
+    },
+    "connected=true,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_charging"
     }
   }
 }

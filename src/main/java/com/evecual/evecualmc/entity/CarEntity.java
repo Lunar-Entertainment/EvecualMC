@@ -53,6 +53,7 @@ public class CarEntity extends Entity {
     private boolean inputSprint;
 
     private double currentSpeed = 0.0;
+    private double angularVelocity = 0.0;
 
     public CarEntity(EntityType<? extends CarEntity> type, World world) {
         super(type, world);
@@ -80,6 +81,10 @@ public class CarEntity extends Entity {
     public void unplug() {
         this.dataTracker.set(PLUGGED_IN, false);
         this.connectedExtensionPos = null;
+    }
+
+    public BlockPos getConnectedExtensionPos() {
+        return this.connectedExtensionPos;
     }
 
     public int getEnergy() {
@@ -324,28 +329,31 @@ public class CarEntity extends Entity {
                 currentSpeed = Math.max(targetSpeed, currentSpeed - 0.06);
             }
 
-            // 4. Highly Responsive Steering (Improved!)
+            // 4. Smooth Automotive Steering Physics (Continuous Damped Angular Velocity)
             float targetSteer = 0.0F;
-            if (inputLeft) targetSteer -= 0.45F;
-            if (inputRight) targetSteer += 0.45F;
+            if (inputLeft) targetSteer -= 0.50F;
+            if (inputRight) targetSteer += 0.50F;
 
             float currentSteer = this.getSteeringAngle();
-            currentSteer += (targetSteer - currentSteer) * 0.4F;
+            currentSteer += (targetSteer - currentSteer) * 0.35F;
             this.dataTracker.set(STEERING_ANGLE, currentSteer);
 
-            // Responsive turn rate scaling: fast steering while moving, pivot steering while starting
-            float speedAbs = (float) Math.abs(currentSpeed);
-            float turnSpeed = speedAbs > 0.1F ? 5.8F : (inputForward || inputBack || speedAbs > 0.01F ? 3.5F : 0.0F);
+            // Responsive turn rate scaling: agile steering while moving, smooth pivot when starting
+            double speedAbs = Math.abs(currentSpeed);
+            double targetTurnRate = 0.0;
+            if (speedAbs > 0.01 || inputForward || inputBack) {
+                double speedFactor = Math.min(1.0, speedAbs / 0.30);
+                double maxTurn = 3.6 + 2.8 * speedFactor; // 3.6 to 6.4 deg/tick
+                if (inputLeft) targetTurnRate -= maxTurn;
+                if (inputRight) targetTurnRate += maxTurn;
+            }
 
-            if (turnSpeed > 0.0F) {
+            // Smooth angular acceleration & damping (automotive inertia)
+            angularVelocity += (targetTurnRate - angularVelocity) * 0.32;
+
+            if (Math.abs(angularVelocity) > 0.02) {
                 float dir = currentSpeed >= 0 ? 1.0F : -1.0F;
-                if (inputLeft) {
-                    this.setYaw(this.getYaw() - turnSpeed * dir);
-                }
-                if (inputRight) {
-                    this.setYaw(this.getYaw() + turnSpeed * dir);
-                }
-                this.prevYaw = this.getYaw();
+                this.setYaw(this.getYaw() + (float)(angularVelocity * dir));
             }
 
             // 5. Energy Consumption (Server authoritative)
@@ -378,6 +386,7 @@ public class CarEntity extends Entity {
             if (Math.abs(currentSpeed) < 0.01) {
                 currentSpeed = 0.0;
             }
+            angularVelocity *= 0.7;
             this.dataTracker.set(STEERING_ANGLE, 0.0F);
         }
 
@@ -388,6 +397,15 @@ public class CarEntity extends Entity {
         this.setVelocity(vx, this.getVelocity().y, vz);
 
         this.move(MovementType.SELF, this.getVelocity());
+    }
+
+    protected void clampPassengerYaw(Entity passenger) {
+        passenger.setBodyYaw(this.getYaw());
+        float f = MathHelper.wrapDegrees(passenger.getYaw() - this.getYaw());
+        float g = MathHelper.clamp(f, -110.0F, 110.0F);
+        passenger.prevYaw += g - f;
+        passenger.setYaw(passenger.getYaw() + g - f);
+        passenger.setHeadYaw(passenger.getYaw());
     }
 
     @Override
@@ -403,7 +421,10 @@ public class CarEntity extends Entity {
             double worldZ = this.getZ() + Math.cos(rad) * forwardOffset + Math.sin(rad) * leftOffset;
 
             positionUpdater.accept(passenger, worldX, worldY, worldZ);
-            passenger.setYaw(this.getYaw());
+
+            float deltaYaw = this.getYaw() - this.prevYaw;
+            passenger.setYaw(passenger.getYaw() + deltaYaw);
+            clampPassengerYaw(passenger);
         }
     }
 

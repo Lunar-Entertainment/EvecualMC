@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "evecualmc:block/charger_extension_bottom",
+    "up": "evecualmc:block/charger_extension_top",
+    "north": "evecualmc:block/charger_extension_front_charging",
+    "south": "evecualmc:block/charger_extension_side_cable",
+    "west": "evecualmc:block/charger_extension_side_cable",
+    "east": "evecualmc:block/charger_extension_side_cable",
+    "particle": "evecualmc:block/charger_extension_front_charging"
+  }
+}

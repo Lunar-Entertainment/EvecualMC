@@ -38,6 +38,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding ATTACH_CABLE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.attach_cable",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_X,
+            "category.evecualmc.evecual"
+    ));
+
     @Override
     public void onInitializeClient() {
         // Register HUD tip overlay for Solar Panel, Battery, Combiner, Charger, and Car
@@ -111,6 +118,11 @@ public class EvecualMCClient implements ClientModInitializer {
                         buf.writeInt(targetCar.getId());
                         ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
                     }
+                }
+
+                // 3. 'X' Key to Attach / Detach Charger Cable to Car
+                while (ATTACH_CABLE_KEY.wasPressed()) {
+                    ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
                 }
             }
         });

@@ -21,5 +21,6 @@
   "item.evecualmc.charger_extension": "Vehicle Charger Extension",
   "item.evecualmc.charger_cable": "Charger Cable",
   "key.evecualmc.open_trunk": "Open Car Trunk",
+  "key.evecualmc.attach_cable": "Attach / Detach Charger Cable",
   "category.evecualmc.evecual": "Evecual"
 }
