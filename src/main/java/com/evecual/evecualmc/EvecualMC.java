@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
@@ -162,6 +163,12 @@ public class EvecualMC implements ModInitializer {
             new ScreenHandlerType<>(ElectronicCombinerScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
     );
 
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.CarTrunkScreenHandler> CAR_TRUNK_SCREEN_HANDLER = Registry.register(
+            Registries.SCREEN_HANDLER,
+            new Identifier(MOD_ID, "car_trunk"),
+            new ScreenHandlerType<>(com.evecual.evecualmc.screen.CarTrunkScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
+    );
+
     // Entity Types
     public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
@@ -195,6 +202,7 @@ public class EvecualMC implements ModInitializer {
             .build();
 
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
+    public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
 
     @Override
     public void onInitialize() {
@@ -210,6 +218,16 @@ public class EvecualMC implements ModInitializer {
             server.execute(() -> {
                 if (player.getVehicle() instanceof CarEntity car) {
                     car.setInputs(forward, back, left, right, sprint);
+                }
+            });
+        });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(OPEN_TRUNK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            int entityId = buf.readInt();
+            server.execute(() -> {
+                Entity target = player.getWorld().getEntityById(entityId);
+                if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
+                    car.openTrunk(player);
                 }
             });
         });

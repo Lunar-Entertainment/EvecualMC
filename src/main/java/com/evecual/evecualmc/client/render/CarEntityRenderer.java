@@ -12,12 +12,20 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 
 public class CarEntityRenderer extends EntityRenderer<CarEntity> {
-    private static final Identifier TEXTURE = new Identifier("evecualmc", "textures/entity/car.png");
+    private static final Identifier[] TEXTURES = new Identifier[]{
+            new Identifier("evecualmc", "textures/entity/car_red.png"),    // 0: Sport Crimson & Carbon
+            new Identifier("evecualmc", "textures/entity/car_blue.png"),   // 1: Cyber Electric Blue
+            new Identifier("evecualmc", "textures/entity/car_black.png"),  // 2: Stealth Midnight & Cyan
+            new Identifier("evecualmc", "textures/entity/car_lime.png"),   // 3: Neon Lime & Carbon
+            new Identifier("evecualmc", "textures/entity/car_white.png"),  // 4: Luxury Pearl White & Slate
+            new Identifier("evecualmc", "textures/entity/car_yellow.png")  // 5: Racing Yellow & Carbon
+    };
+
     private final CarEntityModel model;
 
     public CarEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
-        this.shadowRadius = 0.8F;
+        this.shadowRadius = 0.9F;
         this.model = new CarEntityModel(context.getPart(CarEntityModel.MODEL_LAYER));
     }
 
@@ -33,6 +41,9 @@ public class CarEntityRenderer extends EntityRenderer<CarEntity> {
         matrices.scale(-1.0F, -1.0F, 1.0F);
         matrices.translate(0.0, -1.5, 0.0);
 
+        // Update wheel steering angle
+        this.model.setAngles(car, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(this.getTexture(car)));
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -41,7 +52,11 @@ public class CarEntityRenderer extends EntityRenderer<CarEntity> {
     }
 
     @Override
-    public Identifier getTexture(CarEntity entity) {
-        return TEXTURE;
+    public Identifier getTexture(CarEntity car) {
+        int variant = car.getColorVariant();
+        if (variant >= 0 && variant < TEXTURES.length) {
+            return TEXTURES[variant];
+        }
+        return TEXTURES[0];
     }
 }

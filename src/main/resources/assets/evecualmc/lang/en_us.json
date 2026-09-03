@@ -14,6 +14,9 @@
   "block.evecualmc.electronic_combiner": "Electronic Combiner",
   "item.evecualmc.electronic_combiner": "Electronic Combiner",
   "container.evecualmc.electronic_combiner": "Electronic Combiner",
+  "container.evecualmc.car_trunk": "Car Trunk",
   "block.evecualmc.charger": "Vehicle Charger",
-  "item.evecualmc.charger": "Vehicle Charger"
+  "item.evecualmc.charger": "Vehicle Charger",
+  "key.evecualmc.open_trunk": "Open Car Trunk",
+  "category.evecualmc.evecual": "Evecual"
 }
