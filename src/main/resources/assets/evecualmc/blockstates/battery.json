@@ -1,7 +1,31 @@
 {
   "variants": {
-    "": {
-      "model": "evecualmc:block/battery"
+    "charge_level=0": {
+      "model": "evecualmc:block/battery_0"
+    },
+    "charge_level=1": {
+      "model": "evecualmc:block/battery_1"
+    },
+    "charge_level=2": {
+      "model": "evecualmc:block/battery_2"
+    },
+    "charge_level=3": {
+      "model": "evecualmc:block/battery_3"
+    },
+    "charge_level=4": {
+      "model": "evecualmc:block/battery_4"
+    },
+    "charge_level=5": {
+      "model": "evecualmc:block/battery_5"
+    },
+    "charge_level=6": {
+      "model": "evecualmc:block/battery_6"
+    },
+    "charge_level=7": {
+      "model": "evecualmc:block/battery_7"
+    },
+    "charge_level=8": {
+      "model": "evecualmc:block/battery_8"
     }
   }
 }

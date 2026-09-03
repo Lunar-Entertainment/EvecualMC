@@ -25,6 +25,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         if (be.energy > 0) {
             be.transferEnergyToConsumers(world, pos);
         }
+        be.updateChargeLevel();
     }
 
     private void transferEnergyToConsumers(net.minecraft.world.World world, BlockPos startPos) {
@@ -100,6 +101,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
             energy += canInsert;
             markDirty();
             sync();
+            updateChargeLevel();
         }
         return canInsert;
     }
@@ -111,8 +113,22 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
             energy -= canExtract;
             markDirty();
             sync();
+            updateChargeLevel();
         }
         return canExtract;
+    }
+
+    public void updateChargeLevel() {
+        if (world != null && !world.isClient) {
+            BlockState state = getCachedState();
+            if (state.isOf(EvecualMC.BATTERY_BLOCK)) {
+                int level = (int) Math.round((double) this.energy * 8.0 / MAX_CAPACITY);
+                level = net.minecraft.util.math.MathHelper.clamp(level, 0, 8);
+                if (state.get(com.evecual.evecualmc.block.BatteryBlock.CHARGE_LEVEL) != level) {
+                    world.setBlockState(pos, state.with(com.evecual.evecualmc.block.BatteryBlock.CHARGE_LEVEL, level), Block.NOTIFY_LISTENERS);
+                }
+            }
+        }
     }
 
     public void sync() {

@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/battery_side_5",
+    "down": "evecualmc:block/battery_bottom",
+    "up": "evecualmc:block/battery_top",
+    "north": "evecualmc:block/battery_side_5",
+    "south": "evecualmc:block/battery_side_5",
+    "east": "evecualmc:block/battery_side_5",
+    "west": "evecualmc:block/battery_side_5"
+  }
+}
