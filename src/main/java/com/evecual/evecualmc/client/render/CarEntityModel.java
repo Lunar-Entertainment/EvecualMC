@@ -25,109 +25,100 @@ public class CarEntityModel extends EntityModel<CarEntity> {
         ModelData modelData = new ModelData();
         ModelPartData root = modelData.getRoot();
 
-        // 1. Chassis & Body (Red Metallic & Dark Skirts) - Model -Z is Front, +Z is Rear
+        // 1. Chassis & Body - Large, proportional, grounded
         ModelPartBuilder body = ModelPartBuilder.create()
-                // Main chassis floor: 24 wide, 2 thick, 42 long (Z: -21 to +21, Y: 16 to 18)
-                .uv(0, 0).cuboid(-12.0F, 16.0F, -21.0F, 24.0F, 2.0F, 42.0F)
-                // Left side skirt (between wheels, seals gap): Z: -9 to +9, Y: 15 to 19, X: -13 to -11
-                .uv(64, 0).cuboid(-13.5F, 15.0F, -9.0F, 2.0F, 4.0F, 18.0F)
-                // Right side skirt (between wheels, seals gap): Z: -9 to +9, Y: 15 to 19, X: 11 to 13
-                .uv(64, 0).cuboid(11.5F, 15.0F, -9.0F, 2.0F, 4.0F, 18.0F)
-                // Front bumper: 26 wide, 4 tall, 3 long (Z: -23 to -20, Y: 14 to 18)
-                .uv(0, 32).cuboid(-13.0F, 14.0F, -23.0F, 26.0F, 4.0F, 3.0F)
-                // Front hood (sloped down towards front): 24 wide, 5 tall, 14 long (Z: -20 to -6, Y: 11 to 16)
-                .uv(0, 32).cuboid(-12.0F, 11.0F, -20.0F, 24.0F, 5.0F, 14.0F)
-                // Left front fender / wheel cover: Z: -19 to -9, Y: 11 to 17, X: -14 to -12
-                .uv(0, 0).cuboid(-14.0F, 11.0F, -19.0F, 2.0F, 6.0F, 10.0F)
-                // Right front fender / wheel cover: Z: -19 to -9, Y: 11 to 17, X: 12 to 14
-                .uv(0, 0).cuboid(12.0F, 11.0F, -19.0F, 2.0F, 6.0F, 10.0F)
-                // Left door / side panel: Z: -6 to +8, Y: 11 to 16, X: -14 to -11
-                .uv(0, 0).cuboid(-13.5F, 11.0F, -6.0F, 2.0F, 5.0F, 14.0F)
-                // Right door / side panel: Z: -6 to +8, Y: 11 to 16, X: 11 to 14
-                .uv(0, 0).cuboid(11.5F, 11.0F, -6.0F, 2.0F, 5.0F, 14.0F)
-                // Rear trunk deck: 24 wide, 5 tall, 12 long (Z: +8 to +20, Y: 11 to 16)
-                .uv(0, 32).cuboid(-12.0F, 11.0F, 8.0F, 24.0F, 5.0F, 12.0F)
-                // Rear bumper: 26 wide, 4 tall, 3 long (Z: +20 to +23, Y: 14 to 18)
-                .uv(64, 96).cuboid(-13.0F, 14.0F, 20.0F, 26.0F, 4.0F, 3.0F)
-                // Left rear fender / wheel cover: Z: +9 to +19, Y: 11 to 17, X: -14 to -12
-                .uv(0, 0).cuboid(-14.0F, 11.0F, 9.0F, 2.0F, 6.0F, 10.0F)
-                // Right rear fender / wheel cover: Z: +9 to +19, Y: 11 to 17, X: 12 to 14
-                .uv(0, 0).cuboid(12.0F, 11.0F, 9.0F, 2.0F, 6.0F, 10.0F)
-                // Rear spoiler wing: 26 wide, 2 tall, 4 long (Z: +18 to +22, Y: 6 to 8)
-                .uv(64, 0).cuboid(-13.0F, 6.0F, 18.0F, 26.0F, 2.0F, 4.0F)
-                // Spoiler left mount
-                .uv(64, 0).cuboid(-9.0F, 8.0F, 19.0F, 2.0F, 3.0F, 2.0F)
-                // Spoiler right mount
-                .uv(64, 0).cuboid(7.0F, 8.0F, 19.0F, 2.0F, 3.0F, 2.0F);
+                // Main floor plate: 28 wide, 2 thick, 48 long (Z: -24 to +24, Y: 16 to 18)
+                .uv(0, 0).cuboid(-14.0F, 16.0F, -24.0F, 28.0F, 2.0F, 48.0F)
+                // Left side skirt (between wheels): X: -15.5 to -13.5, Y: 15 to 19, Z: -10 to +10
+                .uv(64, 0).cuboid(-15.5F, 15.0F, -10.0F, 2.0F, 4.0F, 20.0F)
+                // Right side skirt (between wheels): X: +13.5 to +15.5, Y: 15 to 19, Z: -10 to +10
+                .uv(64, 0).cuboid(13.5F, 15.0F, -10.0F, 2.0F, 4.0F, 20.0F)
+                // Front bumper: 30 wide, 4 tall, 4 long (Z: -26 to -22, Y: 14 to 18)
+                .uv(0, 32).cuboid(-15.0F, 14.0F, -26.0F, 30.0F, 4.0F, 4.0F)
+                // Front hood (sloped down towards front): 28 wide, 6 tall, 14 long (Z: -22 to -8, Y: 10 to 16)
+                .uv(0, 32).cuboid(-14.0F, 10.0F, -22.0F, 28.0F, 6.0F, 14.0F)
+                // Left front fender / wheel arch: X: -16 to -14, Y: 10 to 17, Z: -21 to -11
+                .uv(0, 0).cuboid(-16.0F, 10.0F, -21.0F, 2.0F, 7.0F, 10.0F)
+                // Right front fender / wheel arch: X: +14 to +16, Y: 10 to 17, Z: -21 to -11
+                .uv(0, 0).cuboid(14.0F, 10.0F, -21.0F, 2.0F, 7.0F, 10.0F)
+                // Left door / side panel: X: -16 to -13, Y: 8 to 16, Z: -8 to +10
+                .uv(0, 0).cuboid(-15.5F, 8.0F, -8.0F, 2.5F, 8.0F, 18.0F)
+                // Right door / side panel: X: +13 to +16, Y: 8 to 16, Z: -8 to +10
+                .uv(0, 0).cuboid(13.0F, 8.0F, -8.0F, 2.5F, 8.0F, 18.0F)
+                // Rear trunk deck: 28 wide, 6 tall, 12 long (Z: +10 to +22, Y: 10 to 16)
+                .uv(0, 32).cuboid(-14.0F, 10.0F, 10.0F, 28.0F, 6.0F, 12.0F)
+                // Rear bumper: 30 wide, 4 tall, 3 long (Z: +22 to +25, Y: 14 to 18)
+                .uv(64, 96).cuboid(-15.0F, 14.0F, 22.0F, 30.0F, 4.0F, 3.0F)
+                // Left rear fender / wheel arch: X: -16 to -14, Y: 10 to 17, Z: +10 to +21
+                .uv(0, 0).cuboid(-16.0F, 10.0F, 10.0F, 2.0F, 7.0F, 11.0F)
+                // Right rear fender / wheel arch: X: +14 to +16, Y: 10 to 17, Z: +10 to +21
+                .uv(0, 0).cuboid(14.0F, 10.0F, 10.0F, 2.0F, 7.0F, 11.0F)
+                // Rear spoiler: 30 wide, 2 tall, 5 long (Z: +20 to +25, Y: 4 to 6)
+                .uv(64, 0).cuboid(-15.0F, 4.0F, 20.0F, 30.0F, 2.0F, 5.0F)
+                // Spoiler mounts
+                .uv(64, 0).cuboid(-10.0F, 6.0F, 21.0F, 2.0F, 4.0F, 2.0F)
+                .uv(64, 0).cuboid(8.0F, 6.0F, 21.0F, 2.0F, 4.0F, 2.0F);
 
         root.addChild("body", body, ModelTransform.NONE);
 
-        // 2. Interior (Dashboard, Steering Wheel, Seats, Center Console)
+        // 2. Interior (Cockpit, Center Driver Seat, Dashboard, Steering Wheel)
         ModelPartBuilder interior = ModelPartBuilder.create()
-                // Front dashboard: 22 wide, 5 tall, 3 deep (Z: -6 to -3, Y: 11 to 16)
-                .uv(0, 64).cuboid(-11.0F, 11.0F, -6.0F, 22.0F, 5.0F, 3.0F)
-                // Steering wheel column: Z: -3 to -1, X: -7 to -5, Y: 12 to 14
-                .uv(0, 64).cuboid(-7.0F, 12.0F, -3.0F, 2.0F, 2.0F, 2.0F)
-                // Steering wheel ring: 6 wide, 6 tall, 1 deep (X: -9 to -3, Y: 9 to 15, Z: -1)
-                .uv(0, 64).cuboid(-9.0F, 9.0F, -1.0F, 6.0F, 6.0F, 1.0F)
-                // Center console: 4 wide, 3 tall, 12 long (Z: -3 to +9, X: -2 to +2, Y: 14 to 17)
-                .uv(64, 0).cuboid(-2.0F, 14.0F, -3.0F, 4.0F, 3.0F, 12.0F)
+                // Front dashboard: 26 wide, 6 tall, 4 deep (Z: -8 to -4, Y: 9 to 15)
+                .uv(0, 64).cuboid(-13.0F, 9.0F, -8.0F, 26.0F, 6.0F, 4.0F)
+                // Center Steering wheel column: Z: -4 to -2, X: -1 to +1, Y: 10 to 12
+                .uv(0, 64).cuboid(-1.0F, 10.0F, -4.0F, 2.0F, 2.0F, 2.0F)
+                // Center Steering wheel: 8 wide, 8 tall, 1 deep (X: -4 to +4, Y: 7 to 15, Z: -2)
+                .uv(0, 64).cuboid(-4.0F, 7.0F, -2.0F, 8.0F, 8.0F, 1.0F)
 
-                // Driver Seat Cushion (Left side): 8 wide, 2 tall, 8 long (X: -11 to -3, Y: 14 to 16, Z: 0 to 8)
-                .uv(64, 32).cuboid(-11.0F, 14.0F, 0.0F, 8.0F, 2.0F, 8.0F)
-                // Driver Seat Backrest: 8 wide, 10 tall, 2 deep (X: -11 to -3, Y: 4 to 14, Z: 7 to 9)
-                .uv(64, 32).cuboid(-11.0F, 4.0F, 7.0F, 8.0F, 10.0F, 2.0F)
-                // Driver Headrest: 4 wide, 3 tall, 2 deep (X: -9 to -5, Y: 1 to 4, Z: 7 to 9)
-                .uv(64, 32).cuboid(-9.0F, 1.0F, 7.0F, 4.0F, 3.0F, 2.0F)
-
-                // Passenger Seat Cushion (Right side): 8 wide, 2 tall, 8 long (X: +3 to +11, Y: 14 to 16, Z: 0 to 8)
-                .uv(64, 32).cuboid(3.0F, 14.0F, 0.0F, 8.0F, 2.0F, 8.0F)
-                // Passenger Seat Backrest: 8 wide, 10 tall, 2 deep (X: +3 to +11, Y: 4 to 14, Z: 7 to 9)
-                .uv(64, 32).cuboid(3.0F, 4.0F, 7.0F, 8.0F, 10.0F, 2.0F)
-                // Passenger Headrest: 4 wide, 3 tall, 2 deep (X: +5 to +9, Y: 1 to 4, Z: 7 to 9)
-                .uv(64, 32).cuboid(5.0F, 1.0F, 7.0F, 4.0F, 3.0F, 2.0F);
+                // Wide Center Driver Bucket Seat:
+                // Seat Cushion: 14 wide, 2 tall, 10 long (X: -7 to +7, Y: 14 to 16, Z: -1 to +9)
+                .uv(64, 32).cuboid(-7.0F, 14.0F, -1.0F, 14.0F, 2.0F, 10.0F)
+                // Seat Backrest: 14 wide, 14 tall, 3 deep (X: -7 to +7, Y: 0 to 14, Z: 8 to 11)
+                .uv(64, 32).cuboid(-7.0F, 0.0F, 8.0F, 14.0F, 14.0F, 3.0F)
+                // Seat Headrest: 8 wide, 4 tall, 3 deep (X: -4 to +4, Y: -4 to 0, Z: 8 to 11)
+                .uv(64, 32).cuboid(-4.0F, -4.0F, 8.0F, 8.0F, 4.0F, 3.0F);
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. Cabin Canopy (Windshield Frame & Hardtop Roof with Open Windows)
+        // 3. High-Clearance Canopy (High Roof & Tall Windshield - Total Headroom!)
         ModelPartBuilder canopy = ModelPartBuilder.create()
-                // Left A-pillar (front left window strut): Y: 3 to 11, Z: -5 to -4, X: -12.5 to -11.5
-                .uv(64, 0).cuboid(-12.5F, 3.0F, -5.0F, 1.0F, 8.0F, 1.0F)
-                // Right A-pillar (front right window strut): Y: 3 to 11, Z: -5 to -4, X: 11.5 to 12.5
-                .uv(64, 0).cuboid(11.5F, 3.0F, -5.0F, 1.0F, 8.0F, 1.0F)
-                // Top windshield header frame: 24 wide, 1 tall, 1 deep (Y: 3 to 4, Z: -5 to -4, X: -12 to +12)
-                .uv(64, 0).cuboid(-12.0F, 3.0F, -5.0F, 24.0F, 1.0F, 1.0F)
-                // Transparent cutout windshield glass: 22 wide, 7 tall, 0.5 deep (Y: 4 to 11, Z: -4.5, X: -11 to +11)
-                .uv(0, 96).cuboid(-11.0F, 4.0F, -4.5F, 22.0F, 7.0F, 1.0F)
-                // Left C-pillar (rear left strut): Y: 3 to 11, Z: +8 to +9, X: -12.5 to -11.5
-                .uv(64, 0).cuboid(-12.5F, 3.0F, 8.0F, 1.0F, 8.0F, 1.0F)
-                // Right C-pillar (rear right strut): Y: 3 to 11, Z: +8 to +9, X: 11.5 to 12.5
-                .uv(64, 0).cuboid(11.5F, 3.0F, 8.0F, 1.0F, 8.0F, 1.0F)
-                // Hardtop roof: 24 wide, 1.5 tall, 14 long (Z: -5 to +9, Y: 1.5 to 3.0, X: -12 to +12)
-                .uv(0, 0).cuboid(-12.0F, 1.5F, -5.0F, 24.0F, 2.0F, 14.0F);
+                // Left A-pillar (strut from Y: 8 up to Y: -4, Z: -7 to -5, X: -14.5 to -13)
+                .uv(64, 0).cuboid(-14.5F, -4.0F, -7.0F, 1.5F, 12.0F, 2.0F)
+                // Right A-pillar (strut from Y: 8 up to Y: -4, Z: -7 to -5, X: +13 to +14.5)
+                .uv(64, 0).cuboid(13.0F, -4.0F, -7.0F, 1.5F, 12.0F, 2.0F)
+                // Windshield top header frame: 28 wide, 2 tall, 2 deep (Y: -4 to -2, Z: -7 to -5)
+                .uv(64, 0).cuboid(-14.0F, -4.0F, -7.0F, 28.0F, 2.0F, 2.0F)
+                // Transparent cutout windshield: 26 wide, 10 tall, 1 deep (Y: -2 to 8, Z: -6.5)
+                .uv(0, 96).cuboid(-13.0F, -2.0F, -6.5F, 26.0F, 10.0F, 1.0F)
+                // Left C-pillar (rear strut from Y: 8 up to Y: -4, Z: +9 to +11)
+                .uv(64, 0).cuboid(-14.5F, -4.0F, 9.0F, 1.5F, 12.0F, 2.0F)
+                // Right C-pillar (rear strut from Y: 8 up to Y: -4, Z: +9 to +11)
+                .uv(64, 0).cuboid(13.0F, -4.0F, 9.0F, 1.5F, 12.0F, 2.0F)
+                // Hardtop roof: 28 wide, 2 tall, 18 long (Y: -6 to -4, Z: -7 to +11)
+                .uv(0, 0).cuboid(-14.0F, -6.0F, -7.0F, 28.0F, 2.0F, 18.0F);
 
         root.addChild("canopy", canopy, ModelTransform.NONE);
 
-        // 4. Wheels (Tires & Alloy Rims) - Resting on ground at Y = 24
-        // Front Left Wheel: X: -14 to -10, Y: 15 to 24, Z: -19 to -10
+        // 4. Wheels (Tires & Silver Alloy Rims) - Resting on ground at Y = 24
+        // Front Left Wheel
         root.addChild("wheel_fl", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(-3.5F, -4.5F, -4.5F, 3.5F, 9.0F, 9.0F),
-                ModelTransform.pivot(-11.0F, 19.5F, -14.0F));
+                .uv(64, 64).cuboid(-4.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.pivot(-12.5F, 19.0F, -16.0F));
 
-        // Front Right Wheel: X: 10 to 14, Y: 15 to 24, Z: -19 to -10
+        // Front Right Wheel
         root.addChild("wheel_fr", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(0.0F, -4.5F, -4.5F, 3.5F, 9.0F, 9.0F),
-                ModelTransform.pivot(11.0F, 19.5F, -14.0F));
+                .uv(64, 64).cuboid(0.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.pivot(12.5F, 19.0F, -16.0F));
 
-        // Rear Left Wheel: X: -14 to -10, Y: 15 to 24, Z: +9 to +19
+        // Rear Left Wheel
         root.addChild("wheel_rl", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(-3.5F, -4.5F, -4.5F, 3.5F, 9.0F, 9.0F),
-                ModelTransform.pivot(-11.0F, 19.5F, 14.0F));
+                .uv(64, 64).cuboid(-4.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.pivot(-12.5F, 19.0F, 16.0F));
 
-        // Rear Right Wheel: X: 10 to 14, Y: 15 to 24, Z: +9 to +19
+        // Rear Right Wheel
         root.addChild("wheel_rr", ModelPartBuilder.create()
-                .uv(64, 64).cuboid(0.0F, -4.5F, -4.5F, 3.5F, 9.0F, 9.0F),
-                ModelTransform.pivot(11.0F, 19.5F, 14.0F));
+                .uv(64, 64).cuboid(0.0F, -5.0F, -5.0F, 4.0F, 10.0F, 10.0F),
+                ModelTransform.pivot(12.5F, 19.0F, 16.0F));
 
         return TexturedModelData.of(modelData, 128, 128);
     }

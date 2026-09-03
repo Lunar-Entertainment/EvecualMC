@@ -197,6 +197,7 @@ public class EvecualMC implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(Registries.ITEM_GROUP, EVECUAL_ITEM_GROUP_KEY, EVECUAL_ITEM_GROUP);
+        net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(CAR_ENTITY, CarEntity.createCarAttributes());
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");
