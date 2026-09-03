@@ -155,6 +155,18 @@ public class EvecualMC implements ModInitializer {
             new BlockItem(CHARGER_EXTENSION_BLOCK, new Item.Settings())
     );
 
+    public static final Block PARKING_LINES_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "parking_lines"),
+            new com.evecual.evecualmc.block.ParkingLinesBlock(FabricBlockSettings.create().strength(0.5f).sounds(BlockSoundGroup.STONE).nonOpaque().noCollision())
+    );
+
+    public static final Item PARKING_LINES_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "parking_lines"),
+            new BlockItem(PARKING_LINES_BLOCK, new Item.Settings())
+    );
+
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_cable"),
@@ -190,6 +202,12 @@ public class EvecualMC implements ModInitializer {
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "charger_extension"),
             FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity::new, CHARGER_EXTENSION_BLOCK).build()
+    );
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity> PARKING_LINES_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "parking_lines"),
+            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity::new, PARKING_LINES_BLOCK).build()
     );
 
     // Screen Handlers
@@ -238,6 +256,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(CHARGER_ITEM);
                 entries.add(CHARGER_EXTENSION_ITEM);
                 entries.add(CHARGER_CABLE);
+                entries.add(PARKING_LINES_ITEM);
             })
             .build();
 
@@ -245,6 +264,7 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
+    public static final Identifier AUTO_PARK_PACKET_ID = new Identifier(MOD_ID, "auto_park");
 
     @Override
     public void onInitialize() {
@@ -349,6 +369,61 @@ public class EvecualMC implements ModInitializer {
                 player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
                         net.minecraft.sound.SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.8F);
                 player.sendMessage(Text.literal("§a⚡ Charging cable connected to car! (Press X to disconnect)"), true);
+            });
+        });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(AUTO_PARK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            server.execute(() -> {
+                if (player.getVehicle() instanceof CarEntity car) {
+                    if (car.isAutoParking()) {
+                        car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                        return;
+                    }
+
+                    // Search for nearest ParkingLinesBlock within 15 blocks
+                    net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
+                    net.minecraft.util.math.BlockPos bestSpot = null;
+                    net.minecraft.util.math.Direction bestFacing = null;
+                    double bestDistSq = Double.MAX_VALUE;
+
+                    for (int x = -15; x <= 15; x++) {
+                        for (int y = -4; y <= 4; y++) {
+                            for (int z = -15; z <= 15; z++) {
+                                net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
+                                net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
+                                if (s.isOf(PARKING_LINES_BLOCK) && s.get(com.evecual.evecualmc.block.ParkingLinesBlock.PART) == com.evecual.evecualmc.block.ParkingLinesPart.FRONT_LEFT) {
+                                    double dSq = p.getSquaredDistance(carPos);
+                                    if (dSq < bestDistSq) {
+                                        bestDistSq = dSq;
+                                        bestSpot = p;
+                                        bestFacing = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.FACING);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (bestSpot != null && bestFacing != null) {
+                        net.minecraft.util.math.Direction right = bestFacing.rotateYClockwise();
+                        // Target center of 3x2 bay:
+                        // Front-left is bestSpot, width is along right, depth is along bestFacing
+                        double targetX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 + bestFacing.getOffsetX() * 1.0;
+                        double targetY = bestSpot.getY();
+                        double targetZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 + bestFacing.getOffsetZ() * 1.0;
+
+                        // Approach point: 2.5 blocks in front of the empty entrance (opposite bestFacing)
+                        double entryX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 - bestFacing.getOffsetX() * 2.5;
+                        double entryY = bestSpot.getY();
+                        double entryZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 - bestFacing.getOffsetZ() * 2.5;
+
+                        float targetYaw = bestFacing.asRotation();
+
+                        car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
+                        player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
+                    } else {
+                        player.sendMessage(Text.literal("§c🅿️ No parking bay found within 15 blocks!"), true);
+                    }
+                }
             });
         });
 

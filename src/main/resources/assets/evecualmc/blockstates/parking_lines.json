@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "facing=north,part=front_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 0
+    },
+    "facing=north,part=front_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 180
+    },
+    "facing=north,part=mid_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 0
+    },
+    "facing=north,part=mid_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 180
+    },
+    "facing=north,part=back_left": {
+      "model": "evecualmc:block/parking_lines_corner",
+      "y": 0
+    },
+    "facing=north,part=back_right": {
+      "model": "evecualmc:block/parking_lines_corner_right",
+      "y": 0
+    },
+    "facing=east,part=front_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 90
+    },
+    "facing=east,part=front_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 270
+    },
+    "facing=east,part=mid_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 90
+    },
+    "facing=east,part=mid_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 270
+    },
+    "facing=east,part=back_left": {
+      "model": "evecualmc:block/parking_lines_corner",
+      "y": 90
+    },
+    "facing=east,part=back_right": {
+      "model": "evecualmc:block/parking_lines_corner_right",
+      "y": 90
+    },
+    "facing=south,part=front_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 180
+    },
+    "facing=south,part=front_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 0
+    },
+    "facing=south,part=mid_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 180
+    },
+    "facing=south,part=mid_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 0
+    },
+    "facing=south,part=back_left": {
+      "model": "evecualmc:block/parking_lines_corner",
+      "y": 180
+    },
+    "facing=south,part=back_right": {
+      "model": "evecualmc:block/parking_lines_corner_right",
+      "y": 180
+    },
+    "facing=west,part=front_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 270
+    },
+    "facing=west,part=front_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 90
+    },
+    "facing=west,part=mid_left": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 270
+    },
+    "facing=west,part=mid_right": {
+      "model": "evecualmc:block/parking_lines_side",
+      "y": 90
+    },
+    "facing=west,part=back_left": {
+      "model": "evecualmc:block/parking_lines_corner",
+      "y": 270
+    },
+    "facing=west,part=back_right": {
+      "model": "evecualmc:block/parking_lines_corner_right",
+      "y": 270
+    }
+  }
+}

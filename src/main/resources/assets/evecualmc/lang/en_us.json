@@ -22,7 +22,10 @@
   "block.evecualmc.charger_extension": "Vehicle Charger Extension",
   "item.evecualmc.charger_extension": "Vehicle Charger Extension",
   "item.evecualmc.charger_cable": "Charger Cable",
+  "block.evecualmc.parking_lines": "Parking Lines",
+  "item.evecualmc.parking_lines": "Parking Lines",
   "key.evecualmc.open_trunk": "Open Car Trunk",
   "key.evecualmc.attach_cable": "Attach / Detach Charger Cable",
+  "key.evecualmc.auto_park": "Auto Park Vehicle",
   "category.evecualmc.evecual": "Evecual"
 }

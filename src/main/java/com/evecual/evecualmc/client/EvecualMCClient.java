@@ -45,6 +45,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding AUTO_PARK_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.auto_park",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_C,
+            "category.evecualmc.evecual"
+    ));
+
     @Override
     public void onInitializeClient() {
         // Register HUD tip overlay for Solar Panel, Battery, Combiner, Charger, and Car
@@ -58,9 +65,10 @@ public class EvecualMCClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.CAR_ENTITY, CarEntityRenderer::new);
 
-        // Cutout render layer for wire block and solar panel
+        // Cutout render layer for wire block, solar panel, and parking lines
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.SOLAR_PANEL_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.PARKING_LINES_BLOCK, RenderLayer.getCutout());
 
         // Register Charger Waypoint Network Sync
         ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CHARGER_WAYPOINT_PACKET_ID, (client, handler, buf, responseSender) -> {
@@ -123,6 +131,13 @@ public class EvecualMCClient implements ClientModInitializer {
                 // 3. 'X' Key to Attach / Detach Charger Cable to Car
                 while (ATTACH_CABLE_KEY.wasPressed()) {
                     ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
+                }
+
+                // 4. 'C' Key to Auto Park Vehicle into nearest Parking Lines bay
+                while (AUTO_PARK_KEY.wasPressed()) {
+                    if (client.player.getVehicle() instanceof CarEntity) {
+                        ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
+                    }
                 }
             }
         });

@@ -68,8 +68,39 @@ public class CarEntity extends Entity {
     private double angularVelocity = 0.0;
     private float wheelRoll = 0.0F;
 
+    private boolean autoParking = false;
+    private int autoParkPhase = 0;
+    private double targetParkX, targetParkY, targetParkZ;
+    private float targetParkYaw;
+    private double entryApproachX, entryApproachY, entryApproachZ;
+
     public float getWheelRoll() {
         return this.wheelRoll;
+    }
+
+    public boolean isAutoParking() {
+        return this.autoParking;
+    }
+
+    public void startAutoPark(double px, double py, double pz, float pyaw, double ex, double ey, double ez) {
+        this.autoParking = true;
+        this.autoParkPhase = 0;
+        this.targetParkX = px;
+        this.targetParkY = py;
+        this.targetParkZ = pz;
+        this.targetParkYaw = pyaw;
+        this.entryApproachX = ex;
+        this.entryApproachY = ey;
+        this.entryApproachZ = ez;
+    }
+
+    public void cancelAutoPark(String message) {
+        if (this.autoParking) {
+            this.autoParking = false;
+            if (this.getFirstPassenger() instanceof PlayerEntity player && message != null) {
+                player.sendMessage(Text.literal(message), true);
+            }
+        }
     }
 
     public CarEntity(EntityType<? extends CarEntity> type, World world) {
@@ -440,6 +471,54 @@ public class CarEntity extends Entity {
                 }
             }
 
+            // Auto-Parking Controller
+            double autoParkAngular = 0.0;
+            boolean isSteeringAutoPark = false;
+            if (autoParking) {
+                if (inputForward || inputBack || inputLeft || inputRight) {
+                    cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                } else {
+                    double destX = (autoParkPhase == 0) ? entryApproachX : targetParkX;
+                    double destZ = (autoParkPhase == 0) ? entryApproachZ : targetParkZ;
+
+                    double dx = destX - this.getX();
+                    double dz = destZ - this.getZ();
+                    double dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (autoParkPhase == 0) {
+                        if (dist < 1.0) {
+                            autoParkPhase = 1;
+                        } else {
+                            targetSpeed = 0.28;
+                            float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                            float diff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                            autoParkAngular = MathHelper.clamp(diff * 0.18, -6.5, 6.5);
+                            isSteeringAutoPark = true;
+                        }
+                    } else if (autoParkPhase == 1) {
+                        if (dist < 0.25) {
+                            autoParkPhase = 2;
+                        } else {
+                            targetSpeed = 0.16;
+                            float desiredYaw = targetParkYaw;
+                            float diff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                            autoParkAngular = MathHelper.clamp(diff * 0.15, -5.5, 5.5);
+                            isSteeringAutoPark = true;
+                        }
+                    } else if (autoParkPhase == 2) {
+                        targetSpeed = 0.0;
+                        autoParkAngular = 0.0;
+                        this.setYaw(targetParkYaw);
+                        this.prevYaw = targetParkYaw;
+                        this.currentSpeed = 0.0;
+                        this.autoParking = false;
+                        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                net.minecraft.sound.SoundEvents.BLOCK_IRON_DOOR_CLOSE, net.minecraft.sound.SoundCategory.PLAYERS, 0.8F, 1.2F);
+                        player.sendMessage(Text.literal("§a🅿️ Vehicle parked successfully! Ready for charging."), true);
+                    }
+                }
+            }
+
             // 3. Smooth continuous acceleration & braking
             double accel = (targetSpeed > currentSpeed) ? 0.06 : 0.12;
             currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) targetSpeed, (float) accel);
@@ -462,7 +541,9 @@ public class CarEntity extends Entity {
 
             // 5. Angular Steering Physics & Decreased Turn Radius
             double targetAngular = 0.0;
-            if (Math.abs(currentSpeed) > 0.01) {
+            if (isSteeringAutoPark) {
+                targetAngular = autoParkAngular;
+            } else if (Math.abs(currentSpeed) > 0.01) {
                 double turnSensitivity = Math.max(0.65, Math.min(1.0, Math.abs(currentSpeed) / 0.25));
                 double baseTurnRate = 7.5 * turnSensitivity;
                 double turnDir = (currentSpeed < 0) ? -1.0 : 1.0;
