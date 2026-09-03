@@ -71,6 +71,7 @@ public class CarEntity extends Entity {
 
     private boolean autoParking = false;
     private int autoParkPhase = 0;
+    private int autoParkGraceTicks = 0;
     private double targetParkX, targetParkY, targetParkZ;
     private float targetParkYaw;
     private double entryApproachX, entryApproachY, entryApproachZ;
@@ -86,6 +87,11 @@ public class CarEntity extends Entity {
     public void startAutoPark(double px, double py, double pz, float pyaw, double ex, double ey, double ez) {
         this.autoParking = true;
         this.autoParkPhase = 0;
+        this.autoParkGraceTicks = 15; // 15 ticks grace period so residual key presses don't cancel it
+        this.inputForward = false;
+        this.inputBack = false;
+        this.inputLeft = false;
+        this.inputRight = false;
         this.targetParkX = px;
         this.targetParkY = py;
         this.targetParkZ = pz;
@@ -98,8 +104,9 @@ public class CarEntity extends Entity {
     public void cancelAutoPark(String message) {
         if (this.autoParking) {
             this.autoParking = false;
+            this.autoParkGraceTicks = 0;
             if (this.getFirstPassenger() instanceof PlayerEntity player && message != null) {
-                player.sendMessage(Text.literal(message), true);
+                player.sendMessage(Text.literal(message), false);
             }
         }
     }
@@ -376,17 +383,7 @@ public class CarEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 8. Right clicking the rear/trunk: Open trunk inventory
-        Vec3d toPlayer = player.getPos().subtract(this.getPos());
-        double rad = Math.toRadians(this.getYaw());
-        double dotRear = toPlayer.x * Math.sin(rad) - toPlayer.z * Math.cos(rad);
-
-        if (dotRear > 0.4 && !this.hasPassenger(player)) {
-            openTrunk(player);
-            return ActionResult.SUCCESS;
-        }
-
-        // 9. Otherwise, enter car to drive
+        // 8. Otherwise, right-clicking always enters the car to drive
         if (!this.getWorld().isClient) {
             player.startRiding(this);
         }
@@ -476,9 +473,13 @@ public class CarEntity extends Entity {
             double autoParkAngular = 0.0;
             boolean isSteeringAutoPark = false;
             if (autoParking) {
-                if (inputForward || inputBack || inputLeft || inputRight) {
+                if (autoParkGraceTicks > 0) {
+                    autoParkGraceTicks--;
+                } else if (inputForward || inputBack || inputLeft || inputRight) {
                     cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
-                } else {
+                }
+
+                if (autoParking) {
                     double destX = (autoParkPhase == 0) ? entryApproachX : targetParkX;
                     double destZ = (autoParkPhase == 0) ? entryApproachZ : targetParkZ;
 
@@ -487,13 +488,13 @@ public class CarEntity extends Entity {
                     double dist = Math.sqrt(dx * dx + dz * dz);
 
                     if (autoParkPhase == 0) {
-                        if (dist < 1.0) {
+                        if (dist < 1.2) {
                             autoParkPhase = 1;
                         } else {
                             targetSpeed = 0.28;
                             float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                             float diff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                            autoParkAngular = MathHelper.clamp(diff * 0.18, -6.5, 6.5);
+                            autoParkAngular = MathHelper.clamp(diff * 0.20, -7.0, 7.0);
                             isSteeringAutoPark = true;
                         }
                     } else if (autoParkPhase == 1) {
@@ -503,7 +504,7 @@ public class CarEntity extends Entity {
                             targetSpeed = 0.16;
                             float desiredYaw = targetParkYaw;
                             float diff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                            autoParkAngular = MathHelper.clamp(diff * 0.15, -5.5, 5.5);
+                            autoParkAngular = MathHelper.clamp(diff * 0.20, -6.0, 6.0);
                             isSteeringAutoPark = true;
                         }
                     } else if (autoParkPhase == 2) {
@@ -515,7 +516,7 @@ public class CarEntity extends Entity {
                         this.autoParking = false;
                         this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                                 net.minecraft.sound.SoundEvents.BLOCK_IRON_DOOR_CLOSE, net.minecraft.sound.SoundCategory.PLAYERS, 0.8F, 1.2F);
-                        player.sendMessage(Text.literal("§a🅿️ Vehicle parked successfully! Ready for charging."), true);
+                        player.sendMessage(Text.literal("§a🅿️ Vehicle parked successfully! Ready for charging."), false);
                     }
                 }
             }

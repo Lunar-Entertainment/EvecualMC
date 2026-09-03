@@ -374,55 +374,64 @@ public class EvecualMC implements ModInitializer {
 
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(AUTO_PARK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
             server.execute(() -> {
-                if (player.getVehicle() instanceof CarEntity car) {
-                    if (car.isAutoParking()) {
-                        car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
-                        return;
-                    }
+                if (!(player.getVehicle() instanceof CarEntity car)) {
+                    player.sendMessage(Text.literal("§c🅿️ You must be driving an Electric Car to auto-park!"), false);
+                    return;
+                }
 
-                    // Search for nearest ParkingLinesBlock within 15 blocks
-                    net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
-                    net.minecraft.util.math.BlockPos bestSpot = null;
-                    net.minecraft.util.math.Direction bestFacing = null;
-                    double bestDistSq = Double.MAX_VALUE;
+                if (car.isAutoParking()) {
+                    car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                    return;
+                }
 
-                    for (int x = -15; x <= 15; x++) {
-                        for (int y = -4; y <= 4; y++) {
-                            for (int z = -15; z <= 15; z++) {
-                                net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
-                                net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
-                                if (s.isOf(PARKING_LINES_BLOCK) && s.get(com.evecual.evecualmc.block.ParkingLinesBlock.PART) == com.evecual.evecualmc.block.ParkingLinesPart.FRONT_LEFT) {
-                                    double dSq = p.getSquaredDistance(carPos);
-                                    if (dSq < bestDistSq) {
-                                        bestDistSq = dSq;
-                                        bestSpot = p;
-                                        bestFacing = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.FACING);
-                                    }
+                // Search for nearest ParkingLinesBlock within 15 blocks (matching any part of the 3x2 bay)
+                net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
+                net.minecraft.util.math.BlockPos bestSpot = null;
+                net.minecraft.util.math.Direction bestFacing = null;
+                double bestDistSq = Double.MAX_VALUE;
+
+                for (int x = -15; x <= 15; x++) {
+                    for (int y = -4; y <= 4; y++) {
+                        for (int z = -15; z <= 15; z++) {
+                            net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
+                            net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
+                            if (s.isOf(PARKING_LINES_BLOCK)) {
+                                com.evecual.evecualmc.block.ParkingLinesPart part = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.PART);
+                                net.minecraft.util.math.Direction facing = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.FACING);
+                                net.minecraft.util.math.Direction right = facing.rotateYClockwise();
+                                net.minecraft.util.math.BlockPos origin = com.evecual.evecualmc.block.ParkingLinesBlock.getOriginPos(p, facing, right, part);
+
+                                double dSq = origin.getSquaredDistance(carPos);
+                                if (dSq < bestDistSq) {
+                                    bestDistSq = dSq;
+                                    bestSpot = origin;
+                                    bestFacing = facing;
                                 }
                             }
                         }
                     }
+                }
 
-                    if (bestSpot != null && bestFacing != null) {
-                        net.minecraft.util.math.Direction right = bestFacing.rotateYClockwise();
-                        // Target center of 3x2 bay:
-                        // Front-left is bestSpot, width is along right, depth is along bestFacing
-                        double targetX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 + bestFacing.getOffsetX() * 1.0;
-                        double targetY = bestSpot.getY();
-                        double targetZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 + bestFacing.getOffsetZ() * 1.0;
+                if (bestSpot != null && bestFacing != null) {
+                    net.minecraft.util.math.Direction right = bestFacing.rotateYClockwise();
+                    // Target center of 3x2 bay:
+                    // Front-left is bestSpot, width is along right, depth is along bestFacing
+                    double targetX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 + bestFacing.getOffsetX() * 1.0;
+                    double targetY = bestSpot.getY();
+                    double targetZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 + bestFacing.getOffsetZ() * 1.0;
 
-                        // Approach point: 2.5 blocks in front of the empty entrance (opposite bestFacing)
-                        double entryX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 - bestFacing.getOffsetX() * 2.5;
-                        double entryY = bestSpot.getY();
-                        double entryZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 - bestFacing.getOffsetZ() * 2.5;
+                    // Approach point: 2.5 blocks in front of the empty entrance (opposite bestFacing)
+                    double entryX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 - bestFacing.getOffsetX() * 2.5;
+                    double entryY = bestSpot.getY();
+                    double entryZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 - bestFacing.getOffsetZ() * 2.5;
 
-                        float targetYaw = bestFacing.asRotation();
+                    float targetYaw = bestFacing.asRotation();
 
-                        car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
-                        player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
-                    } else {
-                        player.sendMessage(Text.literal("§c🅿️ No parking bay found within 15 blocks!"), true);
-                    }
+                    car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
+                    player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), false);
+                    player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
+                } else {
+                    player.sendMessage(Text.literal("§c🅿️ No parking bay found within 15 blocks!"), false);
                 }
             });
         });

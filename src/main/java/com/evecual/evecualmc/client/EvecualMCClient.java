@@ -135,9 +135,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
                 // 4. 'C' Key to Auto Park Vehicle into nearest Parking Lines bay
                 while (AUTO_PARK_KEY.wasPressed()) {
-                    if (client.player.getVehicle() instanceof CarEntity) {
-                        ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
-                    }
+                    ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
                 }
             }
         });
