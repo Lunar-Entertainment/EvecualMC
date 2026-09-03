@@ -1,4 +1,10 @@
 {
   "itemGroup.evecualmc.evecual": "evecual",
-  "item.evecualmc.lightning": "Lightning"
+  "item.evecualmc.lightning": "Lightning",
+  "block.evecualmc.solar_panel": "Solar Panel",
+  "item.evecualmc.solar_panel": "Solar Panel",
+  "block.evecualmc.battery": "Battery",
+  "item.evecualmc.battery": "Battery",
+  "block.evecualmc.wire": "Electrical Wire",
+  "item.evecualmc.wire": "Electrical Wire"
 }
