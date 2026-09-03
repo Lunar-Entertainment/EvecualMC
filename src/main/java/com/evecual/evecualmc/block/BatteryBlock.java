@@ -23,4 +23,10 @@ public class BatteryBlock extends BlockWithEntity {
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new BatteryBlockEntity(pos, state);
     }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> net.minecraft.block.entity.BlockEntityTicker<T> getTicker(net.minecraft.world.World world, BlockState state, net.minecraft.block.entity.BlockEntityType<T> type) {
+        return checkType(type, com.evecual.evecualmc.EvecualMC.BATTERY_BLOCK_ENTITY, BatteryBlockEntity::tick);
+    }
 }

@@ -69,7 +69,7 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
     private void transferEnergyToNetwork(World world, BlockPos startPos) {
         Queue<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
-        List<BatteryBlockEntity> targets = new ArrayList<>();
+        List<EnergyStorage> targets = new ArrayList<>();
 
         // Check direct neighbors of solar panel
         for (Direction dir : Direction.values()) {
@@ -79,10 +79,10 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
             if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
                 queue.add(neighbor);
                 visited.add(neighbor);
-            } else if (neighborState.isOf(EvecualMC.BATTERY_BLOCK)) {
+            } else {
                 BlockEntity neighborBe = world.getBlockEntity(neighbor);
-                if (neighborBe instanceof BatteryBlockEntity battery) {
-                    targets.add(battery);
+                if (neighborBe instanceof EnergyStorage storage && neighborBe != this) {
+                    targets.add(storage);
                 }
             }
         }
@@ -99,24 +99,24 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
                 BlockState nextState = world.getBlockState(next);
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
                     queue.add(next);
-                } else if (nextState.isOf(EvecualMC.BATTERY_BLOCK)) {
+                } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
-                    if (nextBe instanceof BatteryBlockEntity battery) {
-                        targets.add(battery);
+                    if (nextBe instanceof EnergyStorage storage && nextBe != this) {
+                        targets.add(storage);
                     }
                 }
             }
         }
 
-        // Push energy to connected batteries
+        // Push energy to connected consumers
         if (!targets.isEmpty()) {
-            for (BatteryBlockEntity battery : targets) {
+            for (EnergyStorage storage : targets) {
                 if (this.energy <= 0) break;
 
-                long needed = battery.getMaxEnergy() - battery.getEnergy();
+                long needed = storage.getMaxEnergy() - storage.getEnergy();
                 if (needed > 0) {
                     long toSend = Math.min(this.energy, Math.min(needed, 5)); // Transfer speed per tick
-                    long inserted = battery.insertEnergy(toSend, false);
+                    long inserted = storage.insertEnergy(toSend, false);
                     this.energy -= inserted;
                     this.markDirty();
                     this.sync();

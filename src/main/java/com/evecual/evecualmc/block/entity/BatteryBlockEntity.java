@@ -19,6 +19,70 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         super(EvecualMC.BATTERY_BLOCK_ENTITY, pos, state);
     }
 
+    public static void tick(net.minecraft.world.World world, BlockPos pos, BlockState state, BatteryBlockEntity be) {
+        if (world.isClient) return;
+
+        if (be.energy > 0) {
+            be.transferEnergyToConsumers(world, pos);
+        }
+    }
+
+    private void transferEnergyToConsumers(net.minecraft.world.World world, BlockPos startPos) {
+        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        java.util.List<EnergyStorage> consumers = new java.util.ArrayList<>();
+
+        for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+            BlockPos neighbor = startPos.offset(dir);
+            BlockState neighborState = world.getBlockState(neighbor);
+
+            if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
+                queue.add(neighbor);
+                visited.add(neighbor);
+            } else {
+                BlockEntity neighborBe = world.getBlockEntity(neighbor);
+                if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity) && neighborBe != this) {
+                    consumers.add((EnergyStorage) neighborBe);
+                }
+            }
+        }
+
+        int maxHops = 64;
+        while (!queue.isEmpty() && visited.size() <= maxHops) {
+            BlockPos current = queue.poll();
+
+            for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+                BlockPos next = current.offset(dir);
+                if (!visited.add(next)) continue;
+
+                BlockState nextState = world.getBlockState(next);
+                if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
+                    queue.add(next);
+                } else {
+                    BlockEntity nextBe = world.getBlockEntity(next);
+                    if ((nextBe instanceof ElectronicCombinerBlockEntity || nextBe instanceof ChargerBlockEntity) && nextBe != this) {
+                        consumers.add((EnergyStorage) nextBe);
+                    }
+                }
+            }
+        }
+
+        if (!consumers.isEmpty()) {
+            for (EnergyStorage consumer : consumers) {
+                if (this.energy <= 0) break;
+
+                long needed = consumer.getMaxEnergy() - consumer.getEnergy();
+                if (needed > 0) {
+                    long toSend = Math.min(this.energy, Math.min(needed, 5));
+                    long inserted = consumer.insertEnergy(toSend, false);
+                    this.energy -= inserted;
+                    this.markDirty();
+                    this.sync();
+                }
+            }
+        }
+    }
+
     @Override
     public long getEnergy() {
         return energy;

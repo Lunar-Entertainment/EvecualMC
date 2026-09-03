@@ -1,18 +1,29 @@
 package com.evecual.evecualmc;
 
 import com.evecual.evecualmc.block.BatteryBlock;
+import com.evecual.evecualmc.block.ChargerBlock;
+import com.evecual.evecualmc.block.ElectronicCombinerBlock;
 import com.evecual.evecualmc.block.SolarPanelBlock;
 import com.evecual.evecualmc.block.WireBlock;
 import com.evecual.evecualmc.block.entity.BatteryBlockEntity;
+import com.evecual.evecualmc.block.entity.ChargerBlockEntity;
+import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
 import com.evecual.evecualmc.block.entity.SolarPanelBlockEntity;
+import com.evecual.evecualmc.entity.CarEntity;
+import com.evecual.evecualmc.item.CarItem;
 import com.evecual.evecualmc.item.LightningItem;
+import com.evecual.evecualmc.screen.ElectronicCombinerScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -21,6 +32,8 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -36,6 +49,24 @@ public class EvecualMC implements ModInitializer {
             Registries.ITEM,
             new Identifier(MOD_ID, "lightning"),
             new LightningItem(new Item.Settings().maxCount(1))
+    );
+
+    public static final Item STEEL_INGOT = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "steel_ingot"),
+            new Item(new Item.Settings())
+    );
+
+    public static final Item ENGINE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electric_engine"),
+            new Item(new Item.Settings())
+    );
+
+    public static final Item CAR_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "car"),
+            new CarItem(new Item.Settings().maxCount(1))
     );
 
     // Blocks
@@ -75,6 +106,30 @@ public class EvecualMC implements ModInitializer {
             new BlockItem(WIRE_BLOCK, new Item.Settings())
     );
 
+    public static final Block ELECTRONIC_COMBINER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "electronic_combiner"),
+            new ElectronicCombinerBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(3.5f).sounds(BlockSoundGroup.METAL))
+    );
+
+    public static final Item ELECTRONIC_COMBINER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electronic_combiner"),
+            new BlockItem(ELECTRONIC_COMBINER_BLOCK, new Item.Settings())
+    );
+
+    public static final Block CHARGER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "charger"),
+            new ChargerBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK).strength(3.0f).sounds(BlockSoundGroup.METAL))
+    );
+
+    public static final Item CHARGER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "charger"),
+            new BlockItem(CHARGER_BLOCK, new Item.Settings())
+    );
+
     // Block Entities
     public static final BlockEntityType<SolarPanelBlockEntity> SOLAR_PANEL_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
@@ -88,6 +143,35 @@ public class EvecualMC implements ModInitializer {
             FabricBlockEntityTypeBuilder.create(BatteryBlockEntity::new, BATTERY_BLOCK).build()
     );
 
+    public static final BlockEntityType<ElectronicCombinerBlockEntity> ELECTRONIC_COMBINER_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "electronic_combiner"),
+            FabricBlockEntityTypeBuilder.create(ElectronicCombinerBlockEntity::new, ELECTRONIC_COMBINER_BLOCK).build()
+    );
+
+    public static final BlockEntityType<ChargerBlockEntity> CHARGER_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "charger"),
+            FabricBlockEntityTypeBuilder.create(ChargerBlockEntity::new, CHARGER_BLOCK).build()
+    );
+
+    // Screen Handlers
+    public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry.register(
+            Registries.SCREEN_HANDLER,
+            new Identifier(MOD_ID, "electronic_combiner"),
+            new ScreenHandlerType<>(ElectronicCombinerScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
+    );
+
+    // Entity Types
+    public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "car"),
+            FabricEntityTypeBuilder.<CarEntity>create(SpawnGroup.MISC, CarEntity::new)
+                    .dimensions(EntityDimensions.fixed(1.4f, 0.7f))
+                    .trackRangeBlocks(10)
+                    .build()
+    );
+
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
@@ -99,9 +183,14 @@ public class EvecualMC implements ModInitializer {
             .displayName(Text.translatable("itemGroup.evecualmc.evecual"))
             .entries((displayContext, entries) -> {
                 entries.add(LIGHTNING_ITEM);
+                entries.add(STEEL_INGOT);
+                entries.add(ENGINE);
+                entries.add(CAR_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);
+                entries.add(ELECTRONIC_COMBINER_ITEM);
+                entries.add(CHARGER_ITEM);
             })
             .build();
 
@@ -111,10 +200,7 @@ public class EvecualMC implements ModInitializer {
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");
-        LOGGER.info("  Electricity system ready:             ");
-        LOGGER.info("   - Solar Panel (Sun-tracking power)   ");
-        LOGGER.info("   - Battery (600 Energy Storage)       ");
-        LOGGER.info("   - Electrical Wire                    ");
+        LOGGER.info("  Electronic Combiner & Electric Car ready!");
         LOGGER.info("========================================");
     }
 }

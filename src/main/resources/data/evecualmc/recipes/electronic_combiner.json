@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SGS",
+    "WBW",
+    "SIS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "B": {
+      "item": "evecualmc:battery"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "evecualmc:electronic_combiner",
+    "count": 1
+  }
+}

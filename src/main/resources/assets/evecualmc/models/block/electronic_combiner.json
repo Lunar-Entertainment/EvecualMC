@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/combiner_front",
+    "down": "evecualmc:block/combiner_bottom",
+    "up": "evecualmc:block/combiner_top",
+    "north": "evecualmc:block/combiner_front",
+    "south": "evecualmc:block/combiner_side",
+    "east": "evecualmc:block/combiner_side",
+    "west": "evecualmc:block/combiner_side"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SIS",
+    "IWI",
+    "SRS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "evecualmc:electric_engine",
+    "count": 1
+  }
+}

@@ -48,7 +48,11 @@ public class WireBlock extends Block {
     }
 
     private boolean canConnectTo(BlockState state) {
-        return state.isOf(this) || state.isOf(EvecualMC.SOLAR_PANEL_BLOCK) || state.isOf(EvecualMC.BATTERY_BLOCK);
+        return state.isOf(this)
+                || state.isOf(EvecualMC.SOLAR_PANEL_BLOCK)
+                || state.isOf(EvecualMC.BATTERY_BLOCK)
+                || state.isOf(EvecualMC.ELECTRONIC_COMBINER_BLOCK)
+                || state.isOf(EvecualMC.CHARGER_BLOCK);
     }
 
     @Override
