@@ -167,7 +167,7 @@ public class EvecualMC implements ModInitializer {
             Registries.ENTITY_TYPE,
             new Identifier(MOD_ID, "car"),
             FabricEntityTypeBuilder.<CarEntity>create(SpawnGroup.MISC, CarEntity::new)
-                    .dimensions(EntityDimensions.fixed(1.4f, 0.7f))
+                    .dimensions(EntityDimensions.fixed(2.2f, 1.4f))
                     .trackRangeBlocks(10)
                     .build()
     );

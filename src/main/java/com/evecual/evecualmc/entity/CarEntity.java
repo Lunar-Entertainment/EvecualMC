@@ -161,8 +161,26 @@ public class CarEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            positionUpdater.accept(passenger, this.getX(), this.getY() + 0.35, this.getZ());
+            // Driver seat offset in local car coordinates: seated on driver cushion in interior
+            double localX = -0.50;
+            double localY = 0.38;
+            double localZ = 0.20;
+
+            float rad = (float) Math.toRadians(this.getYaw());
+            double cos = Math.cos(rad);
+            double sin = Math.sin(rad);
+
+            double worldX = this.getX() + (localX * cos - localZ * sin);
+            double worldY = this.getY() + localY;
+            double worldZ = this.getZ() + (localX * sin + localZ * cos);
+
+            positionUpdater.accept(passenger, worldX, worldY, worldZ);
         }
+    }
+
+    @Override
+    public double getMountedHeightOffset() {
+        return 0.38;
     }
 
     @Nullable
