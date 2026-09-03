@@ -34,7 +34,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedInventory, ExtendedScreenHandlerFactory {
+import com.evecual.evecualmc.energy.EnergyStorage;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+
+public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedInventory, ExtendedScreenHandlerFactory, EnergyStorage {
     public static final int INVENTORY_SIZE = 7;
     public static final int MAX_ENERGY = 500;
     public static final int MAX_PROGRESS = 100;
@@ -219,9 +222,30 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
     }
 
     public void receiveEnergy(int amount) {
-        this.energy = Math.min(this.energy + amount, MAX_ENERGY);
-        markDirty();
-        sync();
+        insertEnergy(amount, false);
+    }
+
+    @Override
+    public long insertEnergy(long amount, boolean simulate) {
+        long needed = MAX_ENERGY - energy;
+        long toInsert = Math.min(amount, needed);
+        if (!simulate && toInsert > 0) {
+            this.energy += (int) toInsert;
+            markDirty();
+            sync();
+        }
+        return toInsert;
+    }
+
+    @Override
+    public long extractEnergy(long amount, boolean simulate) {
+        long toExtract = Math.min(amount, energy);
+        if (!simulate && toExtract > 0) {
+            this.energy -= (int) toExtract;
+            markDirty();
+            sync();
+        }
+        return toExtract;
     }
 
     public void sync() {
