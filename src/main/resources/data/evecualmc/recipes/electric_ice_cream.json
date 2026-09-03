@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "evecualmc:vanilla_ice_cream"
+    },
+    {
+      "item": "evecualmc:lightning"
+    },
+    {
+      "item": "evecualmc:wire"
+    }
+  ],
+  "result": {
+    "item": "evecualmc:electric_ice_cream",
+    "count": 2
+  }
+}

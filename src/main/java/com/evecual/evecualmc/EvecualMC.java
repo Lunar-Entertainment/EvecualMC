@@ -82,6 +82,30 @@ public class EvecualMC implements ModInitializer {
             new CarItem(new Item.Settings().maxCount(1))
     );
 
+    public static final Item VANILLA_ICE_CREAM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "vanilla_ice_cream"),
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.VANILLA, new Item.Settings())
+    );
+
+    public static final Item CHOCOLATE_ICE_CREAM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "chocolate_ice_cream"),
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.CHOCOLATE, new Item.Settings())
+    );
+
+    public static final Item SWEET_BERRY_ICE_CREAM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "sweet_berry_ice_cream"),
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.SWEET_BERRY, new Item.Settings())
+    );
+
+    public static final Item ELECTRIC_ICE_CREAM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electric_ice_cream"),
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.ELECTRIC, new Item.Settings())
+    );
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -257,6 +281,10 @@ public class EvecualMC implements ModInitializer {
                 entries.add(CHARGER_EXTENSION_ITEM);
                 entries.add(CHARGER_CABLE);
                 entries.add(PARKING_LINES_ITEM);
+                entries.add(VANILLA_ICE_CREAM);
+                entries.add(CHOCOLATE_ICE_CREAM);
+                entries.add(SWEET_BERRY_ICE_CREAM);
+                entries.add(ELECTRIC_ICE_CREAM);
             })
             .build();
 
