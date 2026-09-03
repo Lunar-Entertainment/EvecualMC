@@ -31,17 +31,23 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ChargerExtensionBlock extends BlockWithEntity {
+    public static final net.minecraft.state.property.DirectionProperty FACING = net.minecraft.state.property.Properties.HORIZONTAL_FACING;
     public static final BooleanProperty HAS_CABLE = BooleanProperty.of("has_cable");
     public static final BooleanProperty CONNECTED = BooleanProperty.of("connected");
 
     public ChargerExtensionBlock(Settings settings) {
         super(settings);
-        setDefaultState(this.stateManager.getDefaultState().with(HAS_CABLE, false).with(CONNECTED, false));
+        setDefaultState(this.stateManager.getDefaultState().with(FACING, net.minecraft.util.math.Direction.NORTH).with(HAS_CABLE, false).with(CONNECTED, false));
+    }
+
+    @Override
+    public BlockState getPlacementState(net.minecraft.item.ItemPlacementContext ctx) {
+        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
     }
 
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(HAS_CABLE, CONNECTED);
+        builder.add(FACING, HAS_CABLE, CONNECTED);
     }
 
     @Override

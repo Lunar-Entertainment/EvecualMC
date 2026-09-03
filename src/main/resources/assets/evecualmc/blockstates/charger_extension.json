@@ -1,16 +1,64 @@
 {
   "variants": {
-    "connected=false,has_cable=false": {
+    "connected=false,facing=north,has_cable=false": {
       "model": "evecualmc:block/charger_extension_empty"
     },
-    "connected=false,has_cable=true": {
+    "connected=true,facing=north,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty"
+    },
+    "connected=false,facing=north,has_cable=true": {
       "model": "evecualmc:block/charger_extension_cable"
     },
-    "connected=true,has_cable=false": {
-      "model": "evecualmc:block/charger_extension_empty"
-    },
-    "connected=true,has_cable=true": {
+    "connected=true,facing=north,has_cable=true": {
       "model": "evecualmc:block/charger_extension_charging"
+    },
+    "connected=false,facing=east,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 90
+    },
+    "connected=true,facing=east,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 90
+    },
+    "connected=false,facing=east,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_cable",
+      "y": 90
+    },
+    "connected=true,facing=east,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_charging",
+      "y": 90
+    },
+    "connected=false,facing=south,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 180
+    },
+    "connected=true,facing=south,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 180
+    },
+    "connected=false,facing=south,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_cable",
+      "y": 180
+    },
+    "connected=true,facing=south,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_charging",
+      "y": 180
+    },
+    "connected=false,facing=west,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 270
+    },
+    "connected=true,facing=west,has_cable=false": {
+      "model": "evecualmc:block/charger_extension_empty",
+      "y": 270
+    },
+    "connected=false,facing=west,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_cable",
+      "y": 270
+    },
+    "connected=true,facing=west,has_cable=true": {
+      "model": "evecualmc:block/charger_extension_charging",
+      "y": 270
     }
   }
 }

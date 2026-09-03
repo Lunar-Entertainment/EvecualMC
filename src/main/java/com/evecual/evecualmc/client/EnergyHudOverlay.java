@@ -28,8 +28,10 @@ public class EnergyHudOverlay implements HudRenderCallback {
         if (client == null || client.world == null || client.player == null) return;
         if (client.options.hudHidden) return;
 
-        // 1. Render active Vehicle Charger Waypoint
-        renderChargerWaypoints(drawContext, client);
+        // 1. Render active Vehicle Charger Waypoint ONLY if player is inside a car
+        if (client.player.getVehicle() instanceof CarEntity) {
+            renderChargerWaypoints(drawContext, client);
+        }
 
         HitResult hit = client.crosshairTarget;
         if (hit == null) return;
@@ -197,7 +199,7 @@ public class EnergyHudOverlay implements HudRenderCallback {
         context.drawBorder(x, y, boxWidth, boxHeight, 0xFFA855F7);
 
         TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("⚙ Combiner"), x + 8, y + 5, 0xFFC084FC, true);
+        context.drawText(tr, Text.literal("⚙ Car Fabricator"), x + 8, y + 5, 0xFFC084FC, true);
         String energyStr = energy + " / " + maxEnergy + " E";
         context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
 
@@ -210,7 +212,7 @@ public class EnergyHudOverlay implements HudRenderCallback {
 
     private void renderChargerTip(DrawContext context, MinecraftClient client, ChargerBlockEntity charger) {
         int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 160;
+        int boxWidth = 210;
         int boxHeight = 44;
         int x = (screenWidth - boxWidth) / 2;
         int y = 24;
@@ -226,7 +228,7 @@ public class EnergyHudOverlay implements HudRenderCallback {
         String energyStr = energy + " / " + maxEnergy + " E";
         context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
 
-        String status = charger.isCharging() ? "⚡ Charging Vehicle..." : "Ready (Park Car Nearby)";
+        String status = charger.isCharging() ? "⚡ Charging Vehicle..." : "Ready - Attach Vehicle Charger Extension";
         int color = charger.isCharging() ? 0xFF86EFAC : 0xFF94A3B8;
         context.drawText(tr, Text.literal(status), x + 8, y + 16, color, true);
 
