@@ -37,6 +37,7 @@ import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -587,6 +588,20 @@ public class CarEntity extends Entity {
         }
 
         this.move(MovementType.SELF, this.getVelocity());
+        this.setBoundingBox(this.calculateBoundingBox());
+    }
+
+    @Override
+    public Box calculateBoundingBox() {
+        double rad = Math.toRadians(this.getYaw());
+        double halfLen = 1.70; // 3.4 blocks total length (front splitter to rear diffuser)
+        double halfWid = 1.15; // 2.3 blocks total width (including side mirrors)
+        double extX = Math.abs(Math.cos(rad)) * halfWid + Math.abs(Math.sin(rad)) * halfLen;
+        double extZ = Math.abs(Math.sin(rad)) * halfWid + Math.abs(Math.cos(rad)) * halfLen;
+        return new Box(
+                this.getX() - extX, this.getY(), this.getZ() - extZ,
+                this.getX() + extX, this.getY() + 1.88, this.getZ() + extZ
+        );
     }
 
     protected void clampPassengerYaw(Entity passenger) {
