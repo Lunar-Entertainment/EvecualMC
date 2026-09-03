@@ -3,20 +3,16 @@ package com.evecual.evecualmc.entity;
 import com.evecual.evecualmc.EvecualMC;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.MovementType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -24,28 +20,27 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-
-public class CarEntity extends LivingEntity {
+public class CarEntity extends Entity {
     public static final int MAX_ENERGY = 1000;
 
     private static final TrackedData<Integer> ENERGY = DataTracker.registerData(CarEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
+    private boolean inputForward;
+    private boolean inputBack;
+    private boolean inputLeft;
+    private boolean inputRight;
+    private boolean inputSprint;
+
+    private double currentSpeed = 0.0;
+
     public CarEntity(EntityType<? extends CarEntity> type, World world) {
         super(type, world);
-        this.setStepHeight(1.0F); // Climb 1-block terrain effortlessly
-    }
-
-    public static DefaultAttributeContainer.Builder createCarAttributes() {
-        return LivingEntity.createLivingAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 60.0)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.45)
-                .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 1.0);
+        this.intersectionChecked = true;
+        this.setStepHeight(1.0F); // Climb 1-block terrain smoothly without bumpiness
     }
 
     @Override
     protected void initDataTracker() {
-        super.initDataTracker();
         this.dataTracker.startTracking(ENERGY, 500);
     }
 
@@ -70,6 +65,14 @@ public class CarEntity extends LivingEntity {
         return canAdd;
     }
 
+    public void setInputs(boolean forward, boolean back, boolean left, boolean right, boolean sprint) {
+        this.inputForward = forward;
+        this.inputBack = back;
+        this.inputLeft = left;
+        this.inputRight = right;
+        this.inputSprint = sprint;
+    }
+
     @Override
     public boolean canHit() {
         return !this.isRemoved();
@@ -87,17 +90,18 @@ public class CarEntity extends LivingEntity {
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        if (!this.getWorld().isClient) {
-            if (player.isSneaking()) {
+        if (player.isSneaking()) {
+            if (!this.getWorld().isClient) {
                 this.dropItem(EvecualMC.CAR_ITEM);
                 this.discard();
-                return ActionResult.SUCCESS;
-            } else {
-                player.startRiding(this);
-                return ActionResult.SUCCESS;
             }
+            return ActionResult.SUCCESS;
+        } else {
+            if (!this.getWorld().isClient) {
+                player.startRiding(this);
+            }
+            return ActionResult.SUCCESS;
         }
-        return ActionResult.SUCCESS;
     }
 
     @Override
@@ -113,78 +117,101 @@ public class CarEntity extends LivingEntity {
     }
 
     @Override
-    public void travel(Vec3d movementInput) {
-        if (!this.isAlive()) return;
+    public void tick() {
+        super.tick();
+
+        // 1. Gravity & Ground adherence
+        if (!this.hasNoGravity()) {
+            if (this.isOnGround()) {
+                this.setVelocity(this.getVelocity().x, 0.0, this.getVelocity().z);
+            } else {
+                this.setVelocity(this.getVelocity().add(0.0, -0.05, 0.0));
+            }
+        }
 
         Entity passenger = this.getFirstPassenger();
-        if (passenger instanceof LivingEntity driver) {
-            // Keep body and head aligned straight forward with car
-            this.setYaw(driver.getYaw());
-            this.prevYaw = this.getYaw();
-            this.setPitch(driver.getPitch() * 0.5F);
-            this.setRotation(this.getYaw(), this.getPitch());
-            this.bodyYaw = this.getYaw();
-            this.headYaw = this.bodyYaw;
+        int energy = getEnergy();
+        boolean hasPower = energy > 0;
 
-            float sideways = driver.sidewaysSpeed * 0.5F;
-            float forward = driver.forwardSpeed;
-
-            int energy = getEnergy();
-            if (energy <= 0) {
-                forward = 0.0F;
-                sideways = 0.0F;
+        if (passenger instanceof PlayerEntity) {
+            // 2. Target speed calculation with CTRL Boost
+            double targetSpeed = 0.0;
+            if (hasPower) {
+                if (inputForward) {
+                    // Normal cruising speed is 0.50; holding CTRL boosts to 0.95!
+                    targetSpeed = inputSprint ? 0.95 : 0.50;
+                } else if (inputBack) {
+                    targetSpeed = -0.22; // Reverse gear
+                }
             }
 
-            // CTRL / Sprint speed boost
-            boolean isBoosting = driver.isSprinting();
-            float speedFactor = 1.0F;
-
-            if (isBoosting && forward > 0.0F && energy > 0) {
-                speedFactor = 1.85F; // CTRL Boost speed!
+            // 3. Smooth vehicular acceleration and coasting friction
+            if (targetSpeed > currentSpeed) {
+                currentSpeed = Math.min(targetSpeed, currentSpeed + 0.035);
+            } else if (targetSpeed < currentSpeed) {
+                currentSpeed = Math.max(targetSpeed, currentSpeed - 0.055);
             }
 
-            // Energy drain & particles
-            if (!this.getWorld().isClient && energy > 0 && (forward != 0.0F || sideways != 0.0F)) {
-                int drainTicks = isBoosting ? 1 : 4; // Takes 4x energy while holding CTRL boost
+            // 4. Smooth steering when vehicle is in motion
+            if (Math.abs(currentSpeed) > 0.01) {
+                float turnSpeed = 3.8F;
+                float dir = Math.signum((float) currentSpeed);
+                if (inputLeft) {
+                    this.setYaw(this.getYaw() - turnSpeed * dir);
+                }
+                if (inputRight) {
+                    this.setYaw(this.getYaw() + turnSpeed * dir);
+                }
+                this.prevYaw = this.getYaw();
+            }
+
+            // 5. Energy Consumption (Server authoritative)
+            if (!this.getWorld().isClient && Math.abs(currentSpeed) > 0.05 && energy > 0) {
+                // Boost consumes 1 E every single tick (20 E/s); normal driving consumes 1 E every 3 ticks (~6.6 E/s)
+                int drainTicks = inputSprint ? 1 : 3;
                 if (this.age % drainTicks == 0) {
                     setEnergy(energy - 1);
                 }
             }
 
-            if (this.getWorld().isClient && energy > 0 && (forward != 0.0F || sideways != 0.0F)) {
-                if (isBoosting) {
-                    // Boost flames and heavy smoke from rear exhaust
-                    this.getWorld().addParticle(ParticleTypes.FLAME,
-                            this.getX() + (random.nextDouble() - 0.5) * 0.4,
-                            this.getY() + 0.3,
-                            this.getZ() + (random.nextDouble() - 0.5) * 0.4,
-                            0, 0.05, 0);
+            // 6. Visual drive & boost exhaust particles
+            if (this.getWorld().isClient && Math.abs(currentSpeed) > 0.05 && energy > 0) {
+                double rad = Math.toRadians(this.getYaw());
+                if (inputSprint && inputForward) {
+                    // Fiery turbo boost flames emitting from exhaust pipes
+                    double exhaustX = this.getX() + Math.sin(rad) * 1.5;
+                    double exhaustZ = this.getZ() - Math.cos(rad) * 1.5;
+                    this.getWorld().addParticle(ParticleTypes.FLAME, exhaustX, this.getY() + 0.35, exhaustZ, 0, 0.02, 0);
                 }
                 if (this.random.nextFloat() < 0.25F) {
                     this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK,
                             this.getX() + (random.nextDouble() - 0.5) * 0.8,
-                            this.getY() + 0.1,
+                            this.getY() + 0.15,
                             this.getZ() + (random.nextDouble() - 0.5) * 0.8,
                             0, 0.05, 0);
                 }
             }
-
-            float baseSpeed = (float) this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-            this.setMovementSpeed(baseSpeed * speedFactor);
-            super.travel(new Vec3d(sideways, movementInput.y, forward));
-            return;
+        } else {
+            // Decelerate smoothly when parked or no passenger
+            currentSpeed *= 0.85;
+            if (Math.abs(currentSpeed) < 0.01) {
+                currentSpeed = 0.0;
+            }
         }
 
-        super.travel(movementInput);
+        // 7. Apply velocity smoothly along vehicle heading
+        double rad = Math.toRadians(this.getYaw());
+        double vx = -Math.sin(rad) * currentSpeed;
+        double vz = Math.cos(rad) * currentSpeed;
+        this.setVelocity(vx, this.getVelocity().y, vz);
+
+        this.move(MovementType.SELF, this.getVelocity());
     }
 
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Player sits in the CENTER, facing straight forward, inside the cabin:
-            // forwardOffset: -0.10 (firmly on seat cushion)
-            // leftOffset: 0.00 (centered in the car, arms enclosed!)
-            // heightOffset: 0.12 (plenty of headroom under the roof!)
+            // Player sits centered, facing straight forward, inside the cabin
             double forwardOffset = -0.10;
             double leftOffset = 0.00;
             double heightOffset = 0.12;
@@ -195,21 +222,26 @@ public class CarEntity extends LivingEntity {
             double worldZ = this.getZ() + Math.cos(rad) * forwardOffset + Math.sin(rad) * leftOffset;
 
             positionUpdater.accept(passenger, worldX, worldY, worldZ);
-
-            // Keep passenger facing straight forward with the car
             passenger.setYaw(this.getYaw());
-            if (passenger instanceof LivingEntity living) {
-                living.setBodyYaw(this.getYaw());
-                living.prevBodyYaw = this.getYaw();
-            }
         }
     }
 
     @Override
     public Vec3d updatePassengerForDismount(LivingEntity passenger) {
-        // Dismount safely to the side on the ground (no floating mid air!)
+        // Dismount safely to the side onto the ground (no floating mid-air)
         Direction dir = this.getHorizontalFacing().rotateYClockwise();
         return new Vec3d(this.getX() + dir.getOffsetX() * 1.6, this.getY(), this.getZ() + dir.getOffsetZ() * 1.6);
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        this.inputForward = false;
+        this.inputBack = false;
+        this.inputLeft = false;
+        this.inputRight = false;
+        this.inputSprint = false;
+        this.currentSpeed = 0.0;
     }
 
     @Override
@@ -224,37 +256,15 @@ public class CarEntity extends LivingEntity {
         return passenger instanceof LivingEntity living ? living : null;
     }
 
-    // Required LivingEntity abstract methods
     @Override
-    public Iterable<ItemStack> getArmorItems() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public ItemStack getEquippedStack(EquipmentSlot slot) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {
-    }
-
-    @Override
-    public Arm getMainArm() {
-        return Arm.RIGHT;
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    protected void readCustomDataFromNbt(NbtCompound nbt) {
         if (nbt.contains("Energy")) {
             setEnergy(nbt.getInt("Energy"));
         }
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    protected void writeCustomDataToNbt(NbtCompound nbt) {
         nbt.putInt("Energy", getEnergy());
     }
 }

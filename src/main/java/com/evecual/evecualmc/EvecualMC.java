@@ -194,10 +194,25 @@ public class EvecualMC implements ModInitializer {
             })
             .build();
 
+    public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
+
     @Override
     public void onInitialize() {
         Registry.register(Registries.ITEM_GROUP, EVECUAL_ITEM_GROUP_KEY, EVECUAL_ITEM_GROUP);
-        net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(CAR_ENTITY, CarEntity.createCarAttributes());
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CAR_INPUT_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            boolean forward = buf.readBoolean();
+            boolean back = buf.readBoolean();
+            boolean left = buf.readBoolean();
+            boolean right = buf.readBoolean();
+            boolean sprint = buf.readBoolean();
+
+            server.execute(() -> {
+                if (player.getVehicle() instanceof CarEntity car) {
+                    car.setInputs(forward, back, left, right, sprint);
+                }
+            });
+        });
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");
