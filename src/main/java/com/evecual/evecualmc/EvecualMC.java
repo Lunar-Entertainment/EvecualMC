@@ -49,233 +49,221 @@ public class EvecualMC implements ModInitializer {
     public static final Item LIGHTNING_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "lightning"),
-            new LightningItem(new Item.Settings().maxCount(1))
-    );
+            new LightningItem(new Item.Settings().maxCount(1)));
 
     public static final Item STEEL_INGOT = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "steel_ingot"),
-            new Item(new Item.Settings())
-    );
+            new Item(new Item.Settings()));
 
     public static final Item ENGINE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "electric_engine"),
-            new Item(new Item.Settings())
-    );
+            new Item(new Item.Settings()));
 
     public static final Item UPGRADED_ENGINE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "upgraded_electric_engine"),
-            new Item(new Item.Settings())
-    );
+            new Item(new Item.Settings()));
 
     public static final Item TRUNK_UPGRADE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "trunk_upgrade"),
-            new Item(new Item.Settings())
-    );
+            new Item(new Item.Settings()));
 
     public static final Item CAR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "car"),
-            new CarItem(new Item.Settings().maxCount(1))
-    );
+            new CarItem(new Item.Settings().maxCount(1)));
 
     public static final Item RC_CAR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_car"),
-            new com.evecual.evecualmc.item.RcCarItem(new Item.Settings().maxCount(1))
-    );
+            new com.evecual.evecualmc.item.RcCarItem(new Item.Settings().maxCount(1)));
+
+    public static final Item RC_DRONE_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_drone"),
+            new com.evecual.evecualmc.item.RcDroneItem(new Item.Settings().maxCount(1)));
 
     public static final Item RC_CONTROLLER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_controller"),
-            new com.evecual.evecualmc.item.RcControllerItem(new Item.Settings().maxCount(1))
-    );
+            new com.evecual.evecualmc.item.RcControllerItem(new Item.Settings().maxCount(1)));
 
     public static final Item VANILLA_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "vanilla_ice_cream"),
-            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.VANILLA, new Item.Settings())
-    );
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.VANILLA,
+                    new Item.Settings()));
 
     public static final Item CHOCOLATE_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "chocolate_ice_cream"),
-            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.CHOCOLATE, new Item.Settings())
-    );
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.CHOCOLATE,
+                    new Item.Settings()));
 
     public static final Item SWEET_BERRY_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "sweet_berry_ice_cream"),
-            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.SWEET_BERRY, new Item.Settings())
-    );
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.SWEET_BERRY,
+                    new Item.Settings()));
 
     public static final Item ELECTRIC_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "electric_ice_cream"),
-            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.ELECTRIC, new Item.Settings())
-    );
+            new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.ELECTRIC,
+                    new Item.Settings()));
 
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "solar_panel"),
-            new SolarPanelBlock(FabricBlockSettings.create().strength(0.8f).nonOpaque().sounds(BlockSoundGroup.METAL))
-    );
+            new SolarPanelBlock(FabricBlockSettings.create().strength(0.8f).nonOpaque().sounds(BlockSoundGroup.METAL)));
 
     public static final Item SOLAR_PANEL_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "solar_panel"),
-            new BlockItem(SOLAR_PANEL_BLOCK, new Item.Settings())
-    );
+            new BlockItem(SOLAR_PANEL_BLOCK, new Item.Settings()));
 
     public static final Block BATTERY_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "battery"),
-            new BatteryBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
-    );
+            new BatteryBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL)));
 
     public static final Item BATTERY_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "battery"),
-            new BlockItem(BATTERY_BLOCK, new Item.Settings())
-    );
+            new BlockItem(BATTERY_BLOCK, new Item.Settings()));
 
     public static final Block WIRE_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "wire"),
-            new WireBlock(FabricBlockSettings.create().strength(0.3f).nonOpaque().sounds(BlockSoundGroup.COPPER))
-    );
+            new WireBlock(FabricBlockSettings.create().strength(0.3f).nonOpaque().sounds(BlockSoundGroup.COPPER)));
 
     public static final Item WIRE_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "wire"),
-            new BlockItem(WIRE_BLOCK, new Item.Settings())
-    );
+            new BlockItem(WIRE_BLOCK, new Item.Settings()));
 
     public static final Block ELECTRONIC_COMBINER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "electronic_combiner"),
-            new ElectronicCombinerBlock(FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL))
-    );
+            new ElectronicCombinerBlock(FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL)));
 
     public static final Item ELECTRONIC_COMBINER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "electronic_combiner"),
-            new BlockItem(ELECTRONIC_COMBINER_BLOCK, new Item.Settings())
-    );
+            new BlockItem(ELECTRONIC_COMBINER_BLOCK, new Item.Settings()));
 
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "charger"),
-            new ChargerBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
-    );
+            new ChargerBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL)));
 
     public static final Item CHARGER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger"),
-            new BlockItem(CHARGER_BLOCK, new Item.Settings())
-    );
+            new BlockItem(CHARGER_BLOCK, new Item.Settings()));
 
     public static final Block CHARGER_EXTENSION_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "charger_extension"),
-            new com.evecual.evecualmc.block.ChargerExtensionBlock(FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL))
-    );
+            new com.evecual.evecualmc.block.ChargerExtensionBlock(
+                    FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL)));
 
     public static final Item CHARGER_EXTENSION_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_extension"),
-            new BlockItem(CHARGER_EXTENSION_BLOCK, new Item.Settings())
-    );
+            new BlockItem(CHARGER_EXTENSION_BLOCK, new Item.Settings()));
 
     public static final Block PARKING_LINES_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "parking_lines"),
-            new com.evecual.evecualmc.block.ParkingLinesBlock(FabricBlockSettings.create().strength(0.5f).sounds(BlockSoundGroup.STONE).nonOpaque().noCollision())
-    );
+            new com.evecual.evecualmc.block.ParkingLinesBlock(FabricBlockSettings.create().strength(0.5f)
+                    .sounds(BlockSoundGroup.STONE).nonOpaque().noCollision()));
 
     public static final Item PARKING_LINES_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "parking_lines"),
-            new BlockItem(PARKING_LINES_BLOCK, new Item.Settings())
-    );
+            new BlockItem(PARKING_LINES_BLOCK, new Item.Settings()));
 
     public static final Block RC_CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "rc_charger"),
-            new com.evecual.evecualmc.block.RcChargerBlock(FabricBlockSettings.create().strength(0.8f).sounds(BlockSoundGroup.METAL).nonOpaque())
-    );
+            new com.evecual.evecualmc.block.RcChargerBlock(
+                    FabricBlockSettings.create().strength(0.8f).sounds(BlockSoundGroup.METAL).nonOpaque()));
 
     public static final Item RC_CHARGER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_charger"),
-            new BlockItem(RC_CHARGER_BLOCK, new Item.Settings())
-    );
+            new BlockItem(RC_CHARGER_BLOCK, new Item.Settings()));
 
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_cable"),
-            new Item(new Item.Settings().maxCount(1))
-    );
+            new Item(new Item.Settings().maxCount(1)));
 
     // Block Entities
     public static final BlockEntityType<SolarPanelBlockEntity> SOLAR_PANEL_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "solar_panel"),
-            FabricBlockEntityTypeBuilder.create(SolarPanelBlockEntity::new, SOLAR_PANEL_BLOCK).build()
-    );
+            FabricBlockEntityTypeBuilder.create(SolarPanelBlockEntity::new, SOLAR_PANEL_BLOCK).build());
 
     public static final BlockEntityType<BatteryBlockEntity> BATTERY_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "battery"),
-            FabricBlockEntityTypeBuilder.create(BatteryBlockEntity::new, BATTERY_BLOCK).build()
-    );
+            FabricBlockEntityTypeBuilder.create(BatteryBlockEntity::new, BATTERY_BLOCK).build());
 
-    public static final BlockEntityType<ElectronicCombinerBlockEntity> ELECTRONIC_COMBINER_BLOCK_ENTITY = Registry.register(
-            Registries.BLOCK_ENTITY_TYPE,
-            new Identifier(MOD_ID, "electronic_combiner"),
-            FabricBlockEntityTypeBuilder.create(ElectronicCombinerBlockEntity::new, ELECTRONIC_COMBINER_BLOCK).build()
-    );
+    public static final BlockEntityType<ElectronicCombinerBlockEntity> ELECTRONIC_COMBINER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "electronic_combiner"),
+                    FabricBlockEntityTypeBuilder.create(ElectronicCombinerBlockEntity::new, ELECTRONIC_COMBINER_BLOCK)
+                            .build());
 
     public static final BlockEntityType<ChargerBlockEntity> CHARGER_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "charger"),
-            FabricBlockEntityTypeBuilder.create(ChargerBlockEntity::new, CHARGER_BLOCK).build()
-    );
+            FabricBlockEntityTypeBuilder.create(ChargerBlockEntity::new, CHARGER_BLOCK).build());
 
-    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity> CHARGER_EXTENSION_BLOCK_ENTITY = Registry.register(
-            Registries.BLOCK_ENTITY_TYPE,
-            new Identifier(MOD_ID, "charger_extension"),
-            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity::new, CHARGER_EXTENSION_BLOCK).build()
-    );
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity> CHARGER_EXTENSION_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "charger_extension"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity::new,
+                                    CHARGER_EXTENSION_BLOCK)
+                            .build());
 
-    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity> PARKING_LINES_BLOCK_ENTITY = Registry.register(
-            Registries.BLOCK_ENTITY_TYPE,
-            new Identifier(MOD_ID, "parking_lines"),
-            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity::new, PARKING_LINES_BLOCK).build()
-    );
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity> PARKING_LINES_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "parking_lines"),
+                    FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity::new,
+                            PARKING_LINES_BLOCK).build());
 
-    public static final BlockEntityType<com.evecual.evecualmc.block.entity.RcChargerBlockEntity> RC_CHARGER_BLOCK_ENTITY = Registry.register(
-            Registries.BLOCK_ENTITY_TYPE,
-            new Identifier(MOD_ID, "rc_charger"),
-            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.RcChargerBlockEntity::new, RC_CHARGER_BLOCK).build()
-    );
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.RcChargerBlockEntity> RC_CHARGER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "rc_charger"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.RcChargerBlockEntity::new, RC_CHARGER_BLOCK)
+                            .build());
 
     // Screen Handlers
-    public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry.register(
-            Registries.SCREEN_HANDLER,
-            new Identifier(MOD_ID, "electronic_combiner"),
-            new ScreenHandlerType<>(ElectronicCombinerScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
-    );
+    public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "electronic_combiner"),
+                    new ScreenHandlerType<>(ElectronicCombinerScreenHandler::new, FeatureFlags.VANILLA_FEATURES));
 
-    public static final ScreenHandlerType<com.evecual.evecualmc.screen.CarTrunkScreenHandler> CAR_TRUNK_SCREEN_HANDLER = Registry.register(
-            Registries.SCREEN_HANDLER,
-            new Identifier(MOD_ID, "car_trunk"),
-            new ScreenHandlerType<>(com.evecual.evecualmc.screen.CarTrunkScreenHandler::new, FeatureFlags.VANILLA_FEATURES)
-    );
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.CarTrunkScreenHandler> CAR_TRUNK_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "car_trunk"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.CarTrunkScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
 
     // Entity Types
     public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
@@ -284,23 +272,30 @@ public class EvecualMC implements ModInitializer {
             FabricEntityTypeBuilder.<CarEntity>create(SpawnGroup.MISC, CarEntity::new)
                     .dimensions(EntityDimensions.fixed(2.6f, 1.88f))
                     .trackRangeChunks(10)
-                    .build()
-    );
+                    .build());
 
     public static final EntityType<com.evecual.evecualmc.entity.RcCarEntity> RC_CAR_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
             new Identifier(MOD_ID, "rc_car"),
-            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcCarEntity>create(SpawnGroup.MISC, com.evecual.evecualmc.entity.RcCarEntity::new)
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcCarEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.RcCarEntity::new)
                     .dimensions(EntityDimensions.fixed(0.7f, 0.45f))
-                    .trackRangeChunks(10)
-                    .build()
-    );
+                    .trackRangeChunks(18) // 288 blocks (> 256m)
+                    .build());
+
+    public static final EntityType<com.evecual.evecualmc.entity.RcDroneEntity> RC_DRONE_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "rc_drone"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcDroneEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.RcDroneEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.8f, 0.35f))
+                    .trackRangeChunks(34) // 544 blocks (> 512m)
+                    .build());
 
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
-            new Identifier(MOD_ID, "evecual")
-    );
+            new Identifier(MOD_ID, "evecual"));
 
     public static final ItemGroup EVECUAL_ITEM_GROUP = FabricItemGroup.builder()
             .icon(() -> new ItemStack(LIGHTNING_ITEM))
@@ -313,6 +308,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(TRUNK_UPGRADE);
                 entries.add(CAR_ITEM);
                 entries.add(RC_CAR_ITEM);
+                entries.add(RC_DRONE_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
                 entries.add(RC_CHARGER_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
@@ -333,6 +329,8 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
     public static final Identifier RC_CAR_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_car_auto_dock");
+    public static final Identifier RC_DRONE_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_drone_input");
+    public static final Identifier RC_DRONE_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_drone_auto_dock");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
@@ -344,230 +342,315 @@ public class EvecualMC implements ModInitializer {
     public void onInitialize() {
         Registry.register(Registries.ITEM_GROUP, EVECUAL_ITEM_GROUP_KEY, EVECUAL_ITEM_GROUP);
 
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CAR_INPUT_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            boolean forward = buf.readBoolean();
-            boolean back = buf.readBoolean();
-            boolean left = buf.readBoolean();
-            boolean right = buf.readBoolean();
-            boolean sprint = buf.readBoolean();
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CAR_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
 
-            server.execute(() -> {
-                if (player.getVehicle() instanceof CarEntity car) {
-                    car.setInputs(forward, back, left, right, sprint);
-                }
-            });
-        });
-
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_INPUT_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            java.util.UUID carUuid = buf.readUuid();
-            boolean forward = buf.readBoolean();
-            boolean back = buf.readBoolean();
-            boolean left = buf.readBoolean();
-            boolean right = buf.readBoolean();
-            boolean sprint = buf.readBoolean();
-            boolean jump = buf.readBoolean();
-
-            server.execute(() -> {
-                if (player.getServerWorld() != null) {
-                    Entity target = player.getServerWorld().getEntity(carUuid);
-                    if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
-                        if (player.squaredDistanceTo(rcCar) <= 4096.0) { // 64 blocks max range
-                            rcCar.setRemoteInputs(forward, back, left, right, sprint, jump);
+                    server.execute(() -> {
+                        if (player.getVehicle() instanceof CarEntity car) {
+                            car.setInputs(forward, back, left, right, sprint);
                         }
-                    }
-                }
-            });
-        });
+                    });
+                });
 
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_AUTO_DOCK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            java.util.UUID carUuid = buf.readUuid();
-            server.execute(() -> {
-                if (player.getServerWorld() != null) {
-                    Entity target = player.getServerWorld().getEntity(carUuid);
-                    if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
-                        if (player.squaredDistanceTo(rcCar) <= 4096.0) {
-                            boolean started = rcCar.startAutoReturnToCharger();
-                            if (started) {
-                                player.sendMessage(Text.literal("§a⚡ RC Car returning to RC Charger..."), true);
-                            } else {
-                                player.sendMessage(Text.literal("§c⚡ No RC Charger found within 50 blocks!"), true);
-                            }
-                        }
-                    }
-                }
-            });
-        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID carUuid = buf.readUuid();
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
+                    boolean jump = buf.readBoolean();
 
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(OPEN_TRUNK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            int entityId = buf.readInt();
-            server.execute(() -> {
-                Entity target = player.getWorld().getEntityById(entityId);
-                if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
-                    car.openTrunk(player);
-                } else if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rc && player.squaredDistanceTo(rc) < 64.0) {
-                    rc.openTrunk(player);
-                }
-            });
-        });
-
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TOGGLE_CABLE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            server.execute(() -> {
-                CarEntity car = null;
-                if (player.getVehicle() instanceof CarEntity c) {
-                    car = c;
-                } else {
-                    net.minecraft.util.math.Box box = player.getBoundingBox().expand(16.0);
-                    java.util.List<CarEntity> cars = player.getWorld().getEntitiesByClass(CarEntity.class, box, c -> true);
-                    if (!cars.isEmpty()) {
-                        cars.sort(java.util.Comparator.comparingDouble(c -> c.squaredDistanceTo(player)));
-                        car = cars.get(0);
-                    }
-                }
-
-                if (car == null) {
-                    player.sendMessage(Text.literal("§c⚡ No electric car within 16 blocks! Park closer."), true);
-                    return;
-                }
-
-                // If car is already plugged in: unplug!
-                if (car.isPluggedIn()) {
-                    if (car.getConnectedExtensionPos() != null) {
-                        net.minecraft.block.entity.BlockEntity be = player.getWorld().getBlockEntity(car.getConnectedExtensionPos());
-                        if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
-                            ext.disconnectCar();
-                        }
-                    }
-                    car.unplug();
-                    player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
-                            net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 0.8F);
-                    player.sendMessage(Text.literal("§6⚡ Charging cable disconnected. Vehicle ready to drive!"), true);
-                    return;
-                }
-
-                // Find nearest ChargerExtensionBlockEntity within 16 blocks of car
-                net.minecraft.util.math.BlockPos center = car.getBlockPos();
-                com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity bestExt = null;
-                double bestDist = Double.MAX_VALUE;
-
-                for (net.minecraft.util.math.BlockPos p : net.minecraft.util.math.BlockPos.iterate(center.add(-16, -5, -16), center.add(16, 5, 16))) {
-                    net.minecraft.block.entity.BlockEntity be = player.getWorld().getBlockEntity(p);
-                    if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
-                        double d = car.squaredDistanceTo(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
-                        if (d < bestDist) {
-                            bestDist = d;
-                            bestExt = ext;
-                        }
-                    }
-                }
-
-                if (bestExt == null) {
-                    player.sendMessage(Text.literal("§c⚡ No Vehicle Charger Extension found within 16 blocks!"), true);
-                    return;
-                }
-
-                if (!bestExt.hasCable()) {
-                    // Check if player has cable in inventory
-                    if (player.getInventory().contains(new ItemStack(CHARGER_CABLE))) {
-                        int slot = player.getInventory().indexOf(new ItemStack(CHARGER_CABLE));
-                        if (slot != -1 && !player.isCreative()) {
-                            player.getInventory().getStack(slot).decrement(1);
-                        }
-                        bestExt.setHasCable(true);
-                        player.getWorld().playSound(null, bestExt.getPos(), net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.2F);
-                    } else {
-                        player.sendMessage(Text.literal("§c⚡ Nearby Extension has no cable! Right-click it with a Charger Cable first."), true);
-                        return;
-                    }
-                }
-
-                // Connect!
-                bestExt.connectCar(car);
-                player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
-                        net.minecraft.sound.SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.8F);
-                player.sendMessage(Text.literal("§a⚡ Charging cable connected to car! (Press X to disconnect)"), true);
-            });
-        });
-
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(AUTO_PARK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-            server.execute(() -> {
-                if (!(player.getVehicle() instanceof CarEntity car)) {
-                    player.sendMessage(Text.literal("§c🅿️ You must be driving an Electric Car to auto-park!"), false);
-                    return;
-                }
-
-                if (car.isAutoParking()) {
-                    car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
-                    net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
-                    net.minecraft.network.PacketByteBuf cancelBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
-                    cancelBuf.writeInt(car.getId());
-                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, CANCEL_AUTO_PARK_S2C_PACKET_ID, cancelBuf);
-                    return;
-                }
-
-                // Search for nearest ParkingLinesBlock within 50 blocks (matching any part of the 3x2 bay)
-                net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
-                net.minecraft.util.math.BlockPos bestSpot = null;
-                net.minecraft.util.math.Direction bestFacing = null;
-                double bestDistSq = Double.MAX_VALUE;
-
-                for (int x = -50; x <= 50; x++) {
-                    for (int y = -8; y <= 8; y++) {
-                        for (int z = -50; z <= 50; z++) {
-                            net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
-                            net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
-                            if (s.isOf(PARKING_LINES_BLOCK)) {
-                                com.evecual.evecualmc.block.ParkingLinesPart part = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.PART);
-                                net.minecraft.util.math.Direction facing = s.get(com.evecual.evecualmc.block.ParkingLinesBlock.FACING);
-                                net.minecraft.util.math.Direction right = facing.rotateYClockwise();
-                                net.minecraft.util.math.BlockPos origin = com.evecual.evecualmc.block.ParkingLinesBlock.getOriginPos(p, facing, right, part);
-
-                                double dSq = origin.getSquaredDistance(carPos);
-                                if (dSq < bestDistSq) {
-                                    bestDistSq = dSq;
-                                    bestSpot = origin;
-                                    bestFacing = facing;
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(carUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
+                                if (player.squaredDistanceTo(rcCar) <= 65536.0) { // 256 blocks max range (256^2)
+                                    rcCar.setRemoteInputs(forward, back, left, right, sprint, jump);
                                 }
                             }
                         }
-                    }
-                }
+                    });
+                });
 
-                if (bestSpot != null && bestFacing != null) {
-                    net.minecraft.util.math.Direction right = bestFacing.rotateYClockwise();
-                    // Target center of 3x2 bay:
-                    // Front-left is bestSpot, width is along right, depth is along bestFacing
-                    double targetX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 + bestFacing.getOffsetX() * 1.0;
-                    double targetY = bestSpot.getY();
-                    double targetZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 + bestFacing.getOffsetZ() * 1.0;
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_AUTO_DOCK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID carUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(carUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
+                                if (player.squaredDistanceTo(rcCar) <= 65536.0) { // 256 blocks max range
+                                    boolean started = rcCar.startAutoReturnToCharger();
+                                    if (started) {
+                                        player.sendMessage(Text.literal("§a⚡ RC Car returning to RC Charger..."), true);
+                                    } else {
+                                        player.sendMessage(Text.literal("§c⚡ No RC Charger found within 50 blocks!"),
+                                                true);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
 
-                    // Approach point: 2.5 blocks in front of the empty entrance (opposite bestFacing)
-                    double entryX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5 - bestFacing.getOffsetX() * 2.5;
-                    double entryY = bestSpot.getY();
-                    double entryZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5 - bestFacing.getOffsetZ() * 2.5;
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_DRONE_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID droneUuid = buf.readUuid();
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean up = buf.readBoolean();
+                    boolean down = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
 
-                    float targetYaw = bestFacing.asRotation();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(droneUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range (512^2)
+                                    drone.setRemoteInputs(forward, back, left, right, up, down, sprint);
+                                }
+                            }
+                        }
+                    });
+                });
 
-                    car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_DRONE_AUTO_DOCK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID droneUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(droneUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range
+                                    boolean started = drone.startAutoReturnToCharger();
+                                    if (started) {
+                                        player.sendMessage(Text.literal("§a⚡ RC Drone returning to RC Charger pad..."), true);
+                                    } else {
+                                        player.sendMessage(Text.literal("§c⚡ No RC Charger found within 64 blocks!"),
+                                                true);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
 
-                    // Sync to client so client vehicle physics simulation executes auto-park smoothly
-                    net.minecraft.network.PacketByteBuf startBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
-                    startBuf.writeInt(car.getId());
-                    startBuf.writeDouble(targetX);
-                    startBuf.writeDouble(targetY);
-                    startBuf.writeDouble(targetZ);
-                    startBuf.writeFloat(targetYaw);
-                    startBuf.writeDouble(entryX);
-                    startBuf.writeDouble(entryY);
-                    startBuf.writeDouble(entryZ);
-                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, START_AUTO_PARK_S2C_PACKET_ID, startBuf);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(OPEN_TRUNK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    int entityId = buf.readInt();
+                    server.execute(() -> {
+                        Entity target = player.getWorld().getEntityById(entityId);
+                        if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
+                            car.openTrunk(player);
+                        } else if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rc
+                                && player.squaredDistanceTo(rc) < 64.0) {
+                            rc.openTrunk(player);
+                        } else if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone
+                                && player.squaredDistanceTo(drone) < 64.0) {
+                            drone.openInventory(player);
+                        }
+                    });
+                });
 
-                    player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), false);
-                    player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
-                } else {
-                    player.sendMessage(Text.literal("§c🅿️ No parking bay found within 50 blocks!"), false);
-                }
-            });
-        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TOGGLE_CABLE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        CarEntity car = null;
+                        if (player.getVehicle() instanceof CarEntity c) {
+                            car = c;
+                        } else {
+                            net.minecraft.util.math.Box box = player.getBoundingBox().expand(16.0);
+                            java.util.List<CarEntity> cars = player.getWorld().getEntitiesByClass(CarEntity.class, box,
+                                    c -> true);
+                            if (!cars.isEmpty()) {
+                                cars.sort(java.util.Comparator.comparingDouble(c -> c.squaredDistanceTo(player)));
+                                car = cars.get(0);
+                            }
+                        }
+
+                        if (car == null) {
+                            player.sendMessage(Text.literal("§c⚡ No electric car within 16 blocks! Park closer."),
+                                    true);
+                            return;
+                        }
+
+                        // If car is already plugged in: unplug!
+                        if (car.isPluggedIn()) {
+                            if (car.getConnectedExtensionPos() != null) {
+                                net.minecraft.block.entity.BlockEntity be = player.getWorld()
+                                        .getBlockEntity(car.getConnectedExtensionPos());
+                                if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
+                                    ext.disconnectCar();
+                                }
+                            }
+                            car.unplug();
+                            player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
+                                    net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK,
+                                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 0.8F);
+                            player.sendMessage(Text.literal("§6⚡ Charging cable disconnected. Vehicle ready to drive!"),
+                                    true);
+                            return;
+                        }
+
+                        // Find nearest ChargerExtensionBlockEntity within 16 blocks of car
+                        net.minecraft.util.math.BlockPos center = car.getBlockPos();
+                        com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity bestExt = null;
+                        double bestDist = Double.MAX_VALUE;
+
+                        for (net.minecraft.util.math.BlockPos p : net.minecraft.util.math.BlockPos
+                                .iterate(center.add(-16, -5, -16), center.add(16, 5, 16))) {
+                            net.minecraft.block.entity.BlockEntity be = player.getWorld().getBlockEntity(p);
+                            if (be instanceof com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity ext) {
+                                double d = car.squaredDistanceTo(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
+                                if (d < bestDist) {
+                                    bestDist = d;
+                                    bestExt = ext;
+                                }
+                            }
+                        }
+
+                        if (bestExt == null) {
+                            player.sendMessage(Text.literal("§c⚡ No Vehicle Charger Extension found within 16 blocks!"),
+                                    true);
+                            return;
+                        }
+
+                        if (!bestExt.hasCable()) {
+                            // Check if player has cable in inventory
+                            if (player.getInventory().contains(new ItemStack(CHARGER_CABLE))) {
+                                int slot = player.getInventory().indexOf(new ItemStack(CHARGER_CABLE));
+                                if (slot != -1 && !player.isCreative()) {
+                                    player.getInventory().getStack(slot).decrement(1);
+                                }
+                                bestExt.setHasCable(true);
+                                player.getWorld().playSound(null, bestExt.getPos(),
+                                        net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_CHAIN,
+                                        net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.2F);
+                            } else {
+                                player.sendMessage(Text.literal(
+                                        "§c⚡ Nearby Extension has no cable! Right-click it with a Charger Cable first."),
+                                        true);
+                                return;
+                            }
+                        }
+
+                        // Connect!
+                        bestExt.connectCar(car);
+                        player.getWorld().playSound(null, car.getX(), car.getY(), car.getZ(),
+                                net.minecraft.sound.SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN,
+                                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.8F);
+                        player.sendMessage(Text.literal("§a⚡ Charging cable connected to car! (Press X to disconnect)"),
+                                true);
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(AUTO_PARK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        if (!(player.getVehicle() instanceof CarEntity car)) {
+                            player.sendMessage(Text.literal("§c🅿️ You must be driving an Electric Car to auto-park!"),
+                                    false);
+                            return;
+                        }
+
+                        if (car.isAutoParking()) {
+                            car.cancelAutoPark("§e🅿️ Auto-parking cancelled by driver.");
+                            net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                            net.minecraft.network.PacketByteBuf cancelBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs
+                                    .create();
+                            cancelBuf.writeInt(car.getId());
+                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player,
+                                    CANCEL_AUTO_PARK_S2C_PACKET_ID, cancelBuf);
+                            return;
+                        }
+
+                        // Search for nearest ParkingLinesBlock within 50 blocks (matching any part of
+                        // the 3x2 bay)
+                        net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
+                        net.minecraft.util.math.BlockPos bestSpot = null;
+                        net.minecraft.util.math.Direction bestFacing = null;
+                        double bestDistSq = Double.MAX_VALUE;
+
+                        for (int x = -50; x <= 50; x++) {
+                            for (int y = -8; y <= 8; y++) {
+                                for (int z = -50; z <= 50; z++) {
+                                    net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
+                                    net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
+                                    if (s.isOf(PARKING_LINES_BLOCK)) {
+                                        com.evecual.evecualmc.block.ParkingLinesPart part = s
+                                                .get(com.evecual.evecualmc.block.ParkingLinesBlock.PART);
+                                        net.minecraft.util.math.Direction facing = s
+                                                .get(com.evecual.evecualmc.block.ParkingLinesBlock.FACING);
+                                        net.minecraft.util.math.Direction right = facing.rotateYClockwise();
+                                        net.minecraft.util.math.BlockPos origin = com.evecual.evecualmc.block.ParkingLinesBlock
+                                                .getOriginPos(p, facing, right, part);
+
+                                        double dSq = origin.getSquaredDistance(carPos);
+                                        if (dSq < bestDistSq) {
+                                            bestDistSq = dSq;
+                                            bestSpot = origin;
+                                            bestFacing = facing;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (bestSpot != null && bestFacing != null) {
+                            net.minecraft.util.math.Direction right = bestFacing.rotateYClockwise();
+                            // Target center of 3x2 bay:
+                            // Front-left is bestSpot, width is along right, depth is along bestFacing
+                            double targetX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5
+                                    + bestFacing.getOffsetX() * 1.0;
+                            double targetY = bestSpot.getY();
+                            double targetZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5
+                                    + bestFacing.getOffsetZ() * 1.0;
+
+                            // Approach point: 2.5 blocks in front of the empty entrance (opposite
+                            // bestFacing)
+                            double entryX = bestSpot.getX() + 0.5 + right.getOffsetX() * 0.5
+                                    - bestFacing.getOffsetX() * 2.5;
+                            double entryY = bestSpot.getY();
+                            double entryZ = bestSpot.getZ() + 0.5 + right.getOffsetZ() * 0.5
+                                    - bestFacing.getOffsetZ() * 2.5;
+
+                            float targetYaw = bestFacing.asRotation();
+
+                            car.startAutoPark(targetX, targetY, targetZ, targetYaw, entryX, entryY, entryZ);
+
+                            // Sync to client so client vehicle physics simulation executes auto-park
+                            // smoothly
+                            net.minecraft.network.PacketByteBuf startBuf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs
+                                    .create();
+                            startBuf.writeInt(car.getId());
+                            startBuf.writeDouble(targetX);
+                            startBuf.writeDouble(targetY);
+                            startBuf.writeDouble(targetZ);
+                            startBuf.writeFloat(targetYaw);
+                            startBuf.writeDouble(entryX);
+                            startBuf.writeDouble(entryY);
+                            startBuf.writeDouble(entryZ);
+                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player,
+                                    START_AUTO_PARK_S2C_PACKET_ID, startBuf);
+
+                            player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."),
+                                    false);
+                            player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."),
+                                    true);
+                        } else {
+                            player.sendMessage(Text.literal("§c🅿️ No parking bay found within 50 blocks!"), false);
+                        }
+                    });
+                });
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");

@@ -137,6 +137,10 @@ public class CarEntity extends Entity {
         this.connectedExtensionPos = pos;
     }
 
+    public double getCurrentSpeed() {
+        return this.getVelocity().horizontalLength();
+    }
+
     public void unplug() {
         this.dataTracker.set(PLUGGED_IN, false);
         this.connectedExtensionPos = null;

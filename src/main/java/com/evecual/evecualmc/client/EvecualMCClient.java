@@ -92,7 +92,7 @@ public class EvecualMCClient implements ClientModInitializer {
         }
         if (held != null && held.hasNbt()) {
             net.minecraft.nbt.NbtCompound nbt = held.getNbt();
-            return nbt != null && nbt.containsUuid("PairedCar") && nbt.getBoolean("ActiveLink");
+            return nbt != null && (nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone")) && nbt.getBoolean("ActiveLink");
         }
         return false;
     }
@@ -118,12 +118,37 @@ public class EvecualMCClient implements ClientModInitializer {
         return null;
     }
 
+    public static com.evecual.evecualmc.entity.RcDroneEntity getTargetRcDrone(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return null;
+        net.minecraft.item.ItemStack held = null;
+        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getMainHandStack();
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getOffHandStack();
+        }
+        if (held == null || !held.hasNbt()) return null;
+        net.minecraft.nbt.NbtCompound nbt = held.getNbt();
+        if (nbt == null || !nbt.containsUuid("PairedDrone")) return null;
+        java.util.UUID pairedUuid = nbt.getUuid("PairedDrone");
+
+        for (Entity e : client.world.getEntities()) {
+            if (e instanceof com.evecual.evecualmc.entity.RcDroneEntity drone && drone.getUuid().equals(pairedUuid)) {
+                return drone;
+            }
+        }
+        return null;
+    }
+
     public static void toggleRcCamera(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return;
 
-        com.evecual.evecualmc.entity.RcCarEntity targetRc = getTargetRcCar(client);
+        Entity targetRc = getTargetRcCar(client);
         if (targetRc == null) {
-            client.player.sendMessage(Text.literal("§c📷 No linked RC Car found in range!"), true);
+            targetRc = getTargetRcDrone(client);
+        }
+
+        if (targetRc == null) {
+            client.player.sendMessage(Text.literal("§c📷 No linked RC Car or Drone found in range!"), true);
             return;
         }
 
@@ -136,7 +161,8 @@ public class EvecualMCClient implements ClientModInitializer {
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
-            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aENABLED §7[Arrow Keys to Rotate, F to return]"), true);
+            String name = (targetRc instanceof com.evecual.evecualmc.entity.RcDroneEntity) ? "Drone" : "Car";
+            client.player.sendMessage(Text.literal("§b📷 RC " + name + " Camera: §aENABLED §7[Arrow Keys to Rotate, F to return]"), true);
         }
     }
 
@@ -156,6 +182,10 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register RC Car Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.RcCarEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.RcCarEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.RC_CAR_ENTITY, com.evecual.evecualmc.client.render.RcCarEntityRenderer::new);
+
+        // Register RC Drone Model and Renderer
+        EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.RcDroneEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.RcDroneEntityModel::getTexturedModelData);
+        EntityRendererRegistry.register(EvecualMC.RC_DRONE_ENTITY, com.evecual.evecualmc.client.render.RcDroneEntityRenderer::new);
 
         // Cutout render layer for wire block, solar panel, parking lines, and RC charger
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
@@ -254,16 +284,16 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
-                // 2. 'Z' Key to Open Car Trunk
+                // 2. 'Z' Key to Open Car Trunk / Drone Cargo
                 while (OPEN_TRUNK_KEY.wasPressed()) {
                     Entity targetCar = null;
                     if (client.player.getVehicle() instanceof CarEntity car) {
                         targetCar = car;
-                    } else if (client.targetedEntity instanceof CarEntity || client.targetedEntity instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                    } else if (client.targetedEntity instanceof CarEntity || client.targetedEntity instanceof com.evecual.evecualmc.entity.RcCarEntity || client.targetedEntity instanceof com.evecual.evecualmc.entity.RcDroneEntity) {
                         targetCar = client.targetedEntity;
                     } else if (client.world != null) {
                         for (Entity entity : client.world.getOtherEntities(client.player, client.player.getBoundingBox().expand(5.0))) {
-                            if (entity instanceof CarEntity || entity instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                            if (entity instanceof CarEntity || entity instanceof com.evecual.evecualmc.entity.RcCarEntity || entity instanceof com.evecual.evecualmc.entity.RcDroneEntity) {
                                 targetCar = entity;
                                 break;
                             }
@@ -285,7 +315,7 @@ public class EvecualMCClient implements ClientModInitializer {
                 // 4. 'C' Key handling
                 boolean cDown = (client.currentScreen == null && InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_C)) || AUTO_PARK_KEY.isPressed();
 
-                // 5. RC Controller Remote Driving Control
+                // 5. RC Controller Remote Driving & Flying Control
                 boolean isRcActive = isRcLinkActive();
                 if (isRcActive) {
                     // Immobilize player while RC Link is active
@@ -313,7 +343,7 @@ public class EvecualMCClient implements ClientModInitializer {
                             }
                         }
 
-                        if (client.player.squaredDistanceTo(targetRc) <= 4096.0) {
+                        if (client.player.squaredDistanceTo(targetRc) <= 65536.0) { // 256m max range (256^2)
                             boolean rcFwd = client.options.forwardKey.isPressed();
                             boolean rcBack = client.options.backKey.isPressed();
                             boolean rcLeft = client.options.leftKey.isPressed();
@@ -336,14 +366,58 @@ public class EvecualMCClient implements ClientModInitializer {
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRc;
                                 String camPrompt = isCamView ? "Arrows: Orbit Cam | F: Player View" : "F: RC Camera";
-                                client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[" + camPrompt + ", C: Charger]"), true);
+                                client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
+                            }
+                        }
+                    }
+
+                    com.evecual.evecualmc.entity.RcDroneEntity targetDrone = getTargetRcDrone(client);
+                    if (targetDrone != null) {
+                        java.util.UUID pairedUuid = targetDrone.getUuid();
+
+                        // 'C' Key while RC link is active: Auto Return to RC Charger!
+                        if (cDown) {
+                            if (!wasCPressed) {
+                                wasCPressed = true;
+                                PacketByteBuf dockBuf = PacketByteBufs.create();
+                                dockBuf.writeUuid(pairedUuid);
+                                ClientPlayNetworking.send(EvecualMC.RC_DRONE_AUTO_DOCK_PACKET_ID, dockBuf);
+                            }
+                        }
+
+                        if (client.player.squaredDistanceTo(targetDrone) <= 262144.0) { // 512m max range (512^2)
+                            boolean rcFwd = client.options.forwardKey.isPressed();
+                            boolean rcBack = client.options.backKey.isPressed();
+                            boolean rcLeft = client.options.leftKey.isPressed();
+                            boolean rcRight = client.options.rightKey.isPressed();
+                            boolean rcUp = client.options.jumpKey.isPressed();
+                            boolean rcDown = client.options.sneakKey.isPressed();
+                            boolean rcSprint = client.options.sprintKey.isPressed();
+
+                            targetDrone.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint);
+
+                            PacketByteBuf droneBuf = PacketByteBufs.create();
+                            droneBuf.writeUuid(pairedUuid);
+                            droneBuf.writeBoolean(rcFwd);
+                            droneBuf.writeBoolean(rcBack);
+                            droneBuf.writeBoolean(rcLeft);
+                            droneBuf.writeBoolean(rcRight);
+                            droneBuf.writeBoolean(rcUp);
+                            droneBuf.writeBoolean(rcDown);
+                            droneBuf.writeBoolean(rcSprint);
+                            ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
+
+                            if (client.player.age % 10 == 0) {
+                                boolean isCamView = client.getCameraEntity() == targetDrone;
+                                String camPrompt = isCamView ? "Arrows: Orbit Cam | F: Player View" : "F: Drone Camera";
+                                client.player.sendMessage(Text.literal("§b📡 RC DRONE: §a" + targetDrone.getEnergy() + " E §7| §eAlt: " + String.format("%.1f", targetDrone.getY()) + "m §7| §eRange: " + (int)client.player.distanceTo(targetDrone) + "m/512m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
                     }
                 }
 
-                // Camera orientation control via Arrow Keys while looking through RC Car camera
-                if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                // Camera orientation control via Arrow Keys while looking through RC Car or Drone camera
+                if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcCarEntity || client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcDroneEntity) {
                     if (client.currentScreen == null) {
                         long windowHandle = client.getWindow().getHandle();
                         boolean left = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_LEFT);
@@ -358,9 +432,15 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
-                // Reset camera if RC link is disabled or target car is invalid
+                // Reset camera if RC link is disabled or target vehicle is invalid
                 if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcCarEntity rc) {
-                    boolean valid = isRcActive && rc.isAlive() && !rc.isRemoved() && client.player.squaredDistanceTo(rc) <= 4096.0;
+                    boolean valid = isRcActive && rc.isAlive() && !rc.isRemoved() && client.player.squaredDistanceTo(rc) <= 65536.0;
+                    if (!valid) {
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective);
+                    }
+                } else if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
+                    boolean valid = isRcActive && drone.isAlive() && !drone.isRemoved() && client.player.squaredDistanceTo(drone) <= 262144.0;
                     if (!valid) {
                         client.setCameraEntity(client.player);
                         client.options.setPerspective(previousPerspective);

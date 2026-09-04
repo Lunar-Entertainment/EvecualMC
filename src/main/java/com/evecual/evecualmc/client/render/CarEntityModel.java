@@ -172,6 +172,36 @@ public class CarEntityModel extends EntityModel<CarEntity> {
         wheel_rr.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
+    public void renderWheelMotionBlur(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float speed) {
+        if (Math.abs(speed) > 0.08F) {
+            float dir = speed > 0 ? -1.0F : 1.0F;
+            float[] offsets = { dir * 0.15F, dir * 0.32F, dir * 0.50F };
+            float[] alphas = { 0.40F, 0.22F, 0.10F };
+
+            for (int i = 0; i < offsets.length; i++) {
+                float off = offsets[i];
+                float a = alphas[i];
+
+                matrices.push();
+                this.wheel_fl.pitch += off;
+                this.wheel_fr.pitch -= off;
+                this.wheel_rl.pitch += off;
+                this.wheel_rr.pitch -= off;
+
+                this.wheel_fl.render(matrices, vertices, light, overlay, 0.3F, 0.3F, 0.3F, a);
+                this.wheel_fr.render(matrices, vertices, light, overlay, 0.3F, 0.3F, 0.3F, a);
+                this.wheel_rl.render(matrices, vertices, light, overlay, 0.3F, 0.3F, 0.3F, a);
+                this.wheel_rr.render(matrices, vertices, light, overlay, 0.3F, 0.3F, 0.3F, a);
+
+                this.wheel_fl.pitch -= off;
+                this.wheel_fr.pitch += off;
+                this.wheel_rl.pitch -= off;
+                this.wheel_rr.pitch += off;
+                matrices.pop();
+            }
+        }
+    }
+
     public void renderGlass(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
         glass.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }

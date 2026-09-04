@@ -2,13 +2,15 @@
 
 /*
  * Evecual Tech Shader - Composite Pass
- * Features: Quality Settings (Low, Medium, High), Procedural Drifting Clouds, ACES Filmic Tonemap, Emissive Bloom
+ * Features: Quality Settings (Low, Medium, High), Procedural Drifting Clouds, ACES Filmic Tonemap, Emissive Bloom, Motion Blur
  */
 
 #define QUALITY 1 // [0 1 2]
 #define BLOOM 1   // [0 1 2]
 #define CLOUDS    // [true false]
 #define VIGNETTE  // [true false]
+#define MOTION_BLUR // [true false]
+#define MOTION_BLUR_SAMPLES 5 // [3 5 7]
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
@@ -17,6 +19,11 @@ uniform sampler2D depthtex0;
 uniform float viewWidth;
 uniform float viewHeight;
 uniform float frameTimeCounter;
+
+uniform mat4 gbufferProjectionInverse;
+uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousProjection;
 
 varying vec2 texcoord;
 
@@ -59,9 +66,44 @@ float fbm(vec2 p) {
 }
 
 void main() {
-    vec4 baseColor = texture2D(colortex0, texcoord);
     float depth = texture2D(depthtex0, texcoord).r;
     vec2 pixelSize = vec2(1.0 / max(viewWidth, 1.0), 1.0 / max(viewHeight, 1.0));
+
+    vec4 baseColor = texture2D(colortex0, texcoord);
+
+#ifdef MOTION_BLUR
+    // Camera & world motion blur
+    vec4 currentClip = vec4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 viewPos = gbufferProjectionInverse * currentClip;
+    if (abs(viewPos.w) > 0.0001) {
+        viewPos /= viewPos.w;
+        vec4 feetPos = gbufferModelViewInverse * viewPos;
+
+        vec4 prevViewPos = gbufferPreviousModelView * feetPos;
+        vec4 prevClip = gbufferPreviousProjection * prevViewPos;
+        if (abs(prevClip.w) > 0.0001) {
+            prevClip /= prevClip.w;
+            vec2 prevCoord = prevClip.xy * 0.5 + 0.5;
+            vec2 velocity = (texcoord - prevCoord) * 0.40;
+            float speed = length(velocity);
+            if (speed > 0.0005) {
+                velocity = clamp(velocity, vec2(-0.035), vec2(0.035));
+                vec4 accumColor = baseColor;
+                float totalWeight = 1.0;
+                for (int s = 1; s <= MOTION_BLUR_SAMPLES; s++) {
+                    float t = float(s) / float(MOTION_BLUR_SAMPLES);
+                    vec2 sampleCoord = clamp(texcoord + velocity * t, 0.0, 1.0);
+                    float sampleDepth = texture2D(depthtex0, sampleCoord).r;
+                    if (abs(sampleDepth - depth) < 0.15) {
+                        accumColor += texture2D(colortex0, sampleCoord);
+                        totalWeight += 1.0;
+                    }
+                }
+                baseColor = accumColor / totalWeight;
+            }
+        }
+    }
+#endif
 
     vec3 skyColor = baseColor.rgb;
 

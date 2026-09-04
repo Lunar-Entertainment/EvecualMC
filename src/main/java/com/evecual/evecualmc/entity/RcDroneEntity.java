@@ -1,0 +1,584 @@
+package com.evecual.evecualmc.entity;
+
+import com.evecual.evecualmc.EvecualMC;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.MovementType;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.DyeItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+
+public class RcDroneEntity extends Entity {
+    public static final int MAX_ENERGY = 600;
+    public static final double MAX_RANGE = 512.0;
+
+    private static final TrackedData<Integer> ENERGY = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<String> PAIRED_PLAYER_UUID = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Float> PITCH_TILT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final TrackedData<Float> ROLL_TILT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final TrackedData<Boolean> FLYING = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
+    private final SimpleInventory trunk = new SimpleInventory(9); // 9-slot compact drone cargo bay
+
+    private boolean inputForward;
+    private boolean inputBack;
+    private boolean inputLeft;
+    private boolean inputRight;
+    private boolean inputUp;
+    private boolean inputDown;
+    private boolean inputSprint;
+
+    private int inputTimeoutTicks = 0;
+    private float propAngle = 0.0F;
+    private float prevPropAngle = 0.0F;
+    private float propSpeed = 0.0F;
+
+    private boolean autoReturning = false;
+    private BlockPos targetChargerPos = null;
+    private int autoReturnTicks = 0;
+    private int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
+
+    public RcDroneEntity(EntityType<?> type, World world) {
+        super(type, world);
+        this.setStepHeight(1.0F);
+        this.noClip = false;
+    }
+
+    @Override
+    protected void initDataTracker() {
+        this.dataTracker.startTracking(ENERGY, MAX_ENERGY);
+        this.dataTracker.startTracking(COLOR_VARIANT, 1); // Default 1: Cyber Blue
+        this.dataTracker.startTracking(PAIRED_PLAYER_UUID, "");
+        this.dataTracker.startTracking(PITCH_TILT, 0.0F);
+        this.dataTracker.startTracking(ROLL_TILT, 0.0F);
+        this.dataTracker.startTracking(FLYING, false);
+    }
+
+    public int getEnergy() {
+        return this.dataTracker.get(ENERGY);
+    }
+
+    public void setEnergy(int energy) {
+        this.dataTracker.set(ENERGY, MathHelper.clamp(energy, 0, MAX_ENERGY));
+    }
+
+    public int getColorVariant() {
+        return this.dataTracker.get(COLOR_VARIANT);
+    }
+
+    public void setColorVariant(int variant) {
+        this.dataTracker.set(COLOR_VARIANT, variant % 6);
+    }
+
+    public String getPairedPlayerUuid() {
+        return this.dataTracker.get(PAIRED_PLAYER_UUID);
+    }
+
+    public void setPairedPlayerUuid(String uuid) {
+        this.dataTracker.set(PAIRED_PLAYER_UUID, uuid != null ? uuid : "");
+    }
+
+    public float getPitchTilt() {
+        return this.dataTracker.get(PITCH_TILT);
+    }
+
+    public void setPitchTilt(float tilt) {
+        this.dataTracker.set(PITCH_TILT, tilt);
+    }
+
+    public float getRollTilt() {
+        return this.dataTracker.get(ROLL_TILT);
+    }
+
+    public void setRollTilt(float tilt) {
+        this.dataTracker.set(ROLL_TILT, tilt);
+    }
+
+    public boolean isFlying() {
+        return this.dataTracker.get(FLYING);
+    }
+
+    public void setFlying(boolean flying) {
+        this.dataTracker.set(FLYING, flying);
+    }
+
+    public float getPropAngle(float tickDelta) {
+        return MathHelper.lerp(tickDelta, this.prevPropAngle, this.propAngle);
+    }
+
+    public float getPropSpeed() {
+        return this.propSpeed;
+    }
+
+    public SimpleInventory getTrunk() {
+        return this.trunk;
+    }
+
+    public boolean isAutoReturning() {
+        return this.autoReturning;
+    }
+
+    public void cancelAutoReturn() {
+        if (this.autoReturning) {
+            this.autoReturning = false;
+            this.targetChargerPos = null;
+            this.autoReturnStage = 0;
+        }
+    }
+
+    public void onReachedCharger() {
+        this.autoReturning = false;
+        this.targetChargerPos = null;
+        this.autoReturnStage = 0;
+        this.setVelocity(Vec3d.ZERO);
+        setFlying(false);
+    }
+
+    public boolean startAutoReturnToCharger() {
+        BlockPos dronePos = this.getBlockPos();
+        BlockPos bestCharger = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        // 100 block search radius for RC Charger pad
+        for (int x = -100; x <= 100; x += 2) {
+            for (int y = -20; y <= 20; y += 2) {
+                for (int z = -100; z <= 100; z += 2) {
+                    BlockPos p = dronePos.add(x, y, z);
+                    if (this.getWorld().getBlockState(p).isOf(EvecualMC.RC_CHARGER_BLOCK)) {
+                        double dSq = p.getSquaredDistance(dronePos);
+                        if (dSq < bestDistSq) {
+                            bestDistSq = dSq;
+                            bestCharger = p;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestCharger != null) {
+            this.autoReturning = true;
+            this.targetChargerPos = bestCharger;
+            this.autoReturnTicks = 0;
+            this.autoReturnStage = 0;
+            setFlying(true);
+            return true;
+        }
+        return false;
+    }
+
+    public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint) {
+        if (this.autoReturning && (forward || back || left || right || up || down)) {
+            cancelAutoReturn();
+        }
+        this.inputForward = forward;
+        this.inputBack = back;
+        this.inputLeft = left;
+        this.inputRight = right;
+        this.inputUp = up;
+        this.inputDown = down;
+        this.inputSprint = sprint;
+        this.inputTimeoutTicks = 0;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        this.prevPropAngle = this.propAngle;
+
+        // Remote signal timeout (stops inputs if controller link is interrupted)
+        this.inputTimeoutTicks++;
+        if (this.inputTimeoutTicks > 8) {
+            this.inputForward = false;
+            this.inputBack = false;
+            this.inputLeft = false;
+            this.inputRight = false;
+            this.inputUp = false;
+            this.inputDown = false;
+            this.inputSprint = false;
+        }
+
+        int energy = getEnergy();
+        boolean hasPower = energy > 0;
+
+        // Auto Return to Charger when battery reaches <= 5% (<= 30 E)
+        if (!this.getWorld().isClient && !this.autoReturning && energy <= 30 && energy > 0) {
+            if (this.age % 100 == 0) {
+                startAutoReturnToCharger();
+            }
+        }
+
+        Vec3d vel = this.getVelocity();
+
+        if (hasPower && (isFlying() || this.inputUp || this.inputForward || this.inputBack || this.inputLeft || this.inputRight || this.autoReturning)) {
+            setFlying(true);
+            float targetPropSpeed = this.inputSprint ? 2.2F : 1.6F;
+            this.propSpeed += (targetPropSpeed - this.propSpeed) * 0.25F;
+        } else {
+            this.propSpeed *= 0.88F;
+            if (this.propSpeed < 0.05F) {
+                this.propSpeed = 0.0F;
+                if (this.isOnGround()) {
+                    setFlying(false);
+                }
+            }
+        }
+        this.propAngle += this.propSpeed;
+
+        // Auto-navigation autopilot return to charger
+        if (this.autoReturning && this.targetChargerPos != null && hasPower) {
+            this.autoReturnTicks++;
+            if (this.autoReturnTicks > 1800) { // 90s timeout
+                cancelAutoReturn();
+            } else {
+                double targetX = this.targetChargerPos.getX() + 0.5;
+                double targetY = this.targetChargerPos.getY() + 0.25;
+                double targetZ = this.targetChargerPos.getZ() + 0.5;
+
+                double dx = targetX - this.getX();
+                double dz = targetZ - this.getZ();
+                double horizDist = Math.sqrt(dx * dx + dz * dz);
+                double cruiseAltitude = targetY + 6.0;
+
+                // Stage 0: Ascend to cruise altitude
+                if (this.autoReturnStage == 0) {
+                    if (this.getY() < cruiseAltitude - 0.5) {
+                        vel = new Vec3d(vel.x * 0.7, 0.35, vel.z * 0.7);
+                    } else {
+                        this.autoReturnStage = 1;
+                    }
+                }
+                // Stage 1: Fly horizontally toward target X/Z
+                else if (this.autoReturnStage == 1) {
+                    float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                    float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() + MathHelper.clamp(yawDiff * 0.3F, -8.0F, 8.0F)));
+
+                    double speed = MathHelper.clamp(horizDist * 0.15, 0.25, 0.65);
+                    Vec3d dir = new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed);
+
+                    // Maintain cruise altitude
+                    double dy = cruiseAltitude - this.getY();
+                    double yVel = MathHelper.clamp(dy * 0.2, -0.2, 0.2);
+                    vel = new Vec3d(dir.x, yVel, dir.z);
+
+                    if (horizDist < 0.6) {
+                        this.autoReturnStage = 2;
+                    }
+                }
+                // Stage 2: Vertical descent and dock squarely onto pad
+                else if (this.autoReturnStage == 2) {
+                    double speed = MathHelper.clamp(horizDist * 0.3, 0.05, 0.15);
+                    Vec3d align = horizDist > 0.05 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
+
+                    double dy = targetY - this.getY();
+                    double descSpeed = MathHelper.clamp(dy * 0.25, -0.22, 0.1);
+                    vel = new Vec3d(align.x, descSpeed, align.z);
+
+                    if (horizDist <= 0.25 && Math.abs(dy) <= 0.35) {
+                        this.setPosition(targetX, targetY, targetZ);
+                        onReachedCharger();
+                        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);
+                    }
+                }
+            }
+        }
+        // Manual flight controls
+        else if (hasPower && isFlying()) {
+            double topSpeed = this.inputSprint ? 0.78 : 0.42;
+            double accel = this.inputSprint ? 0.08 : 0.045;
+
+            Vec3d forwardVec = Vec3d.fromPolar(0, this.getYaw());
+            Vec3d rightVec = Vec3d.fromPolar(0, this.getYaw() + 90.0F);
+
+            Vec3d moveDir = Vec3d.ZERO;
+            if (this.inputForward) moveDir = moveDir.add(forwardVec);
+            if (this.inputBack) moveDir = moveDir.subtract(forwardVec);
+            if (this.inputRight) moveDir = moveDir.add(rightVec);
+            if (this.inputLeft) moveDir = moveDir.subtract(rightVec);
+
+            if (moveDir.lengthSquared() > 0.001) {
+                moveDir = moveDir.normalize().multiply(topSpeed);
+                vel = new Vec3d(
+                        vel.x + (moveDir.x - vel.x) * accel * 8.0,
+                        vel.y,
+                        vel.z + (moveDir.z - vel.z) * accel * 8.0
+                );
+
+                // Consume battery during flight
+                if (this.age % 25 == 0 && !this.getWorld().isClient) {
+                    setEnergy(energy - 1);
+                }
+            } else {
+                vel = new Vec3d(vel.x * 0.90, vel.y, vel.z * 0.90);
+                if (Math.abs(vel.x) < 0.005) vel = new Vec3d(0, vel.y, vel.z);
+                if (Math.abs(vel.z) < 0.005) vel = new Vec3d(vel.x, vel.y, 0);
+            }
+
+            // Vertical flight: Ascend (Space) and Descend (Shift)
+            if (this.inputUp) {
+                double targetY = this.inputSprint ? 0.55 : 0.32;
+                vel = new Vec3d(vel.x, vel.y + (targetY - vel.y) * 0.35, vel.z);
+                if (this.age % 25 == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
+            } else if (this.inputDown) {
+                double targetY = this.inputSprint ? -0.45 : -0.28;
+                vel = new Vec3d(vel.x, vel.y + (targetY - vel.y) * 0.35, vel.z);
+                if (this.age % 30 == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
+            } else {
+                // Gyro-stabilized altitude hold hover physics
+                double hoverDamping = 0.70;
+                double subtleHoverWave = Math.sin(this.age * 0.18) * 0.012;
+                vel = new Vec3d(vel.x, vel.y * hoverDamping + subtleHoverWave, vel.z);
+            }
+
+            // Yaw rotation when turning/strafing
+            float targetAngle = 0.0F;
+            if (this.inputLeft) targetAngle -= 3.5F;
+            if (this.inputRight) targetAngle += 3.5F;
+            if (targetAngle != 0.0F) {
+                this.setYaw(MathHelper.wrapDegrees(this.getYaw() + targetAngle));
+            }
+
+            // Aerodynamic tilt (pitch forward/back, roll left/right)
+            float targetPitch = 0.0F;
+            if (this.inputForward) targetPitch = this.inputSprint ? -25.0F : -16.0F;
+            if (this.inputBack) targetPitch = 14.0F;
+            setPitchTilt(getPitchTilt() + (targetPitch - getPitchTilt()) * 0.25F);
+
+            float targetRoll = 0.0F;
+            if (this.inputLeft) targetRoll = -22.0F;
+            if (this.inputRight) targetRoll = 22.0F;
+            setRollTilt(getRollTilt() + (targetRoll - getRollTilt()) * 0.25F);
+
+        } else {
+            // Gravity applies when engines are off or out of battery
+            if (!this.isOnGround()) {
+                vel = vel.add(0, -0.04, 0);
+            } else {
+                vel = new Vec3d(vel.x * 0.8, 0, vel.z * 0.8);
+            }
+            setPitchTilt(getPitchTilt() * 0.8F);
+            setRollTilt(getRollTilt() * 0.8F);
+        }
+
+        this.setVelocity(vel);
+        this.move(MovementType.SELF, this.getVelocity());
+
+        // Particles & Sounds
+        if (this.getWorld().isClient && isFlying()) {
+            // Turbo boost sparks
+            if (this.inputSprint && this.random.nextFloat() < 0.4F) {
+                Vec3d back = this.getPos().subtract(Vec3d.fromPolar(0, this.getYaw()).multiply(0.4));
+                this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK,
+                        back.x + (this.random.nextDouble() - 0.5) * 0.3,
+                        back.y + 0.1,
+                        back.z + (this.random.nextDouble() - 0.5) * 0.3,
+                        0, 0.05, 0);
+            }
+
+            // Ground downdraft dust when near ground
+            if (this.getY() - this.getBlockPos().getY() < 2.5 && this.random.nextFloat() < 0.25F) {
+                this.getWorld().addParticle(ParticleTypes.SMOKE,
+                        this.getX() + (this.random.nextDouble() - 0.5) * 0.8,
+                        this.getY() - 0.2,
+                        this.getZ() + (this.random.nextDouble() - 0.5) * 0.8,
+                        (this.random.nextDouble() - 0.5) * 0.1, 0.01, (this.random.nextDouble() - 0.5) * 0.1);
+            }
+        }
+
+        // Quadcopter engine drone hum
+        if (isFlying() && this.age % 8 == 0) {
+            float pitch = this.inputSprint ? 2.0F : 1.7F;
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.ENTITY_BEE_LOOP, SoundCategory.NEUTRAL, 0.22F, pitch);
+        }
+    }
+
+    public void openTrunk(PlayerEntity player) {
+        if (!this.getWorld().isClient) {
+            player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, this.trunk, 1),
+                    Text.literal("RC Drone Cargo (9 Slots)")
+            ));
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.PLAYERS, 0.6f, 2.0f);
+        }
+    }
+
+    public void openInventory(PlayerEntity player) {
+        openTrunk(player);
+    }
+
+    public ItemStack asItemStack() {
+        ItemStack stack = new ItemStack(EvecualMC.RC_DRONE_ITEM);
+        NbtCompound nbt = new NbtCompound();
+        nbt.putInt("Energy", getEnergy());
+        nbt.putInt("ColorVariant", getColorVariant());
+        if (!getPairedPlayerUuid().isEmpty()) {
+            nbt.putString("PairedPlayer", getPairedPlayerUuid());
+        }
+
+        // Save cargo items in item stack
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+        boolean hasItems = false;
+        for (int i = 0; i < this.trunk.size(); ++i) {
+            ItemStack s = this.trunk.getStack(i);
+            list.set(i, s);
+            if (!s.isEmpty()) hasItems = true;
+        }
+        if (hasItems) {
+            NbtCompound trunkNbt = new NbtCompound();
+            Inventories.writeNbt(trunkNbt, list);
+            nbt.put("TrunkItems", trunkNbt);
+        }
+
+        stack.setNbt(nbt);
+        return stack;
+    }
+
+    @Override
+    public ActionResult interact(PlayerEntity player, Hand hand) {
+        ItemStack held = player.getStackInHand(hand);
+
+        // Pairing with RC Controller
+        if (held.getItem() instanceof com.evecual.evecualmc.item.RcControllerItem) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.item.RcControllerItem.pairWithDrone(held, player, this);
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
+        // Sneaking with empty hand: Pick up the RC drone
+        if (player.isSneaking() && held.isEmpty()) {
+            if (!this.getWorld().isClient) {
+                ItemStack drop = asItemStack();
+                if (!player.getInventory().insertStack(drop)) {
+                    this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY(), this.getZ(), drop));
+                }
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.8f, 1.6f);
+                this.discard();
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
+        // Right click with empty hand without sneaking: Open Drone Cargo!
+        if (held.isEmpty() && !player.isSneaking()) {
+            openTrunk(player);
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
+        // Dyeing color on right click with dye
+        if (held.getItem() instanceof DyeItem dye) {
+            int newColor = switch (dye.getColor()) {
+                case BLUE, CYAN, LIGHT_BLUE -> 1;
+                case BLACK, GRAY -> 2;
+                case LIME, GREEN -> 3;
+                case WHITE -> 4;
+                case YELLOW, ORANGE -> 5;
+                default -> 0; // Red
+            };
+            if (!this.getWorld().isClient) {
+                setColorVariant(newColor);
+                if (!player.isCreative()) held.decrement(1);
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.ITEM_DYE_USE, SoundCategory.PLAYERS, 0.8f, 1.4f);
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
+        return super.interact(player, hand);
+    }
+
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        if (!this.getWorld().isClient && !this.isRemoved()) {
+            this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY(), this.getZ(), asItemStack()));
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.ENTITY_ITEM_BREAK, SoundCategory.NEUTRAL, 0.8f, 1.4f);
+            this.discard();
+            return true;
+        }
+        return super.damage(source, amount);
+    }
+
+    @Override
+    protected void readCustomDataFromNbt(NbtCompound nbt) {
+        if (nbt.contains("Energy")) setEnergy(nbt.getInt("Energy"));
+        if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
+        if (nbt.contains("PairedPlayer")) setPairedPlayerUuid(nbt.getString("PairedPlayer"));
+        if (nbt.contains("Flying")) setFlying(nbt.getBoolean("Flying"));
+        if (nbt.contains("TrunkItems")) {
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+            Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
+            for (int i = 0; i < list.size(); ++i) {
+                this.trunk.setStack(i, list.get(i));
+            }
+        }
+    }
+
+    @Override
+    protected void writeCustomDataToNbt(NbtCompound nbt) {
+        nbt.putInt("Energy", getEnergy());
+        nbt.putInt("ColorVariant", getColorVariant());
+        nbt.putString("PairedPlayer", getPairedPlayerUuid());
+        nbt.putBoolean("Flying", isFlying());
+
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+        for (int i = 0; i < this.trunk.size(); ++i) {
+            list.set(i, this.trunk.getStack(i));
+        }
+        NbtCompound trunkNbt = new NbtCompound();
+        Inventories.writeNbt(trunkNbt, list);
+        nbt.put("TrunkItems", trunkNbt);
+    }
+
+    @Override
+    protected float getEyeHeight(net.minecraft.entity.EntityPose pose, net.minecraft.entity.EntityDimensions dimensions) {
+        return 0.25F;
+    }
+
+    @Override
+    public boolean collidesWith(Entity other) {
+        return false;
+    }
+
+    @Override
+    public boolean canHit() {
+        return !this.isRemoved();
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return true;
+    }
+
+    @Override
+    public boolean isPushable() {
+        return true;
+    }
+}

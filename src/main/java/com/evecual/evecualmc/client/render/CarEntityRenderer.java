@@ -72,6 +72,13 @@ public class CarEntityRenderer extends EntityRenderer<CarEntity> {
         VertexConsumer glassConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
         this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
 
+        // 3. Wheel rotational motion blur when cruising at speed
+        float speed = (float) car.getCurrentSpeed();
+        if (Math.abs(speed) > 0.08F) {
+            VertexConsumer blurConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
+            this.model.renderWheelMotionBlur(matrices, blurConsumer, light, OverlayTexture.DEFAULT_UV, speed);
+        }
+
         matrices.pop();
         super.render(car, yaw, tickDelta, matrices, vertexConsumers, light);
     }

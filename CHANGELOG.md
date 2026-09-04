@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.0] - 2026-09-04
+### Added & Improved
+- **High-Speed RC Drone (512-Block Range)**:
+  - Added new `RcDroneEntity` quadcopter and `RcDroneItem`.
+  - Pairable using the same universal `RcControllerItem` (aiming at a drone pairs with the drone; aiming at a car pairs with the car).
+  - True 3D quadcopter flight physics with gyroscopic hovering, altitude hold, pitch/roll banking tilt, agile yaw turning, and turbo boost sprint mode (`Ctrl`).
+  - Flight controls: `W`/`S` (pitch forward/back), `A`/`D` (roll strafe & bank), `Space` (ascend), `Shift` (descend), `Ctrl` (sprint boost).
+  - High-range transmitter antenna delivering **512 blocks** of control range ($512^2 = 262,144$ dist sq) with chunk tracking configured up to 34 chunks (544 blocks).
+  - Integrated 9-slot cargo hold (`RC Drone Cargo (9 Slots)`) accessible by right-clicking with an empty hand or pressing `Z`. Drone item retains cargo inventory in NBT upon pickup.
+  - Full RC Camera view (`F`), 360° orbit and tilt via arrow keys, and real-time flight telemetry HUD showing battery, altitude, and range.
+  - Return to Charger (`C` key): Drones automatically track and land directly onto nearby `RcChargerBlockEntity` pads to fast recharge.
+- **Extended RC Car Range**:
+  - Increased RC Car remote control range from 64 blocks to **256 blocks** ($256^2 = 65,536$ dist sq) with chunk tracking expanded to 18 chunks (288 blocks).
+- **Motion Blur for Propellers, Wheels & Shaders**:
+  - **Drone Propellers**: High-speed counter-rotating rotor blur discs and 3 multi-pass ghost blades with exponential alpha falloff.
+  - **RC Car Wheels**: Rotational motion blur rim trails that intensify with vehicle velocity.
+  - **Full-Size Electric Car Wheels**: High-speed rotational motion blur trails on all four alloy wheels.
+  - **Iris Shader Motion Blur**: Integrated velocity-vector motion blur into `EvecualTechShader` composite pass with configurable sample density (Low, Medium, High).
+
 ## [1.1.4] - 2026-09-04
 ### Added & Improved
 - **Arrow Keys RC Camera Orbit & Tilt**:

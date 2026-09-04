@@ -64,6 +64,36 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                 }
             }
         }
+
+        // Check for RC Drones landed or hovering directly on the charger pad
+        Box droneArea = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 1.2, pos.getZ() + 0.95);
+        List<com.evecual.evecualmc.entity.RcDroneEntity> drones = world.getEntitiesByClass(com.evecual.evecualmc.entity.RcDroneEntity.class, droneArea, com.evecual.evecualmc.entity.RcDroneEntity::isAlive);
+
+        for (com.evecual.evecualmc.entity.RcDroneEntity drone : drones) {
+            if (drone.getEnergy() < com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY) {
+                int needed = com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY - drone.getEnergy();
+                int transfer = Math.min(needed, 10);
+                drone.setEnergy(drone.getEnergy() + transfer);
+
+                // Stop auto-returning once docked
+                if (drone.isAutoReturning()) {
+                    drone.onReachedCharger();
+                }
+
+                // Visual spark particles
+                if (world.isClient && world.random.nextFloat() < 0.45f) {
+                    world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                            drone.getX() + (world.random.nextDouble() - 0.5) * 0.35,
+                            drone.getY() + 0.15,
+                            drone.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
+                            0, 0.08, 0);
+                }
+
+                if (drone.age % 25 == 0) {
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 2.2f);
+                }
+            }
+        }
     }
 
     @Override

@@ -21,7 +21,7 @@ public abstract class CameraMixin {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;setRotation(FF)V", ordinal = 0)
     )
     private void evecual$rotateRcCamera(Args args) {
-        if (this.focusedEntity instanceof RcCarEntity) {
+        if (this.focusedEntity instanceof RcCarEntity || this.focusedEntity instanceof com.evecual.evecualmc.entity.RcDroneEntity) {
             float yaw = args.get(0);
             float pitch = args.get(1);
             args.set(0, yaw + EvecualMCClient.getRcCameraYaw());

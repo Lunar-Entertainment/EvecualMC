@@ -15,6 +15,8 @@
   "entity.evecualmc.car": "Electric Car",
   "item.evecualmc.rc_car": "Remote Control Car",
   "entity.evecualmc.rc_car": "Remote Control Car",
+  "item.evecualmc.rc_drone": "Remote Control Drone",
+  "entity.evecualmc.rc_drone": "Remote Control Drone",
   "item.evecualmc.rc_controller": "RC Controller",
   "block.evecualmc.rc_charger": "RC Car Fast Charger",
   "item.evecualmc.rc_charger": "RC Car Fast Charger",

@@ -56,6 +56,13 @@ public class RcCarEntityRenderer extends EntityRenderer<RcCarEntity> {
         VertexConsumer vertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
         this.model.render(matrices, vertices, light, OverlayTexture.DEFAULT_UV, r, g, b, 1.0F);
 
+        // Wheel rotational motion blur when driving at speed
+        float speed = (float) car.getCurrentSpeed();
+        if (Math.abs(speed) > 0.08F) {
+            VertexConsumer transVertices = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE));
+            this.model.renderWheelMotionBlur(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, speed);
+        }
+
         matrices.pop();
         super.render(car, yaw, tickDelta, matrices, vertexConsumers, light);
     }
