@@ -191,12 +191,21 @@ public class StationaryRcControllerBlock extends BlockWithEntity {
             if (vehicle instanceof RcCarEntity car) {
                 car.setPairedPlayerUuid(player.getUuidAsString());
                 car.setExplicitlyPairedInSpot(true);
+                if (car.isInParkingSpot() || car.getParkingSpotPos() != null) {
+                    car.onPairFromParkingSpot();
+                }
             } else if (vehicle instanceof RcDroneEntity drone) {
                 drone.setPairedPlayerUuid(player.getUuidAsString());
                 drone.setExplicitlyPairedInSpot(true);
+                if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
+                    drone.onPairFromParkingSpot();
+                }
             } else if (vehicle instanceof RcRobotEntity robot) {
                 robot.setPairedPlayerUuid(player.getUuidAsString());
                 robot.setExplicitlyPairedInSpot(true);
+                if (robot.isInParkingSpot() || robot.getParkingSpotPos() != null) {
+                    robot.onPairFromParkingSpot();
+                }
             }
 
             // Send S2C packet to lock player and engage RC camera

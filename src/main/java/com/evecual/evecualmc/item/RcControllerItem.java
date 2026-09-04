@@ -41,6 +41,9 @@ public class RcControllerItem extends Item {
         nbt.putBoolean("ActiveLink", true);
         car.setPairedPlayerUuid(player.getUuidAsString());
         car.setExplicitlyPairedInSpot(true);
+        if (car.isInParkingSpot() || car.getParkingSpotPos() != null) {
+            car.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Car! §7(Range: 256m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -57,6 +60,9 @@ public class RcControllerItem extends Item {
         nbt.putBoolean("ActiveLink", true);
         drone.setPairedPlayerUuid(player.getUuidAsString());
         drone.setExplicitlyPairedInSpot(true);
+        if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
+            drone.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Drone! §7(Range: 512m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -73,6 +79,9 @@ public class RcControllerItem extends Item {
         nbt.putBoolean("ActiveLink", true);
         robot.setPairedPlayerUuid(player.getUuidAsString());
         robot.setExplicitlyPairedInSpot(true);
+        if (robot.isInParkingSpot() || robot.getParkingSpotPos() != null) {
+            robot.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Robot! §7(Range: 256m, LMB to use tool)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -227,11 +236,36 @@ public class RcControllerItem extends Item {
 
         if (!world.isClient) {
             if (newActive) {
+                UUID carUuid = getPairedCarUuid(stack);
+                UUID droneUuid = getPairedDroneUuid(stack);
+                UUID robotUuid = getPairedRobotUuid(stack);
+
                 if (isRobot) {
+                    if (robotUuid != null) {
+                        for (RcRobotEntity robot : world.getEntitiesByClass(RcRobotEntity.class, user.getBoundingBox().expand(256.0), r -> r.getUuid().equals(robotUuid))) {
+                            if (robot.isInParkingSpot() || robot.getParkingSpotPos() != null) {
+                                robot.onPairFromParkingSpot();
+                            }
+                        }
+                    }
                     user.sendMessage(Text.literal("§6🤖 RC Robot Link: §aENABLED §7[W/A/S/D Move, LMB Use Tool, F Camera]"), true);
                 } else if (isDrone) {
+                    if (droneUuid != null) {
+                        for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(512.0), d -> d.getUuid().equals(droneUuid))) {
+                            if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
+                                drone.onPairFromParkingSpot();
+                            }
+                        }
+                    }
                     user.sendMessage(Text.literal("§b🚁 RC Drone Flight Link: §aENABLED §7[W/A/S/D Fly, Space Up, Shift Down, F Camera]"), true);
                 } else {
+                    if (carUuid != null) {
+                        for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, user.getBoundingBox().expand(256.0), c -> c.getUuid().equals(carUuid))) {
+                            if (car.isInParkingSpot() || car.getParkingSpotPos() != null) {
+                                car.onPairFromParkingSpot();
+                            }
+                        }
+                    }
                     user.sendMessage(Text.literal("§a📡 RC Car Remote Link: §aENABLED §7[W/A/S/D Drive, F Camera]"), true);
                 }
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),

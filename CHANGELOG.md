@@ -1,5 +1,11 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.9] - 2026-09-04
+### Added & Improved
+- **RC Parking & Unparking Forward Advance**:
+  - When an RC vehicle (RC Car, RC Drone, or RC Robot) enters its parking spot or charging pad, it securely parks, aligns with the pad's facing direction, powers down, and disconnects/unpairs.
+  - When paired or linked again using an RC Controller or Stationary Ground Terminal, the vehicle automatically advances one block forward in its facing direction, clearing the parking spot so it is ready to drive or fly immediately without getting stuck or pinned to the pad.
+
 ## [1.3.8] - 2026-09-04
 ### Added & Improved
 - **EvecualTechShader Next-Gen Visual Overhaul**:

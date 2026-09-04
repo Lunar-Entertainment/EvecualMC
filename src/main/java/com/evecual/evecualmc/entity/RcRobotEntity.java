@@ -85,6 +85,7 @@ public class RcRobotEntity extends Entity {
     private int autoReturnTicks = 0;
     private int stuckTicks = 0;
     private boolean explicitlyPairedInSpot = false;
+    private boolean wasInParkingSpot = false;
 
     public RcRobotEntity(EntityType<?> type, World world) {
         super(type, world);
@@ -314,28 +315,37 @@ public class RcRobotEntity extends Entity {
                 this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + 0.0625, spotPos.getZ() + 0.5);
                 this.setVelocity(Vec3d.ZERO);
             }
-            if (!this.getWorld().isClient()) {
-                if (!this.explicitlyPairedInSpot && !getPairedPlayerUuid().isEmpty()) {
-                    String pUuid = getPairedPlayerUuid();
-                    com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(
-                            this.getWorld(), this.getUuid(), pUuid);
-                    try {
-                        PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
-                        if (player != null) {
-                            player.sendMessage(Text.literal("§e🅿️ RC Robot docked! Vehicle turned off and unpaired."), true);
-                        }
-                    } catch (Exception ignored) {}
-                    setPairedPlayerUuid("");
-                    this.inputForward = false;
-                    this.inputBack = false;
-                    this.inputLeft = false;
-                    this.inputRight = false;
+            if (!this.wasInParkingSpot) {
+                this.wasInParkingSpot = true;
+                this.explicitlyPairedInSpot = false;
+                this.currentSpeed = 0.0;
+                this.inputForward = false;
+                this.inputBack = false;
+                this.inputLeft = false;
+                this.inputRight = false;
+                this.inputSprint = false;
+                this.setVelocity(Vec3d.ZERO);
+                if (this.autoReturning) {
                     this.autoReturning = false;
-                    this.currentSpeed = 0.0;
-                    this.setVelocity(Vec3d.ZERO);
+                    this.targetChargerPos = null;
+                }
+                if (!this.getWorld().isClient()) {
+                    String pUuid = getPairedPlayerUuid();
+                    if (pUuid != null && !pUuid.isEmpty()) {
+                        com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(
+                                this.getWorld(), this.getUuid(), pUuid);
+                        try {
+                            PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                            if (player != null) {
+                                player.sendMessage(Text.literal("§e🅿️ RC Robot docked! Vehicle turned off and unpaired."), true);
+                            }
+                        } catch (Exception ignored) {}
+                        setPairedPlayerUuid("");
+                    }
                 }
             }
-        } else if (!inSpot) {
+        } else {
+            this.wasInParkingSpot = false;
             this.explicitlyPairedInSpot = false;
         }
 
@@ -706,6 +716,49 @@ public class RcRobotEntity extends Entity {
         double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
         double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
         return dx <= 0.32 && dz <= 0.32;
+    }
+
+    public void onPairFromParkingSpot() {
+        this.wasInParkingSpot = false;
+        this.explicitlyPairedInSpot = true;
+
+        BlockPos spotPos = getParkingSpotPos();
+        float yaw = this.getYaw();
+        if (spotPos != null) {
+            BlockState bs = this.getWorld().getBlockState(spotPos);
+            if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
+                yaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
+                this.setYaw(yaw);
+                this.setBodyYaw(yaw);
+                this.setHeadYaw(yaw);
+                this.prevYaw = yaw;
+            }
+        }
+
+        float rad = (float) Math.toRadians(yaw);
+        double forwardX = -Math.sin(rad);
+        double forwardZ = Math.cos(rad);
+
+        double newX = this.getX() + forwardX * 1.0;
+        double newZ = this.getZ() + forwardZ * 1.0;
+        double newY = this.getY();
+
+        BlockPos targetPos = new BlockPos((int) Math.floor(newX), (int) Math.floor(newY), (int) Math.floor(newZ));
+        if (this.getWorld().getBlockState(targetPos).isSolidBlock(this.getWorld(), targetPos)) {
+            newY += 1.0;
+        }
+
+        this.setPosition(newX, newY, newZ);
+        this.setVelocity(forwardX * 0.15, 0.0, forwardZ * 0.15);
+        this.velocityDirty = true;
+        this.velocityModified = true;
+        this.currentSpeed = 0.05;
+
+        if (this.getWorld().isClient()) {
+            this.prevX = newX;
+            this.prevY = newY;
+            this.prevZ = newZ;
+        }
     }
 
     public boolean startAutoReturnToCharger() {

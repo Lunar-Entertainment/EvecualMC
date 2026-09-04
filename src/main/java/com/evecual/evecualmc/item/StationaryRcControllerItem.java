@@ -45,6 +45,9 @@ public class StationaryRcControllerItem extends BlockItem {
         nbt.putString("PairedType", "car");
         nbt.putString("VehicleName", "RC Car");
         nbt.putBoolean("ActiveLink", true);
+        if (car.isInParkingSpot() || car.getParkingSpotPos() != null) {
+            car.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 Stationary Controller linked to RC Car! Place down to install station."), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -61,6 +64,9 @@ public class StationaryRcControllerItem extends BlockItem {
         nbt.putString("PairedType", "drone");
         nbt.putString("VehicleName", "RC Drone");
         nbt.putBoolean("ActiveLink", true);
+        if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
+            drone.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 Stationary Controller linked to RC Drone! Place down to install station."), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -77,6 +83,9 @@ public class StationaryRcControllerItem extends BlockItem {
         nbt.putString("PairedType", "robot");
         nbt.putString("VehicleName", "RC Robot");
         nbt.putBoolean("ActiveLink", true);
+        if (robot.isInParkingSpot() || robot.getParkingSpotPos() != null) {
+            robot.onPairFromParkingSpot();
+        }
 
         player.sendMessage(Text.literal("§a📡 Stationary Controller linked to RC Robot! Place down to install station."), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),

@@ -223,6 +223,49 @@ public class RcCarEntity extends Entity {
         this.explicitlyPairedInSpot = val;
     }
 
+    public void onPairFromParkingSpot() {
+        this.wasInParkingSpot = false;
+        this.explicitlyPairedInSpot = true;
+
+        BlockPos spotPos = getParkingSpotPos();
+        float yaw = this.getYaw();
+        if (spotPos != null) {
+            BlockState bs = this.getWorld().getBlockState(spotPos);
+            if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
+                yaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
+                this.setYaw(yaw);
+                this.setBodyYaw(yaw);
+                this.setHeadYaw(yaw);
+                this.prevYaw = yaw;
+            }
+        }
+
+        float rad = (float) Math.toRadians(yaw);
+        double forwardX = -Math.sin(rad);
+        double forwardZ = Math.cos(rad);
+
+        double newX = this.getX() + forwardX * 1.0;
+        double newZ = this.getZ() + forwardZ * 1.0;
+        double newY = this.getY();
+
+        BlockPos targetPos = new BlockPos((int) Math.floor(newX), (int) Math.floor(newY), (int) Math.floor(newZ));
+        if (this.getWorld().getBlockState(targetPos).isSolidBlock(this.getWorld(), targetPos)) {
+            newY += 1.0;
+        }
+
+        this.setPosition(newX, newY, newZ);
+        this.setVelocity(forwardX * 0.15, 0.0, forwardZ * 0.15);
+        this.velocityDirty = true;
+        this.velocityModified = true;
+        this.currentSpeed = 0.05;
+
+        if (this.getWorld().isClient()) {
+            this.prevX = newX;
+            this.prevY = newY;
+            this.prevZ = newZ;
+        }
+    }
+
     public void onReachedCharger() {
         this.autoReturning = false;
         this.targetChargerPos = null;
