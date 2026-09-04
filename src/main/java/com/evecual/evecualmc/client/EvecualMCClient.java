@@ -187,11 +187,13 @@ public class EvecualMCClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.RcDroneEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.RcDroneEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.RC_DRONE_ENTITY, com.evecual.evecualmc.client.render.RcDroneEntityRenderer::new);
 
-        // Cutout render layer for wire block, solar panel, parking lines, and RC charger
+        // Cutout render layer for wire block, solar panel, parking lines, RC charger, and parking spots
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.SOLAR_PANEL_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.PARKING_LINES_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.RC_CHARGER_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.RC_PARKING_SPOT_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.DRONE_PARKING_SPOT_BLOCK, RenderLayer.getCutout());
 
         // Register Charger Waypoint Network Sync
         ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CHARGER_WAYPOINT_PACKET_ID, (client, handler, buf, responseSender) -> {

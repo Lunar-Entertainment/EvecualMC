@@ -61,6 +61,9 @@ public class RcDroneEntity extends Entity {
     private int autoReturnTicks = 0;
     private int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
 
+    private boolean wasInParkingSpot = false;
+    private boolean explicitlyPairedInSpot = false;
+
     public RcDroneEntity(EntityType<?> type, World world) {
         super(type, world);
         this.setStepHeight(1.0F);
@@ -141,6 +144,16 @@ public class RcDroneEntity extends Entity {
         return this.autoReturning;
     }
 
+    public boolean isInParkingSpot() {
+        BlockPos pos = this.getBlockPos();
+        return this.getWorld().getBlockState(pos).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK) ||
+               this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
+    }
+
+    public void setExplicitlyPairedInSpot(boolean val) {
+        this.explicitlyPairedInSpot = val;
+    }
+
     public void cancelAutoReturn() {
         if (this.autoReturning) {
             this.autoReturning = false;
@@ -162,12 +175,13 @@ public class RcDroneEntity extends Entity {
         BlockPos bestCharger = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        // 100 block search radius for RC Charger pad
+        // 100 block search radius for RC Charger pad or Drone Parking Spot
         for (int x = -100; x <= 100; x += 2) {
             for (int y = -20; y <= 20; y += 2) {
                 for (int z = -100; z <= 100; z += 2) {
                     BlockPos p = dronePos.add(x, y, z);
-                    if (this.getWorld().getBlockState(p).isOf(EvecualMC.RC_CHARGER_BLOCK)) {
+                    net.minecraft.block.BlockState bs = this.getWorld().getBlockState(p);
+                    if (bs.isOf(EvecualMC.RC_CHARGER_BLOCK) || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
                         double dSq = p.getSquaredDistance(dronePos);
                         if (dSq < bestDistSq) {
                             bestDistSq = dSq;
@@ -229,6 +243,55 @@ public class RcDroneEntity extends Entity {
             if (this.age % 100 == 0) {
                 startAutoReturnToCharger();
             }
+        }
+
+        // Parking Spot: turn off motors and unpair until paired again
+        boolean inSpot = isInParkingSpot();
+        if (inSpot) {
+            if (!this.wasInParkingSpot) {
+                this.wasInParkingSpot = true;
+                this.explicitlyPairedInSpot = false;
+                setFlying(false);
+                this.inputUp = false;
+                this.inputDown = false;
+                this.inputForward = false;
+                this.inputBack = false;
+                this.inputLeft = false;
+                this.inputRight = false;
+                this.inputSprint = false;
+                this.propSpeed = 0.0F;
+                this.setVelocity(0.0, Math.min(this.getVelocity().y, 0.0), 0.0);
+                if (this.autoReturning) {
+                    cancelAutoReturn();
+                }
+                if (!this.getWorld().isClient) {
+                    String pUuidStr = getPairedPlayerUuid();
+                    if (pUuidStr != null && !pUuidStr.isEmpty()) {
+                        com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuidStr);
+                        try {
+                            PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuidStr));
+                            if (player != null) {
+                                player.sendMessage(Text.literal("§e🅿️ RC Drone docked! Motors turned off and unpaired."), true);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    setPairedPlayerUuid("");
+                }
+            }
+            if (!this.explicitlyPairedInSpot) {
+                setFlying(false);
+                this.inputUp = false;
+                this.inputDown = false;
+                this.inputForward = false;
+                this.inputBack = false;
+                this.inputLeft = false;
+                this.inputRight = false;
+                this.inputSprint = false;
+                this.propSpeed = 0.0F;
+            }
+        } else {
+            this.wasInParkingSpot = false;
+            this.explicitlyPairedInSpot = false;
         }
 
         Vec3d vel = this.getVelocity();

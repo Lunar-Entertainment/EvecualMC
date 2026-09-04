@@ -1,5 +1,18 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.1] - 2026-09-04
+### Added & Improved
+- **RC Parking Spot & Drone Parking Spot**:
+  - Added dedicated low-profile `RcParkingSpotBlock` for RC Cars and `DroneParkingSpotBlock` for RC Drones.
+  - Automatic Vehicle Power-Down: Entering their respective parking spot turns off the vehicle (RC Car cuts throttle and velocity; RC Drone shuts down propellers and lands).
+  - Automatic Unpairing: Parked vehicles unpair from their controller, disconnecting the link and requiring explicit re-pairing by aiming and right-clicking with the RC Controller to operate again.
+  - Auto-Dock Navigation: Pressing `C` on the controller now intelligently targets either nearby RC Chargers or their respective parking spots.
+- **Powered RC Charger & 16-Block Wireless Charging**:
+  - Renamed "RC Car Fast Charger" to "RC Charger".
+  - RC Chargers now require electrical energy supplied via Wires, Batteries, or Solar Panels (no longer cheat-generates infinite power).
+  - 16-Block Wireless Inductive Field: If an RC Charger has stored power, it wirelessly recharges any RC Car parked in an RC Parking Spot or RC Drone docked in a Drone Parking Spot within a 16-block radius.
+  - Added animated wireless electric spark transmission beams connecting the charger to parked vehicles.
+
 ## [1.2.0] - 2026-09-04
 ### Added & Improved
 - **High-Speed RC Drone (512-Block Range)**:

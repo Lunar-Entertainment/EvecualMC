@@ -58,6 +58,9 @@ public class RcCarEntity extends Entity {
     private int stuckTicks = 0;
     private int reverseTicks = 0;
 
+    private boolean wasInParkingSpot = false;
+    private boolean explicitlyPairedInSpot = false;
+
     public RcCarEntity(EntityType<?> type, World world) {
         super(type, world);
         this.setStepHeight(1.0F); // Effortlessly drive over slabs and 1-block steps!
@@ -115,6 +118,16 @@ public class RcCarEntity extends Entity {
         return this.autoReturning;
     }
 
+    public boolean isInParkingSpot() {
+        net.minecraft.util.math.BlockPos pos = this.getBlockPos();
+        return this.getWorld().getBlockState(pos).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK) ||
+               this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK);
+    }
+
+    public void setExplicitlyPairedInSpot(boolean val) {
+        this.explicitlyPairedInSpot = val;
+    }
+
     public void onReachedCharger() {
         this.autoReturning = false;
         this.targetChargerPos = null;
@@ -143,7 +156,8 @@ public class RcCarEntity extends Entity {
             for (int y = -8; y <= 8; y++) {
                 for (int z = -50; z <= 50; z++) {
                     net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
-                    if (this.getWorld().getBlockState(p).isOf(EvecualMC.RC_CHARGER_BLOCK)) {
+                    net.minecraft.block.BlockState bs = this.getWorld().getBlockState(p);
+                    if (bs.isOf(EvecualMC.RC_CHARGER_BLOCK) || bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
                         double dSq = p.getSquaredDistance(carPos);
                         if (dSq < bestDistSq) {
                             bestDistSq = dSq;
@@ -194,6 +208,46 @@ public class RcCarEntity extends Entity {
         // Apply gravity
         if (!this.isOnGround()) {
             this.setVelocity(this.getVelocity().add(0, -0.04, 0));
+        }
+
+        // Parking Spot: turn off and unpair until paired again
+        boolean inSpot = isInParkingSpot();
+        if (inSpot) {
+            if (!this.wasInParkingSpot) {
+                this.wasInParkingSpot = true;
+                this.explicitlyPairedInSpot = false;
+                this.currentSpeed = 0.0;
+                this.setRemoteInputs(false, false, false, false, false, false);
+                this.setVelocity(0.0, this.getVelocity().y, 0.0);
+                if (this.autoReturning) {
+                    cancelAutoReturn();
+                }
+                if (!this.getWorld().isClient) {
+                    String pUuidStr = getPairedPlayerUuid();
+                    if (pUuidStr != null && !pUuidStr.isEmpty()) {
+                        com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuidStr);
+                        try {
+                            PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuidStr));
+                            if (player != null) {
+                                player.sendMessage(Text.literal("§e🅿️ RC Car parked! Vehicle turned off and unpaired."), true);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    setPairedPlayerUuid("");
+                }
+            }
+            if (!this.explicitlyPairedInSpot) {
+                this.currentSpeed = 0.0;
+                this.inputForward = false;
+                this.inputBack = false;
+                this.inputLeft = false;
+                this.inputRight = false;
+                this.inputSprint = false;
+                this.inputJump = false;
+            }
+        } else {
+            this.wasInParkingSpot = false;
+            this.explicitlyPairedInSpot = false;
         }
 
         int energy = getEnergy();

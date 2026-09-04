@@ -38,6 +38,7 @@ public class RcControllerItem extends Item {
         nbt.putString("PairedType", "car");
         nbt.putBoolean("ActiveLink", true);
         car.setPairedPlayerUuid(player.getUuidAsString());
+        car.setExplicitlyPairedInSpot(true);
 
         player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Car! §7(Range: 256m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -52,11 +53,56 @@ public class RcControllerItem extends Item {
         nbt.putString("PairedType", "drone");
         nbt.putBoolean("ActiveLink", true);
         drone.setPairedPlayerUuid(player.getUuidAsString());
+        drone.setExplicitlyPairedInSpot(true);
 
         player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Drone! §7(Range: 512m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
         return true;
+    }
+
+    public static void unpair(ItemStack stack, @Nullable PlayerEntity player) {
+        if (stack.hasNbt()) {
+            NbtCompound nbt = stack.getNbt();
+            if (nbt != null) {
+                nbt.remove("PairedCar");
+                nbt.remove("PairedDrone");
+                nbt.remove("PairedType");
+                nbt.putBoolean("ActiveLink", false);
+            }
+        }
+    }
+
+    public static void unpairVehicleFromPlayer(World world, UUID vehicleUuid, String playerUuidStr) {
+        if (playerUuidStr == null || playerUuidStr.isEmpty()) return;
+        try {
+            UUID pUuid = UUID.fromString(playerUuidStr);
+            PlayerEntity player = world.getPlayerByUuid(pUuid);
+            if (player != null) {
+                for (ItemStack stack : player.getInventory().main) {
+                    if (stack.isOf(com.evecual.evecualmc.EvecualMC.RC_CONTROLLER_ITEM) && stack.hasNbt()) {
+                        NbtCompound nbt = stack.getNbt();
+                        if (nbt != null) {
+                            if ((nbt.containsUuid("PairedCar") && nbt.getUuid("PairedCar").equals(vehicleUuid)) ||
+                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid))) {
+                                unpair(stack, player);
+                            }
+                        }
+                    }
+                }
+                for (ItemStack stack : player.getInventory().offHand) {
+                    if (stack.isOf(com.evecual.evecualmc.EvecualMC.RC_CONTROLLER_ITEM) && stack.hasNbt()) {
+                        NbtCompound nbt = stack.getNbt();
+                        if (nbt != null) {
+                            if ((nbt.containsUuid("PairedCar") && nbt.getUuid("PairedCar").equals(vehicleUuid)) ||
+                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid))) {
+                                unpair(stack, player);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
