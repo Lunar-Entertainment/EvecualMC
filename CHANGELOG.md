@@ -1,5 +1,14 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.1] - 2026-09-04
+### Fixed & Improved
+- **Resolved Actionbar HUD Text Overflow & Clipping**:
+  - Completely redesigned the actionbar HUD overlay messages for the RC Robot, RC Car, and RC Drone.
+  - Replaced overly verbose hotkey strings with compact, color-coded badges (`[F:Cam Z:Cargo L:Light C:Dock]`).
+  - Added responsive screen-width detection: automatically drops secondary hints on lower resolutions or high GUI scales to prevent clipping.
+  - Implemented `sendSafeActionBar`: dynamically calculates pixel text width against screen bounds and gracefully truncates with an ellipsis if space is constrained, guaranteeing actionbar text never spills off the left or right edges of the screen.
+  - Shortened equipped tool names exceeding maximum display width to maintain clean telemetry.
+
 ## [1.3.0] - 2026-09-04
 ### Added & Improved
 - **Fixed Text Overlap in In-Game Tip Menu & Field Guide**:

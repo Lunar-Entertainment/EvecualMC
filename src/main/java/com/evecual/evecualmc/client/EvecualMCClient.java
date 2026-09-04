@@ -120,16 +120,27 @@ public class EvecualMCClient implements ClientModInitializer {
         }
     }
 
+    public static void sendSafeActionBar(MinecraftClient client, String text) {
+        if (client == null || client.player == null) return;
+        int maxPixelWidth = Math.max(100, client.getWindow().getScaledWidth() - 24);
+        if (client.textRenderer != null && client.textRenderer.getWidth(text) > maxPixelWidth) {
+            String trimmed = client.textRenderer.trimToWidth(text, maxPixelWidth - 10) + "…";
+            client.player.sendMessage(Text.literal(trimmed), true);
+        } else {
+            client.player.sendMessage(Text.literal(text), true);
+        }
+    }
+
     public static void toggleRcPerspective(MinecraftClient client) {
         if (client == null || !isRcCameraActive() || client.player == null) return;
         if (client.options.getPerspective().isFirstPerson()) {
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-            client.player.sendMessage(Text.literal("§b📷 RC Camera: §eTHIRD PERSON §7[Scroll: Distance Zoom, RMB: FP]"), true);
+            sendSafeActionBar(client, "§b📷 RC Camera: §eTHIRD PERSON §7[RMB: FPV, Scroll: Zoom]");
         } else {
             client.options.setPerspective(Perspective.FIRST_PERSON);
             targetRcCameraYaw = 0.0F;
             smoothRcCameraYaw = 0.0F;
-            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aFIRST PERSON (FPV) §7[Scroll: Optic Zoom, RMB: TP]"), true);
+            sendSafeActionBar(client, "§b📷 RC Camera: §aFIRST PERSON (FPV) §7[RMB: 3RD, Scroll: Zoom]");
         }
     }
 
@@ -340,7 +351,7 @@ public class EvecualMCClient implements ClientModInitializer {
             client.options.setPerspective(previousPerspective);
             targetRcFpZoom = 1.0F;
             rcFpZoom = 1.0F;
-            client.player.sendMessage(Text.literal("§7📷 RC Camera: §cDISABLED §7[Player View]"), true);
+            sendSafeActionBar(client, "§7📷 RC Camera: §cDISABLED §7[Player View]");
         } else {
             resetRcCameraAngle();
             targetRcCameraDistance = 3.5F;
@@ -351,7 +362,7 @@ public class EvecualMCClient implements ClientModInitializer {
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
             String name = (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
-            client.player.sendMessage(Text.literal("§b📷 RC " + name + " Camera: §aENABLED §7[RMB: FP/TP, Scroll: Zoom, L: Light, F: Exit]"), true);
+            sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[RMB: View | F: Exit]");
         }
     }
 
@@ -642,9 +653,31 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRobot;
-                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer & Aim | RMB: TP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit") : "F: Robot Cam | L: Light | Z: Cargo";
                                 String toolName = targetRobot.getEquippedTool().isEmpty() ? "Bare Hand" : targetRobot.getEquippedTool().getName().getString();
-                                client.player.sendMessage(Text.literal("§6🤖 RC ROBOT: §a" + targetRobot.getEnergy() + " E §7| §bTool: " + toolName + " §7| §eRange: " + (int)client.player.distanceTo(targetRobot) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
+                                if (toolName.length() > 14) {
+                                    toolName = toolName.substring(0, 12) + "…";
+                                }
+                                int range = (int)client.player.distanceTo(targetRobot);
+                                int energy = targetRobot.getEnergy();
+                                int screenWidth = client.getWindow().getScaledWidth();
+
+                                String msg;
+                                if (isCamView) {
+                                    boolean fp = client.options.getPerspective().isFirstPerson();
+                                    String viewMode = fp ? "FPV" : "3RD";
+                                    if (screenWidth < 380) {
+                                        msg = "§6🤖 Cam (" + viewMode + ") §a" + energy + "E §7| §b" + toolName;
+                                    } else {
+                                        msg = "§6🤖 Cam (" + viewMode + ") §a" + energy + "E §7| §b" + toolName + " §8[§fLMB§7:Mine §fZ§7:Inv §fRMB§7:View §fF§7:Exit]";
+                                    }
+                                } else {
+                                    if (screenWidth < 380) {
+                                        msg = "§6🤖 Robot: §a" + energy + "E §7| §b" + toolName + " §7| §e" + range + "m";
+                                    } else {
+                                        msg = "§6🤖 Robot: §a" + energy + "E §7| §b" + toolName + " §7| §e" + range + "m §8[§fF§7:Cam §fZ§7:Cargo §fL§7:Light §fC§7:Dock]";
+                                    }
+                                }
+                                sendSafeActionBar(client, msg);
                             }
                         }
                     }
@@ -685,8 +718,27 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRc;
-                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: RC Camera | L: Light";
-                                client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
+                                int range = (int)client.player.distanceTo(targetRc);
+                                int energy = targetRc.getEnergy();
+                                int screenWidth = client.getWindow().getScaledWidth();
+
+                                String msg;
+                                if (isCamView) {
+                                    boolean fp = client.options.getPerspective().isFirstPerson();
+                                    String viewMode = fp ? "FPV" : "3RD";
+                                    if (screenWidth < 340) {
+                                        msg = "§b🏎️ Car Cam (" + viewMode + ") §a" + energy + "E";
+                                    } else {
+                                        msg = "§b🏎️ Car Cam (" + viewMode + ") §a" + energy + "E §8[§fRMB§7:View §fL§7:Light §fF§7:Exit]";
+                                    }
+                                } else {
+                                    if (screenWidth < 360) {
+                                        msg = "§b🏎️ RC Car: §a" + energy + "E §7| §e" + range + "m";
+                                    } else {
+                                        msg = "§b🏎️ RC Car: §a" + energy + "E §7| §e" + range + "m §8[§fF§7:Cam §fL§7:Light §fC§7:Dock]";
+                                    }
+                                }
+                                sendSafeActionBar(client, msg);
                             }
                         }
                     }
@@ -731,8 +783,28 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetDrone;
-                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer | A/D: Strafe | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | A/D: Turn | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: Drone Camera | L: Light";
-                                client.player.sendMessage(Text.literal("§b📡 RC DRONE: §a" + targetDrone.getEnergy() + " E §7| §eAlt: " + String.format("%.1f", targetDrone.getY()) + "m §7| §eRange: " + (int)client.player.distanceTo(targetDrone) + "m/512m §8| §f[" + camPrompt + ", C: Charger]"), true);
+                                int range = (int)client.player.distanceTo(targetDrone);
+                                int energy = targetDrone.getEnergy();
+                                String alt = String.format("%.1f", targetDrone.getY());
+                                int screenWidth = client.getWindow().getScaledWidth();
+
+                                String msg;
+                                if (isCamView) {
+                                    boolean fp = client.options.getPerspective().isFirstPerson();
+                                    String viewMode = fp ? "FPV" : "3RD";
+                                    if (screenWidth < 360) {
+                                        msg = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m";
+                                    } else {
+                                        msg = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m §8[§fA/D§7:Strafe §fRMB§7:View §fF§7:Exit]";
+                                    }
+                                } else {
+                                    if (screenWidth < 380) {
+                                        msg = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m";
+                                    } else {
+                                        msg = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m §8[§fF§7:Cam §fL§7:Light §fC§7:Dock]";
+                                    }
+                                }
+                                sendSafeActionBar(client, msg);
                             }
                         }
                     }
