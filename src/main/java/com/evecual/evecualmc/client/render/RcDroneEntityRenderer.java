@@ -64,16 +64,15 @@ public class RcDroneEntityRenderer extends EntityRenderer<RcDroneEntity> {
         this.model.renderBodyAndProps(matrices, solidVertices, light, OverlayTexture.DEFAULT_UV, r, g, b, 1.0F);
 
         // 5. High-speed Propeller Motion Blur
-        float propSpeed = drone.getPropSpeed();
-        if (propSpeed > 0.35F) {
+        boolean isMotorSpinning = drone.getEnergy() > 0 && (drone.isFlying() || !drone.isOnGround() || drone.getPropSpeed() > 0.35F);
+        if (isMotorSpinning) {
             VertexConsumer transVertices = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE));
 
             // Rotational ghost blades trailing behind the spinning propellers
-            this.model.renderPropellerGhosts(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, 0.3F, 0.3F, 0.35F, propSpeed);
+            this.model.renderPropellerGhosts(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, 0.3F, 0.3F, 0.35F, 1.0F);
 
             // Translucent motion-blur rotor disc representing high RPM rotor sweep
-            float discAlpha = MathHelper.clamp((propSpeed - 0.35F) * 0.4F, 0.0F, 0.55F);
-            this.model.renderBlurDiscs(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, discAlpha);
+            this.model.renderBlurDiscs(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, 0.35F);
         }
 
         // High-power aerial spotlight when Light is ON

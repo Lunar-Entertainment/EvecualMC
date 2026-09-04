@@ -4,7 +4,11 @@ import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.RcChargerBlockEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LightBlock;
+import net.minecraft.block.Waterloggable;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -98,12 +102,82 @@ public class RcRobotEntity extends Entity {
         this.dataTracker.startTracking(LIGHT_ON, false);
     }
 
+    private BlockPos currentLightPos = null;
+    private float leftTreadRoll = 0.0F;
+    private float rightTreadRoll = 0.0F;
+    private float prevLeftTreadRoll = 0.0F;
+    private float prevRightTreadRoll = 0.0F;
+
     public boolean isLightOn() {
         return this.dataTracker.get(LIGHT_ON);
     }
 
     public void setLightOn(boolean on) {
         this.dataTracker.set(LIGHT_ON, on);
+        if (!on) {
+            removeRealLight();
+        }
+    }
+
+    public float getLeftTreadRoll(float tickDelta) {
+        return MathHelper.lerp(tickDelta, this.prevLeftTreadRoll, this.leftTreadRoll);
+    }
+
+    public float getRightTreadRoll(float tickDelta) {
+        return MathHelper.lerp(tickDelta, this.prevRightTreadRoll, this.rightTreadRoll);
+    }
+
+    public void tickRealLight() {
+        if (this.getWorld().isClient) return;
+
+        boolean active = isLightOn() && getEnergy() > 0 && isAlive() && !isRemoved();
+
+        if (active) {
+            BlockPos targetPos = this.getBlockPos();
+            BlockState state = this.getWorld().getBlockState(targetPos);
+
+            if (!state.isAir() && !state.isOf(Blocks.LIGHT) && !state.getFluidState().isOf(Fluids.WATER)) {
+                targetPos = targetPos.up();
+                state = this.getWorld().getBlockState(targetPos);
+            }
+
+            if (currentLightPos == null || !currentLightPos.equals(targetPos)) {
+                removeRealLight();
+
+                if (state.isAir()) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.getFluidState().isOf(Fluids.WATER) && state.getBlock() instanceof Waterloggable) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15).with(LightBlock.WATERLOGGED, true), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.isOf(Blocks.LIGHT)) {
+                    this.currentLightPos = targetPos;
+                }
+            }
+        } else {
+            removeRealLight();
+        }
+    }
+
+    public void removeRealLight() {
+        if (this.getWorld().isClient) return;
+        if (this.currentLightPos != null) {
+            BlockState oldState = this.getWorld().getBlockState(this.currentLightPos);
+            if (oldState.isOf(Blocks.LIGHT)) {
+                if (oldState.contains(LightBlock.WATERLOGGED) && oldState.get(LightBlock.WATERLOGGED)) {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.WATER.getDefaultState(), Block.NOTIFY_ALL);
+                } else {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                }
+            }
+            this.currentLightPos = null;
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        removeRealLight();
+        super.remove(reason);
     }
 
     public int getEnergy() {
@@ -183,6 +257,8 @@ public class RcRobotEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+
+        tickRealLight();
 
         if (inputTimeoutTicks > 0) {
             inputTimeoutTicks--;
@@ -265,7 +341,25 @@ public class RcRobotEntity extends Entity {
             }
         }
 
-        treadRoll += (float) (currentSpeed * 15.0);
+        this.prevLeftTreadRoll = this.leftTreadRoll;
+        this.prevRightTreadRoll = this.rightTreadRoll;
+
+        float turnComponent = 0.0F;
+        if (inputLeft) turnComponent -= 2.2F;
+        if (inputRight) turnComponent += 2.2F;
+
+        float forwardMotion = (float) currentSpeed;
+        if (this.getWorld().isClient()) {
+            double dx = this.getX() - this.prevX;
+            double dz = this.getZ() - this.prevZ;
+            forwardMotion = (float) (-Math.sin(Math.toRadians(this.getYaw())) * dx + Math.cos(Math.toRadians(this.getYaw())) * dz);
+            float yawDiff = MathHelper.wrapDegrees(this.getYaw() - this.prevYaw);
+            turnComponent = yawDiff * 0.4F;
+        }
+
+        this.leftTreadRoll += forwardMotion * 18.0F - turnComponent;
+        this.rightTreadRoll += forwardMotion * 18.0F + turnComponent;
+        this.treadRoll += (float) (currentSpeed * 15.0);
 
         double rad = Math.toRadians(this.getYaw());
         double forwardX = -Math.sin(rad) * currentSpeed;

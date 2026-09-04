@@ -28,6 +28,12 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LightBlock;
+import net.minecraft.block.Waterloggable;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.world.World;
 
 public class RcDroneEntity extends Entity {
@@ -82,12 +88,70 @@ public class RcDroneEntity extends Entity {
         this.dataTracker.startTracking(LIGHT_ON, false);
     }
 
+    private BlockPos currentLightPos = null;
+
     public boolean isLightOn() {
         return this.dataTracker.get(LIGHT_ON);
     }
 
     public void setLightOn(boolean on) {
         this.dataTracker.set(LIGHT_ON, on);
+        if (!on) {
+            removeRealLight();
+        }
+    }
+
+    public void tickRealLight() {
+        if (this.getWorld().isClient) return;
+
+        boolean active = isLightOn() && getEnergy() > 0 && isAlive() && !isRemoved();
+
+        if (active) {
+            BlockPos targetPos = this.getBlockPos();
+            BlockState state = this.getWorld().getBlockState(targetPos);
+
+            if (!state.isAir() && !state.isOf(Blocks.LIGHT) && !state.getFluidState().isOf(Fluids.WATER)) {
+                targetPos = targetPos.up();
+                state = this.getWorld().getBlockState(targetPos);
+            }
+
+            if (currentLightPos == null || !currentLightPos.equals(targetPos)) {
+                removeRealLight();
+
+                if (state.isAir()) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.isOf(Blocks.WATER) && state.getFluidState().isStill()) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15).with(LightBlock.WATERLOGGED, true), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.isOf(Blocks.LIGHT)) {
+                    this.currentLightPos = targetPos;
+                }
+            }
+        } else {
+            removeRealLight();
+        }
+    }
+
+    public void removeRealLight() {
+        if (this.getWorld().isClient) return;
+        if (this.currentLightPos != null) {
+            BlockState oldState = this.getWorld().getBlockState(this.currentLightPos);
+            if (oldState.isOf(Blocks.LIGHT)) {
+                if (oldState.contains(LightBlock.WATERLOGGED) && oldState.get(LightBlock.WATERLOGGED)) {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.WATER.getDefaultState(), Block.NOTIFY_ALL);
+                } else {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                }
+            }
+            this.currentLightPos = null;
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        removeRealLight();
+        super.remove(reason);
     }
 
     public int getEnergy() {
@@ -230,6 +294,8 @@ public class RcDroneEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+
+        tickRealLight();
 
         this.prevPropAngle = this.propAngle;
 
@@ -386,13 +452,10 @@ public class RcDroneEntity extends Entity {
             double accel = this.inputSprint ? 0.08 : 0.045;
 
             Vec3d forwardVec = Vec3d.fromPolar(0, this.getYaw());
-            Vec3d rightVec = Vec3d.fromPolar(0, this.getYaw() + 90.0F);
 
             Vec3d moveDir = Vec3d.ZERO;
             if (this.inputForward) moveDir = moveDir.add(forwardVec);
             if (this.inputBack) moveDir = moveDir.subtract(forwardVec);
-            if (this.inputRight) moveDir = moveDir.add(rightVec);
-            if (this.inputLeft) moveDir = moveDir.subtract(rightVec);
 
             if (moveDir.lengthSquared() > 0.001) {
                 moveDir = moveDir.normalize().multiply(topSpeed);
@@ -407,7 +470,8 @@ public class RcDroneEntity extends Entity {
                     setEnergy(energy - 1);
                 }
             } else {
-                vel = new Vec3d(vel.x * 0.90, vel.y, vel.z * 0.90);
+                // When hovering or rotating on the spot, rapidly damp horizontal velocity so it stays right where it is
+                vel = new Vec3d(vel.x * 0.70, vel.y, vel.z * 0.70);
                 if (Math.abs(vel.x) < 0.005) vel = new Vec3d(0, vel.y, vel.z);
                 if (Math.abs(vel.z) < 0.005) vel = new Vec3d(vel.x, vel.y, 0);
             }
@@ -428,23 +492,27 @@ public class RcDroneEntity extends Entity {
                 vel = new Vec3d(vel.x, vel.y * hoverDamping + subtleHoverWave, vel.z);
             }
 
-            // Yaw rotation when turning/strafing
-            float targetAngle = 0.0F;
-            if (this.inputLeft) targetAngle -= 3.5F;
-            if (this.inputRight) targetAngle += 3.5F;
-            if (targetAngle != 0.0F) {
-                this.setYaw(MathHelper.wrapDegrees(this.getYaw() + targetAngle));
+            // Rotate on the spot (A/D turns heading cleanly in-place without strafing)
+            float turnSpeed = this.inputSprint ? 5.5F : 4.0F;
+            if (this.inputLeft) {
+                this.setYaw(MathHelper.wrapDegrees(this.getYaw() - turnSpeed));
+            }
+            if (this.inputRight) {
+                this.setYaw(MathHelper.wrapDegrees(this.getYaw() + turnSpeed));
             }
 
-            // Aerodynamic tilt (pitch forward/back, roll left/right)
+            // Aerodynamic tilt (pitch forward/back, roll only during forward motion)
             float targetPitch = 0.0F;
             if (this.inputForward) targetPitch = this.inputSprint ? -25.0F : -16.0F;
             if (this.inputBack) targetPitch = 14.0F;
             setPitchTilt(getPitchTilt() + (targetPitch - getPitchTilt()) * 0.25F);
 
+            // Level roll when rotating on the spot, slight banking only during forward turns
             float targetRoll = 0.0F;
-            if (this.inputLeft) targetRoll = -22.0F;
-            if (this.inputRight) targetRoll = 22.0F;
+            if (this.inputForward || this.inputBack) {
+                if (this.inputLeft) targetRoll = -10.0F;
+                if (this.inputRight) targetRoll = 10.0F;
+            }
             setRollTilt(getRollTilt() + (targetRoll - getRollTilt()) * 0.25F);
 
         } else {

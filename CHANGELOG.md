@@ -1,5 +1,22 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.6] - 2026-09-04
+### Added & Improved
+- **Real World Block Light on All RC Vehicles (Torch-Level Illumination)**:
+  - Upgraded vehicle headlights and spotlights to emit real Minecraft block light at level 15 (equivalent to torches and lanterns) into the surrounding environment.
+  - As the vehicle drives or flies, the dynamic light source follows smoothly from block to block, illuminating terrain, dark caves, and structures for all players and shaders.
+  - Supports underwater and waterlogged travel; automatically cleans up when turned off or when vehicle is collected.
+- **In-Place Drone Rotation (Turns On The Spot)**:
+  - Re-engineered drone steering physics: pressing `A` or `D` now rotates the drone cleanly in place on the spot rather than swinging in wide lateral curves.
+  - Immediately damps horizontal momentum when rotating in hover mode, keeping the drone centered right where it is.
+- **Continuous Drone Propeller Animation & High-Speed Blur**:
+  - Fixed propeller animation: quadcopter propellers now spin continuously and smoothly at authentic high RPM whenever the motors are active or the drone is airborne.
+  - Preserved rotational angles cleanly in the model to avoid blade jitter, with realistic motion blur disc sweeps and ghost blade trails.
+- **Animated Caterpillar Tracks & Band Movement on RC Robot**:
+  - Fully animated the RC Robot's tank tread bands ("bands") and internal drive units.
+  - Added 8 spinning road wheels (4 per track) that rotate in real-time according to speed and steering direction.
+  - Added 24 cycling tread cleats along the top and bottom of the rubber track belts that physically roll across the ground, moving forward on the ground and backward on the return run, with differential rotation during pivot turns.
+
 ## [1.2.5] - 2026-09-04
 ### Added & Improved
 - **RC Camera Mouse Scroll Wheel Zoom**:

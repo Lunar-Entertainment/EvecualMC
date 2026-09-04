@@ -19,6 +19,12 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
     private final ModelPart leftArm;
     private final ModelPart leftTrack;
     private final ModelPart rightTrack;
+    private final ModelPart[] leftWheels = new ModelPart[4];
+    private final ModelPart[] rightWheels = new ModelPart[4];
+    private final ModelPart[] leftCleatsTop = new ModelPart[6];
+    private final ModelPart[] leftCleatsBottom = new ModelPart[6];
+    private final ModelPart[] rightCleatsTop = new ModelPart[6];
+    private final ModelPart[] rightCleatsBottom = new ModelPart[6];
 
     public RcRobotEntityModel(ModelPart root) {
         super(RenderLayer::getEntityCutoutNoCull);
@@ -29,6 +35,17 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
         this.leftArm = this.body.getChild("left_arm");
         this.leftTrack = root.getChild("left_track");
         this.rightTrack = root.getChild("right_track");
+
+        for (int i = 0; i < 4; i++) {
+            this.leftWheels[i] = this.leftTrack.getChild("wheel_" + i);
+            this.rightWheels[i] = this.rightTrack.getChild("wheel_" + i);
+        }
+        for (int i = 0; i < 6; i++) {
+            this.leftCleatsTop[i] = this.leftTrack.getChild("cleat_top_" + i);
+            this.leftCleatsBottom[i] = this.leftTrack.getChild("cleat_bot_" + i);
+            this.rightCleatsTop[i] = this.rightTrack.getChild("cleat_top_" + i);
+            this.rightCleatsBottom[i] = this.rightTrack.getChild("cleat_bot_" + i);
+        }
     }
 
     public static TexturedModelData getTexturedModelData() {
@@ -36,17 +53,46 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
         ModelPartData rootData = modelData.getRoot();
 
         // 1. Dual Tracked Drive Units (Treads)
-        rootData.addChild("left_track",
+        ModelPartData leftTrackData = rootData.addChild("left_track",
                 ModelPartBuilder.create()
                         .uv(0, 36).cuboid(4.5F, -3.0F, -7.0F, 3.0F, 6.0F, 14.0F)
-                        .uv(0, 56).cuboid(4.2F, -2.5F, -6.5F, 0.4F, 5.0F, 13.0F), // tread ridges
+                        .uv(0, 56).cuboid(4.2F, -2.5F, -6.5F, 0.4F, 5.0F, 13.0F),
                 ModelTransform.pivot(0.0F, 21.0F, 0.0F));
 
-        rootData.addChild("right_track",
+        ModelPartData rightTrackData = rootData.addChild("right_track",
                 ModelPartBuilder.create()
                         .uv(0, 36).cuboid(-7.5F, -3.0F, -7.0F, 3.0F, 6.0F, 14.0F)
                         .uv(0, 56).cuboid(-4.6F, -2.5F, -6.5F, 0.4F, 5.0F, 13.0F),
                 ModelTransform.pivot(0.0F, 21.0F, 0.0F));
+
+        // Animated Road Wheels inside tracks
+        float[] wheelZ = { -4.6F, -1.5F, 1.5F, 4.6F };
+        for (int i = 0; i < 4; i++) {
+            leftTrackData.addChild("wheel_" + i,
+                    ModelPartBuilder.create().uv(0, 36).cuboid(-1.4F, -2.0F, -2.0F, 2.8F, 4.0F, 4.0F),
+                    ModelTransform.pivot(6.0F, 0.0F, wheelZ[i]));
+
+            rightTrackData.addChild("wheel_" + i,
+                    ModelPartBuilder.create().uv(0, 36).cuboid(-1.4F, -2.0F, -2.0F, 2.8F, 4.0F, 4.0F),
+                    ModelTransform.pivot(-6.0F, 0.0F, wheelZ[i]));
+        }
+
+        // Animated rolling tread cleats/ribs along the band
+        for (int i = 0; i < 6; i++) {
+            leftTrackData.addChild("cleat_top_" + i,
+                    ModelPartBuilder.create().uv(0, 56).cuboid(-1.6F, -3.3F, -0.5F, 3.2F, 0.4F, 1.0F),
+                    ModelTransform.pivot(6.0F, 0.0F, -5.0F + i * 2.0F));
+            leftTrackData.addChild("cleat_bot_" + i,
+                    ModelPartBuilder.create().uv(0, 56).cuboid(-1.6F, 2.9F, -0.5F, 3.2F, 0.4F, 1.0F),
+                    ModelTransform.pivot(6.0F, 0.0F, 5.0F - i * 2.0F));
+
+            rightTrackData.addChild("cleat_top_" + i,
+                    ModelPartBuilder.create().uv(0, 56).cuboid(-1.6F, -3.3F, -0.5F, 3.2F, 0.4F, 1.0F),
+                    ModelTransform.pivot(-6.0F, 0.0F, -5.0F + i * 2.0F));
+            rightTrackData.addChild("cleat_bot_" + i,
+                    ModelPartBuilder.create().uv(0, 56).cuboid(-1.6F, 2.9F, -0.5F, 3.2F, 0.4F, 1.0F),
+                    ModelTransform.pivot(-6.0F, 0.0F, 5.0F - i * 2.0F));
+        }
 
         // 2. Central Body Chassis & Battery Core
         ModelPartData bodyData = rootData.addChild("body",
@@ -118,6 +164,36 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
         // Left idle arm
         this.leftArm.pitch = 0.15F;
         this.leftArm.yaw = 0.0F;
+
+        // Tank tread wheels rotation and moving band cleats
+        float tickDelta = animationProgress - (int)animationProgress;
+        float leftRoll = robot.getLeftTreadRoll(tickDelta);
+        float rightRoll = robot.getRightTreadRoll(tickDelta);
+
+        for (int i = 0; i < 4; i++) {
+            this.leftWheels[i].pitch = leftRoll;
+            this.rightWheels[i].pitch = rightRoll;
+        }
+
+        float trackLength = 12.0F;
+        float spacing = trackLength / 6.0F;
+        for (int i = 0; i < 6; i++) {
+            float leftTopZ = -5.8F + floorMod(i * spacing + leftRoll * 0.45F, trackLength);
+            float leftBotZ = 5.8F - floorMod(i * spacing + leftRoll * 0.45F, trackLength);
+            this.leftCleatsTop[i].pivotZ = leftTopZ;
+            this.leftCleatsBottom[i].pivotZ = leftBotZ;
+
+            float rightTopZ = -5.8F + floorMod(i * spacing + rightRoll * 0.45F, trackLength);
+            float rightBotZ = 5.8F - floorMod(i * spacing + rightRoll * 0.45F, trackLength);
+            this.rightCleatsTop[i].pivotZ = rightTopZ;
+            this.rightCleatsBottom[i].pivotZ = rightBotZ;
+        }
+    }
+
+    private static float floorMod(float value, float mod) {
+        float rem = value % mod;
+        if (rem < 0.0F) rem += mod;
+        return rem;
     }
 
     public ModelPart getRightArm() {

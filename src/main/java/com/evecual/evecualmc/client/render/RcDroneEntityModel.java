@@ -102,7 +102,10 @@ public class RcDroneEntityModel extends EntityModel<RcDroneEntity> {
 
     @Override
     public void setAngles(RcDroneEntity drone, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        float angle = drone.getPropAngle(animationProgress - (int)animationProgress);
+        boolean active = drone.getEnergy() > 0 && (drone.isFlying() || !drone.isOnGround() || drone.isAutoReturning()
+                || Math.abs(drone.getVelocity().y) > 0.01 || Math.abs(drone.getVelocity().horizontalLength()) > 0.01);
+
+        float angle = active ? animationProgress * 1.85F : 0.0F;
 
         // Counter-rotating quadcopter propellers (FL & RR clockwise, FR & RL counter-clockwise)
         this.prop_fl.yaw = angle;

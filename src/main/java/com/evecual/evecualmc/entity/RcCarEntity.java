@@ -27,6 +27,13 @@ import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LightBlock;
+import net.minecraft.block.Waterloggable;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.UUID;
@@ -76,12 +83,70 @@ public class RcCarEntity extends Entity {
         this.dataTracker.startTracking(LIGHT_ON, false);
     }
 
+    private BlockPos currentLightPos = null;
+
     public boolean isLightOn() {
         return this.dataTracker.get(LIGHT_ON);
     }
 
     public void setLightOn(boolean on) {
         this.dataTracker.set(LIGHT_ON, on);
+        if (!on) {
+            removeRealLight();
+        }
+    }
+
+    public void tickRealLight() {
+        if (this.getWorld().isClient) return;
+
+        boolean active = isLightOn() && getEnergy() > 0 && isAlive() && !isRemoved();
+
+        if (active) {
+            BlockPos targetPos = this.getBlockPos();
+            BlockState state = this.getWorld().getBlockState(targetPos);
+
+            if (!state.isAir() && !state.isOf(Blocks.LIGHT) && !state.getFluidState().isOf(Fluids.WATER)) {
+                targetPos = targetPos.up();
+                state = this.getWorld().getBlockState(targetPos);
+            }
+
+            if (currentLightPos == null || !currentLightPos.equals(targetPos)) {
+                removeRealLight();
+
+                if (state.isAir()) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.isOf(Blocks.WATER) && state.getFluidState().isStill()) {
+                    this.getWorld().setBlockState(targetPos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15).with(LightBlock.WATERLOGGED, true), Block.NOTIFY_ALL);
+                    this.currentLightPos = targetPos;
+                } else if (state.isOf(Blocks.LIGHT)) {
+                    this.currentLightPos = targetPos;
+                }
+            }
+        } else {
+            removeRealLight();
+        }
+    }
+
+    public void removeRealLight() {
+        if (this.getWorld().isClient) return;
+        if (this.currentLightPos != null) {
+            BlockState oldState = this.getWorld().getBlockState(this.currentLightPos);
+            if (oldState.isOf(Blocks.LIGHT)) {
+                if (oldState.contains(LightBlock.WATERLOGGED) && oldState.get(LightBlock.WATERLOGGED)) {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.WATER.getDefaultState(), Block.NOTIFY_ALL);
+                } else {
+                    this.getWorld().setBlockState(this.currentLightPos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+                }
+            }
+            this.currentLightPos = null;
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        removeRealLight();
+        super.remove(reason);
     }
 
     public int getEnergy() {
@@ -203,6 +268,8 @@ public class RcCarEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+
+        tickRealLight();
 
         // Timeout remote inputs if transmitter signal stops
         this.inputTimeoutTicks++;
