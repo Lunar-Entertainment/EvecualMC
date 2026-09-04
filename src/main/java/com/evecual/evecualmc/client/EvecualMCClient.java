@@ -73,6 +73,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding OPEN_TIP_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.open_tips",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            "category.evecualmc.evecual"
+    ));
+
     private static boolean wasCPressed = false;
     private static boolean wasAttackPressed = false;
     private static int robotAttackCooldown = 0;
@@ -440,6 +447,18 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register Open Tip Menu / Field Guide packet receiver
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.OPEN_TIP_SCREEN_PACKET_ID, (client, handler, buf, responseSender) -> {
+            String topicId = buf.readString();
+            int energy = buf.readInt();
+            int maxEnergy = buf.readInt();
+            String status = buf.readString();
+            client.execute(() -> {
+                com.evecual.evecualmc.client.screen.TipTopic topic = com.evecual.evecualmc.client.screen.TipTopic.fromId(topicId);
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(topic, energy, maxEnergy, status));
+            });
+        });
+
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
@@ -532,6 +551,11 @@ public class EvecualMCClient implements ClientModInitializer {
                 // RC Vehicle Light Toggle Key ('L')
                 while (TOGGLE_LIGHT_KEY.wasPressed()) {
                     toggleRcLight(client);
+                }
+
+                // Field Guide / Tip Menu Shortcut Key ('H')
+                while (OPEN_TIP_KEY.wasPressed()) {
+                    openTipScreenContextual(client);
                 }
 
                 // Full-size Car driving inputs
@@ -765,5 +789,72 @@ public class EvecualMCClient implements ClientModInitializer {
                 }
             }
         });
+    }
+
+    private static void openTipScreenContextual(MinecraftClient client) {
+        if (client == null || client.player == null) return;
+
+        // 1. If currently inside or piloting full-size Car
+        if (client.player.getVehicle() instanceof CarEntity car) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.CAR, 0, 1000, "⚡ Vehicle Diagnostics: Active Piloting"));
+            return;
+        }
+
+        // 2. If looking through RC camera or piloting RC vehicle
+        Entity cam = client.getCameraEntity();
+        if (cam instanceof RcDroneEntity drone) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_DRONE, drone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🚁 Aerial Telemetry: " + drone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
+            return;
+        }
+        if (cam instanceof RcRobotEntity robot) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_ROBOT, robot.getEnergy(), RcRobotEntity.MAX_ENERGY, "🤖 Excavator Telemetry: " + robot.getEnergy() + " / " + RcRobotEntity.MAX_ENERGY + " EU"));
+            return;
+        }
+        if (cam instanceof RcCarEntity car) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_CAR, car.getEnergy(), RcCarEntity.MAX_ENERGY, "🏎️ Ground Telemetry: " + car.getEnergy() + " / " + RcCarEntity.MAX_ENERGY + " EU"));
+            return;
+        }
+
+        // 3. If crosshair is aiming directly at an entity
+        if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit && hit.getEntity() != null) {
+            Entity hitEnt = hit.getEntity();
+            if (hitEnt instanceof RcDroneEntity drone) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_DRONE, drone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🚁 Drone Targeted: " + drone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
+                return;
+            }
+            if (hitEnt instanceof RcRobotEntity robot) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_ROBOT, robot.getEnergy(), RcRobotEntity.MAX_ENERGY, "🤖 Robot Targeted: " + robot.getEnergy() + " / " + RcRobotEntity.MAX_ENERGY + " EU"));
+                return;
+            }
+            if (hitEnt instanceof RcCarEntity car) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_CAR, car.getEnergy(), RcCarEntity.MAX_ENERGY, "🏎️ RC Car Targeted: " + car.getEnergy() + " / " + RcCarEntity.MAX_ENERGY + " EU"));
+                return;
+            }
+            if (hitEnt instanceof CarEntity car) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.CAR, 0, 1000, "🚗 Electric Car Targeted"));
+                return;
+            }
+        }
+
+        // 4. If crosshair is aiming directly at a block
+        if (client.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult blockHit && client.world != null) {
+            net.minecraft.block.BlockState bs = client.world.getBlockState(blockHit.getBlockPos());
+            com.evecual.evecualmc.client.screen.TipTopic blockTopic = com.evecual.evecualmc.client.screen.TipTopic.fromBlock(bs.getBlock());
+            if (blockTopic != null) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(blockTopic, 0, 0, "🔍 Inspected: " + blockTopic.title));
+                return;
+            }
+        }
+
+        // 5. If holding a mod item in main hand
+        net.minecraft.item.ItemStack held = client.player.getMainHandStack();
+        com.evecual.evecualmc.client.screen.TipTopic itemTopic = com.evecual.evecualmc.client.screen.TipTopic.fromItem(held.getItem());
+        if (itemTopic != null) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(itemTopic, 0, 0, "📖 Guide: " + itemTopic.title));
+            return;
+        }
+
+        // Default: Open general guide (starting on Solar Panel)
+        client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.SOLAR_PANEL, 0, 0, "📖 EvecualMC Field Guide & Diagnostics"));
     }
 }

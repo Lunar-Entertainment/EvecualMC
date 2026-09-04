@@ -53,4 +53,16 @@ public class BatteryBlock extends BlockWithEntity {
     public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
         return (int) Math.round((double) state.get(CHARGE_LEVEL) * 15.0 / 8.0);
     }
+
+    @Override
+    public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
+        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            BlockEntity be = world.getBlockEntity(pos);
+            int energy = be instanceof BatteryBlockEntity bbe ? (int) bbe.getEnergy() : 0;
+            int max = be instanceof BatteryBlockEntity bbe ? (int) bbe.getMaxEnergy() : 600;
+            String status = "🔋 Storing " + energy + " / " + max + " EU (" + (int)((energy / (double)max) * 100) + "%)";
+            com.evecual.evecualmc.EvecualMC.sendOpenTipScreen(serverPlayer, "battery", energy, max, status);
+        }
+        return net.minecraft.util.ActionResult.SUCCESS;
+    }
 }

@@ -63,6 +63,17 @@ public class RcDroneItem extends Item {
     }
 
     @Override
+    public net.minecraft.util.TypedActionResult<ItemStack> use(World world, net.minecraft.entity.player.PlayerEntity user, net.minecraft.util.Hand hand) {
+        if (user.isSneaking()) {
+            if (!world.isClient && user instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                EvecualMC.sendOpenTipScreen(serverPlayer, "rc_drone", 0, RcDroneEntity.MAX_ENERGY, "🚁 RC Quadcopter Drone: Vertical takeoff and aerial cargo pilot");
+            }
+            return net.minecraft.util.TypedActionResult.success(user.getStackInHand(hand));
+        }
+        return super.use(world, user, hand);
+    }
+
+    @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         int energy = RcDroneEntity.MAX_ENERGY;
         int color = 1; // Default Cyber Blue

@@ -27,6 +27,19 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
     protected void init() {
         super.init();
         titleX = (backgroundWidth - textRenderer.getWidth(title)) / 2;
+        int x = (width - backgroundWidth) / 2;
+        int y = (height - backgroundHeight) / 2;
+        this.addDrawableChild(net.minecraft.client.gui.widget.ButtonWidget.builder(
+                Text.literal("💡 Tips"),
+                btn -> {
+                    if (client != null) {
+                        int energy = handler.getEnergy();
+                        int max = handler.getMaxEnergy();
+                        String status = "⚡ Combiner: " + energy + " / " + max + " EU | Progress: " + (int)((handler.getProgress() / (double)handler.getMaxProgress()) * 100) + "%";
+                        client.setScreen(new ModTipScreen(TipTopic.ELECTRONIC_COMBINER, energy, max, status));
+                    }
+                }
+        ).dimensions(x + backgroundWidth - 55, y + 4, 50, 14).build());
     }
 
     @Override

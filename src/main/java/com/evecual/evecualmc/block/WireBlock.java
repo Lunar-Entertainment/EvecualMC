@@ -97,4 +97,20 @@ public class WireBlock extends Block {
         if (state.get(EAST)) shape = VoxelShapes.union(shape, EAST_SHAPE);
         return shape;
     }
+
+    @Override
+    public net.minecraft.util.ActionResult onUse(BlockState state, net.minecraft.world.World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
+        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            int connections = 0;
+            if (state.get(NORTH)) connections++;
+            if (state.get(SOUTH)) connections++;
+            if (state.get(EAST)) connections++;
+            if (state.get(WEST)) connections++;
+            if (state.get(UP)) connections++;
+            if (state.get(DOWN)) connections++;
+            String status = "🔌 Connected to " + connections + " terminal" + (connections == 1 ? "" : "s");
+            EvecualMC.sendOpenTipScreen(serverPlayer, "wire", 0, 0, status);
+        }
+        return net.minecraft.util.ActionResult.SUCCESS;
+    }
 }

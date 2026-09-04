@@ -59,8 +59,8 @@ public class RcParkingSpotBlock extends Block {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient) {
-            player.sendMessage(Text.literal("§e🅿️ RC Parking Spot: §7Park an RC Car here to power it down and unpair. (Wirelessly charges within 16m of an RC Charger)"), true);
+        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            com.evecual.evecualmc.EvecualMC.sendOpenTipScreen(serverPlayer, "rc_parking_spot", 0, 0, "🅿️ Standby: Ready to dock and power down RC Cars");
         }
         return ActionResult.SUCCESS;
     }

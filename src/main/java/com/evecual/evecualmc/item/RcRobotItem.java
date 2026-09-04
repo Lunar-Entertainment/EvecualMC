@@ -65,6 +65,17 @@ public class RcRobotItem extends Item {
     }
 
     @Override
+    public net.minecraft.util.TypedActionResult<ItemStack> use(World world, net.minecraft.entity.player.PlayerEntity user, net.minecraft.util.Hand hand) {
+        if (user.isSneaking()) {
+            if (!world.isClient && user instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                EvecualMC.sendOpenTipScreen(serverPlayer, "rc_robot", 0, RcRobotEntity.MAX_ENERGY, "🤖 RC Excavator Robot: Autonomous mining and double chest cargo");
+            }
+            return net.minecraft.util.TypedActionResult.success(user.getStackInHand(hand));
+        }
+        return super.use(world, user, hand);
+    }
+
+    @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         int energy = RcRobotEntity.MAX_ENERGY;
         ItemStack tool = ItemStack.EMPTY;

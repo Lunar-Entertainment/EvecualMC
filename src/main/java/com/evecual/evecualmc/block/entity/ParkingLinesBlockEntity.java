@@ -96,4 +96,26 @@ public class ParkingLinesBlockEntity extends BlockEntity {
         }
         return null;
     }
+
+    public boolean isCarParked() {
+        if (world == null) return false;
+        BlockState state = getCachedState();
+        if (!state.isOf(EvecualMC.PARKING_LINES_BLOCK)) return false;
+        Direction facing = state.get(ParkingLinesBlock.FACING);
+        Direction right = facing.rotateYClockwise();
+
+        BlockPos corner1 = pos;
+        BlockPos corner2 = pos.offset(facing, 2).offset(right, 1);
+
+        double minX = Math.min(corner1.getX(), corner2.getX()) - 0.5;
+        double maxX = Math.max(corner1.getX(), corner2.getX()) + 1.5;
+        double minY = pos.getY() - 0.5;
+        double maxY = pos.getY() + 2.0;
+        double minZ = Math.min(corner1.getZ(), corner2.getZ()) - 0.5;
+        double maxZ = Math.max(corner1.getZ(), corner2.getZ()) + 1.5;
+
+        Box parkingBox = new Box(minX, minY, minZ, maxX, maxY, maxZ);
+        List<CarEntity> cars = world.getEntitiesByClass(CarEntity.class, parkingBox, car -> true);
+        return !cars.isEmpty();
+    }
 }

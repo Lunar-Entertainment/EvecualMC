@@ -29,6 +29,21 @@ public class CarTrunkScreen extends HandledScreen<CarTrunkScreenHandler> {
     }
 
     @Override
+    protected void init() {
+        super.init();
+        int x = (this.width - this.backgroundWidth) / 2;
+        int y = (this.height - this.backgroundHeight) / 2;
+        this.addDrawableChild(net.minecraft.client.gui.widget.ButtonWidget.builder(
+                Text.literal("💡 Tips"),
+                btn -> {
+                    if (client != null) {
+                        client.setScreen(new ModTipScreen(TipTopic.CAR, 0, 1000, "⚡ Electric Car In-Vehicle Diagnostics"));
+                    }
+                }
+        ).dimensions(x + this.backgroundWidth - 55, y + 4, 50, 14).build());
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context);
         super.render(context, mouseX, mouseY, delta);

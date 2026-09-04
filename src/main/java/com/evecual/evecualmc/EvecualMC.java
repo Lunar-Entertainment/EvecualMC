@@ -380,6 +380,16 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier START_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "start_auto_park_s2c");
     public static final Identifier CANCEL_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_auto_park_s2c");
     public static final Identifier TOGGLE_RC_LIGHT_PACKET_ID = new Identifier(MOD_ID, "toggle_rc_light");
+    public static final Identifier OPEN_TIP_SCREEN_PACKET_ID = new Identifier(MOD_ID, "open_tip_screen");
+
+    public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
+        net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+        buf.writeString(topicId);
+        buf.writeInt(energy);
+        buf.writeInt(maxEnergy);
+        buf.writeString(status != null ? status : "");
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, OPEN_TIP_SCREEN_PACKET_ID, buf);
+    }
 
     @Override
     public void onInitialize() {

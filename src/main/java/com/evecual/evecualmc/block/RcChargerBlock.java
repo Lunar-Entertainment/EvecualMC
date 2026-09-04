@@ -53,10 +53,15 @@ public class RcChargerBlock extends BlockWithEntity {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient) {
+        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            int energy = 0;
+            int max = 1000;
             if (world.getBlockEntity(pos) instanceof RcChargerBlockEntity be) {
-                player.sendMessage(Text.literal("§b⚡ RC Charger: §a" + be.getEnergy() + " / " + be.getMaxEnergy() + " E §7(Inductive Fast Pad)"), true);
+                energy = (int) be.getEnergy();
+                max = (int) be.getMaxEnergy();
             }
+            String status = "⚡ Wireless Pad: Storing " + energy + " / " + max + " EU (16-block broadcast range)";
+            EvecualMC.sendOpenTipScreen(serverPlayer, "rc_charger", energy, max, status);
         }
         return ActionResult.SUCCESS;
     }

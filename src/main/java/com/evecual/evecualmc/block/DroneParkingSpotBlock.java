@@ -58,8 +58,8 @@ public class DroneParkingSpotBlock extends Block {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient) {
-            player.sendMessage(Text.literal("§e🚁 Drone Parking Spot: §7Land an RC Drone here to shut down motors and unpair. (Wirelessly charges within 16m of an RC Charger)"), true);
+        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            com.evecual.evecualmc.EvecualMC.sendOpenTipScreen(serverPlayer, "drone_parking_spot", 0, 0, "🚁 Standby: Ready for drone landing and motor shutdown");
         }
         return ActionResult.SUCCESS;
     }

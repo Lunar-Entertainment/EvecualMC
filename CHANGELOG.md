@@ -1,5 +1,15 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.9] - 2026-09-04
+### Added & Improved
+- **Interactive Field Guide & Tip Menu for All Mod Blocks & Entities**:
+  - Right-clicking any mod block (`SolarPanelBlock`, `BatteryBlock`, `WireBlock`, `ChargerBlock`, `ChargerExtensionBlock`, `ParkingLinesBlock`, `RcChargerBlock`, `RcParkingSpotBlock`, `DroneParkingSpotBlock`) now opens an interactive, modern, dark-glassmorphic Field Guide and diagnostics screen.
+  - Right-clicking items in hand while sneaking (`CarItem`, `RcCarItem`, `RcDroneItem`, `RcRobotItem`) opens the tip menu directly from inventory without placing the vehicle.
+  - Added quick-access `💡 Tips` buttons inside `CarTrunkScreen` and `ElectronicCombinerScreen`.
+  - Added global `H` keybind shortcut: pressing `H` instantly opens the tip and diagnostics menu for whatever vehicle you are driving/controlling, whatever entity or block is in your crosshair, or the item in your hand.
+  - Real-time diagnostics bar displaying live EU energy storage, generation rate, charging status, and docking states.
+  - Clean sidebar with icons to effortlessly switch between all 14 mod blocks, items, vehicles, and electronics with full control reference tables, setup instructions, and pro tips.
+
 ## [1.2.8] - 2026-09-04
 ### Added & Improved
 - **RC Drone Left/Right Strafing in First-Person (FPV) Mode (`A` / `D`)**:
