@@ -95,12 +95,30 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         }
 
         // Slot hover tips when empty
-        if (mouseX >= x + 44 && mouseX <= x + 60 && mouseY >= y + 43 && mouseY <= y + 59 && !handler.slots.get(4).hasStack()) {
-            context.drawTooltip(textRenderer, Text.literal("§eColor Slot: §7Insert Dye (Default: Red)"), mouseX, mouseY);
-        } else if (mouseX >= x + 64 && mouseX <= x + 80 && mouseY >= y + 43 && mouseY <= y + 59 && !handler.slots.get(5).hasStack()) {
-            context.drawTooltip(textRenderer, Text.literal("§eTrunk Slot: §7Insert Trunk Upgrade (Default: Standard)"), mouseX, mouseY);
-        } else if (mouseX >= x + 64 && mouseX <= x + 80 && mouseY >= y + 21 && mouseY <= y + 37 && !handler.slots.get(2).hasStack()) {
-            context.drawTooltip(textRenderer, Text.literal("§bGlass Slot: §7Any Stained or Normal Glass"), mouseX, mouseY);
+        Slot hoveredSlot = this.focusedSlot;
+        if (hoveredSlot == null) {
+            for (int i = 0; i <= 6; i++) {
+                Slot s = handler.slots.get(i);
+                if (mouseX >= x + s.x && mouseX <= x + s.x + 16 && mouseY >= y + s.y && mouseY <= y + s.y + 16) {
+                    hoveredSlot = s;
+                    break;
+                }
+            }
+        }
+        if (hoveredSlot != null && !hoveredSlot.hasStack() && hoveredSlot.id >= 0 && hoveredSlot.id <= 6) {
+            Text tip = switch (hoveredSlot.id) {
+                case 0 -> Text.literal("§eEngine Slot: §7Insert Electric Engine or Advanced Engine (Affects Top Speed)");
+                case 1 -> Text.literal("§eHull Slot: §7Insert Steel Ingot or Iron Ingot (Structural Frame)");
+                case 2 -> Text.literal("§eGlass Slot: §7Insert Any Glass or Stained Glass (Windshield Tint)");
+                case 3 -> Text.literal("§eInterior Slot: §7Insert Leather (Seats & Upholstery)");
+                case 4 -> Text.literal("§eColor Slot: §7Insert Dye (Default: Red)");
+                case 5 -> Text.literal("§eTrunk Slot: §7Insert Trunk Upgrade (Default: Standard 9 Slots)");
+                case 6 -> Text.literal("§aOutput Slot: §7Fabricated Electric Car");
+                default -> null;
+            };
+            if (tip != null) {
+                context.drawTooltip(textRenderer, tip, mouseX, mouseY);
+            }
         }
     }
 }

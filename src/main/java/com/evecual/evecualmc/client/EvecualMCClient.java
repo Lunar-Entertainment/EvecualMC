@@ -23,6 +23,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +67,10 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register Car Entity Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.CAR_ENTITY, CarEntityRenderer::new);
+
+        // Register RC Car Model and Renderer
+        EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.RcCarEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.RcCarEntityModel::getTexturedModelData);
+        EntityRendererRegistry.register(EvecualMC.RC_CAR_ENTITY, com.evecual.evecualmc.client.render.RcCarEntityRenderer::new);
 
         // Cutout render layer for wire block, solar panel, and parking lines
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
@@ -184,6 +189,55 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 } else {
                     wasCPressed = false;
+                }
+
+                // 5. RC Controller Remote Driving Control
+                net.minecraft.item.ItemStack heldController = null;
+                if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+                    heldController = client.player.getMainHandStack();
+                } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+                    heldController = client.player.getOffHandStack();
+                }
+
+                if (heldController != null && heldController.hasNbt() && client.currentScreen == null) {
+                    net.minecraft.nbt.NbtCompound nbt = heldController.getNbt();
+                    if (nbt != null && nbt.containsUuid("PairedCar") && nbt.getBoolean("ActiveLink")) {
+                        java.util.UUID pairedUuid = nbt.getUuid("PairedCar");
+                        if (client.world != null) {
+                            com.evecual.evecualmc.entity.RcCarEntity targetRc = null;
+                            for (Entity e : client.world.getEntities()) {
+                                if (e instanceof com.evecual.evecualmc.entity.RcCarEntity rc && rc.getUuid().equals(pairedUuid)) {
+                                    targetRc = rc;
+                                    break;
+                                }
+                            }
+
+                            if (targetRc != null && client.player.squaredDistanceTo(targetRc) <= 4096.0) {
+                                boolean rcFwd = client.options.forwardKey.isPressed();
+                                boolean rcBack = client.options.backKey.isPressed();
+                                boolean rcLeft = client.options.leftKey.isPressed();
+                                boolean rcRight = client.options.rightKey.isPressed();
+                                boolean rcSprint = client.options.sprintKey.isPressed();
+                                boolean rcJump = client.options.jumpKey.isPressed();
+
+                                targetRc.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+
+                                PacketByteBuf rcBuf = PacketByteBufs.create();
+                                rcBuf.writeUuid(pairedUuid);
+                                rcBuf.writeBoolean(rcFwd);
+                                rcBuf.writeBoolean(rcBack);
+                                rcBuf.writeBoolean(rcLeft);
+                                rcBuf.writeBoolean(rcRight);
+                                rcBuf.writeBoolean(rcSprint);
+                                rcBuf.writeBoolean(rcJump);
+                                ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
+
+                                if (client.player.age % 10 == 0) {
+                                    client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[W/A/S/D to Drive, Space to Hop]"), true);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });

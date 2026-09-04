@@ -82,6 +82,18 @@ public class EvecualMC implements ModInitializer {
             new CarItem(new Item.Settings().maxCount(1))
     );
 
+    public static final Item RC_CAR_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_car"),
+            new com.evecual.evecualmc.item.RcCarItem(new Item.Settings().maxCount(1))
+    );
+
+    public static final Item RC_CONTROLLER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_controller"),
+            new com.evecual.evecualmc.item.RcControllerItem(new Item.Settings().maxCount(1))
+    );
+
     public static final Item VANILLA_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "vanilla_ice_cream"),
@@ -257,6 +269,15 @@ public class EvecualMC implements ModInitializer {
                     .build()
     );
 
+    public static final EntityType<com.evecual.evecualmc.entity.RcCarEntity> RC_CAR_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "rc_car"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcCarEntity>create(SpawnGroup.MISC, com.evecual.evecualmc.entity.RcCarEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.7f, 0.45f))
+                    .trackRangeBlocks(10)
+                    .build()
+    );
+
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
@@ -273,6 +294,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(UPGRADED_ENGINE);
                 entries.add(TRUNK_UPGRADE);
                 entries.add(CAR_ITEM);
+                entries.add(RC_CAR_ITEM);
+                entries.add(RC_CONTROLLER_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);
@@ -289,6 +312,7 @@ public class EvecualMC implements ModInitializer {
             .build();
 
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
+    public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
@@ -310,6 +334,27 @@ public class EvecualMC implements ModInitializer {
             server.execute(() -> {
                 if (player.getVehicle() instanceof CarEntity car) {
                     car.setInputs(forward, back, left, right, sprint);
+                }
+            });
+        });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_INPUT_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            java.util.UUID carUuid = buf.readUuid();
+            boolean forward = buf.readBoolean();
+            boolean back = buf.readBoolean();
+            boolean left = buf.readBoolean();
+            boolean right = buf.readBoolean();
+            boolean sprint = buf.readBoolean();
+            boolean jump = buf.readBoolean();
+
+            server.execute(() -> {
+                if (player.getServerWorld() != null) {
+                    Entity target = player.getServerWorld().getEntity(carUuid);
+                    if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
+                        if (player.squaredDistanceTo(rcCar) <= 4096.0) { // 64 blocks max range
+                            rcCar.setRemoteInputs(forward, back, left, right, sprint, jump);
+                        }
+                    }
                 }
             });
         });
