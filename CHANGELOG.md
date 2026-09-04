@@ -1,5 +1,16 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.8] - 2026-09-04
+### Added & Improved
+- **EvecualTechShader Next-Gen Visual Overhaul**:
+  - **Volumetric Sun God Rays (Crepuscular Beams)**: Added real-time screen-space ray marched light shafts streaming down through trees, mountain ridges, and vehicle chassis during sunrise, midday, and sunset.
+  - **Screen-Space Ambient Occlusion (SSAO)**: Integrated multi-scale spiral depth ambient occlusion for deep contact shadows under car chassis, tires, block bevels, and structural crevices.
+  - **Atmospheric Rayleigh Scattering**: Added dynamic time-of-day sky transitions with warm golden hour horizons, deep azure midday skies, coral sunsets, and star-filled midnight atmospheres with luminous sun/moon coronas.
+  - **Dynamic Water Waves & Caustics**: Created custom `gbuffers_water` shaders with animated Gerstner wave displacement, Fresnel specular reflections, and crystal-clear aquatic depth tint.
+  - **Waving Foliage & Vegetation**: Added wind wave vertex displacement in `gbuffers_terrain.vsh` for leaves, grass, flowers, and crops.
+  - **Automotive Specular Clearcoat & Fresnel**: Upgraded entity and vehicle renderers with multi-lobe specular gloss and rim lighting on the Electric Car, RC Car, RC Drone, and RC Robot.
+  - **Dual-Ring Cinematic Bloom & Lens Effects**: High-precision multi-scale Gaussian bloom on neon wires, monitors, battery gauges, ore crystals, and headlights, complete with subtle edge chromatic aberration.
+
 ## [1.3.7] - 2026-09-04
 ### Fixed & Improved
 - **RC Parking Spot Forward Alignment & Centering**:
