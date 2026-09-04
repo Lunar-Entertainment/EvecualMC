@@ -3,6 +3,7 @@ package com.evecual.evecualmc.item;
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.entity.RcRobotEntity;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.inventory.Inventories;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -11,6 +12,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -39,6 +41,14 @@ public class RcRobotItem extends Item {
                     if (nbt.contains("Energy")) robot.setEnergy(nbt.getInt("Energy"));
                     if (nbt.contains("EquippedTool")) {
                         robot.setEquippedTool(ItemStack.fromNbt(nbt.getCompound("EquippedTool")));
+                    }
+                    if (nbt.contains("RobotInventory")) {
+                        NbtCompound invNbt = nbt.getCompound("RobotInventory");
+                        DefaultedList<ItemStack> list = DefaultedList.ofSize(robot.getInventory().size(), ItemStack.EMPTY);
+                        Inventories.readNbt(invNbt, list);
+                        for (int i = 0; i < robot.getInventory().size(); i++) {
+                            robot.getInventory().setStack(i, list.get(i));
+                        }
                     }
                 }
             }
@@ -73,7 +83,19 @@ public class RcRobotItem extends Item {
         } else {
             tooltip.add(Text.literal("§7Equipped Tool: §8None (Right-click with tool)"));
         }
-        tooltip.add(Text.literal("§8Pair with RC Controller. Press LMB to use tool."));
+        if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().contains("RobotInventory")) {
+            NbtCompound invNbt = stack.getNbt().getCompound("RobotInventory");
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(RcRobotEntity.INVENTORY_SIZE, ItemStack.EMPTY);
+            Inventories.readNbt(invNbt, list);
+            int used = 0;
+            for (ItemStack s : list) {
+                if (!s.isEmpty()) used++;
+            }
+            tooltip.add(Text.literal("§7Cargo: §6" + used + " / " + RcRobotEntity.INVENTORY_SIZE + " slots used §7(Double Chest)"));
+        } else {
+            tooltip.add(Text.literal("§7Cargo: §8Empty (Double Chest - 54 Slots)"));
+        }
+        tooltip.add(Text.literal("§8Pair with RC Controller. Press LMB to use tool, Z for cargo."));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

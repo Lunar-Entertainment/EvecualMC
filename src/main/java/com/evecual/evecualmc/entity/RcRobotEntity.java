@@ -4,6 +4,7 @@ import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.RcChargerBlockEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -14,10 +15,16 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.*;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
@@ -25,6 +32,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -36,10 +44,17 @@ import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldEvents;
 
+import java.util.List;
 import java.util.UUID;
 
 public class RcRobotEntity extends Entity {
     public static final int MAX_ENERGY = 1000;
+    public static final int INVENTORY_SIZE = 54; // Double chest capacity
+
+    private final SimpleInventory inventory = new SimpleInventory(INVENTORY_SIZE);
+    private BlockPos currentMiningPos = null;
+    private int currentMiningDamage = 0;
+    private int miningResetTimer = 0;
 
     private static final TrackedData<Integer> ENERGY = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -95,6 +110,22 @@ public class RcRobotEntity extends Entity {
 
     public void setEquippedTool(ItemStack tool) {
         this.dataTracker.set(EQUIPPED_TOOL, tool == null ? ItemStack.EMPTY : tool);
+    }
+
+    public SimpleInventory getInventory() {
+        return this.inventory;
+    }
+
+    public void openInventory(PlayerEntity player) {
+        if (!this.getWorld().isClient) {
+            player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(
+                            ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, this.inventory, 6),
+                    Text.literal("RC Robot Cargo (54 Slots)")
+            ));
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.PLAYERS, 0.6f, 1.2f);
+        }
     }
 
     public float getArmSwing() {
@@ -247,6 +278,33 @@ public class RcRobotEntity extends Entity {
         if (getEnergy() < 30 && this.getWorld().isClient() && this.random.nextFloat() < 0.15f) {
             this.getWorld().addParticle(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.5, this.getZ(), 0, 0.05, 0);
         }
+
+        if (!this.getWorld().isClient()) {
+            if (miningResetTimer > 0) {
+                miningResetTimer--;
+                if (miningResetTimer == 0 && currentMiningPos != null) {
+                    this.getWorld().setBlockBreakingInfo(this.getId(), currentMiningPos, -1);
+                    currentMiningPos = null;
+                    currentMiningDamage = 0;
+                }
+            }
+
+            // Vacuum up nearby dropped item entities into inventory
+            List<ItemEntity> nearbyItems = this.getWorld().getEntitiesByClass(ItemEntity.class, this.getBoundingBox().expand(1.5), ItemEntity::isAlive);
+            for (ItemEntity item : nearbyItems) {
+                if (item.cannotPickup()) continue;
+                ItemStack stack = item.getStack();
+                ItemStack remainder = this.inventory.addStack(stack);
+                if (remainder.getCount() != stack.getCount()) {
+                    this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL, 0.4f, 1.4f);
+                }
+                if (remainder.isEmpty()) {
+                    item.discard();
+                } else {
+                    item.setStack(remainder);
+                }
+            }
+        }
     }
 
     /**
@@ -325,31 +383,160 @@ public class RcRobotEntity extends Entity {
                 BlockState state = world.getBlockState(targetPos);
 
                 if (!state.isAir() && state.getHardness(world, targetPos) >= 0.0F) {
-                    // Block break!
-                    world.breakBlock(targetPos, true, null);
-                    world.syncWorldEvent(WorldEvents.BLOCK_BROKEN, targetPos, Block.getRawIdFromState(state));
+                    float hardness = state.getHardness(world, targetPos);
+                    boolean oneShot = isOneShotMineable(state, tool, hardness);
 
-                    // Tool damage
-                    if (tool.isDamageable()) {
-                        tool.setDamage(tool.getDamage() + 1);
-                        if (tool.getDamage() >= tool.getMaxDamage()) {
-                            world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_BREAK, SoundCategory.NEUTRAL, 1.0f, 1.0f);
-                            setEquippedTool(ItemStack.EMPTY);
+                    if (oneShot) {
+                        if (currentMiningPos != null) {
+                            world.setBlockBreakingInfo(this.getId(), currentMiningPos, -1);
+                            currentMiningPos = null;
+                            currentMiningDamage = 0;
                         }
-                    }
+                        breakBlockAndCollect(targetPos, state, tool);
+                        setEnergy(Math.max(0, getEnergy() - 2));
+                        return true;
+                    } else {
+                        if (currentMiningPos == null || !currentMiningPos.equals(targetPos)) {
+                            if (currentMiningPos != null) {
+                                world.setBlockBreakingInfo(this.getId(), currentMiningPos, -1);
+                            }
+                            currentMiningPos = targetPos;
+                            currentMiningDamage = 0;
+                        }
+                        miningResetTimer = 40; // 2s reset timer
 
-                    world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_NETHER_ORE_BREAK, SoundCategory.NEUTRAL, 0.8f, 1.2f);
-                    setEnergy(Math.max(0, getEnergy() - 5));
-                    return true;
+                        int requiredDamage = calculateRequiredHits(state, tool, hardness);
+                        currentMiningDamage += 1;
+
+                        if (currentMiningDamage >= requiredDamage) {
+                            world.setBlockBreakingInfo(this.getId(), targetPos, -1);
+                            currentMiningPos = null;
+                            currentMiningDamage = 0;
+                            breakBlockAndCollect(targetPos, state, tool);
+                            setEnergy(Math.max(0, getEnergy() - 3));
+                        } else {
+                            int stage = (int) Math.min(9, Math.max(0, (currentMiningDamage * 10) / requiredDamage));
+                            world.setBlockBreakingInfo(this.getId(), targetPos, stage);
+                            world.playSound(null, targetPos, state.getSoundGroup().getHitSound(), SoundCategory.BLOCKS, 0.7f, 1.0f);
+                            if (world instanceof ServerWorld sw) {
+                                sw.spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, state),
+                                        targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5,
+                                        5, 0.2, 0.2, 0.2, 0.05);
+                            }
+                            setEnergy(Math.max(0, getEnergy() - 1));
+                        }
+                        return true;
+                    }
                 }
             }
 
             // Swing in air
             world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, SoundCategory.NEUTRAL, 0.7f, 1.3f);
-            setEnergy(Math.max(0, getEnergy() - 2));
+            setEnergy(Math.max(0, getEnergy() - 1));
         }
 
         return true;
+    }
+
+    private void breakBlockAndCollect(BlockPos pos, BlockState state, ItemStack tool) {
+        World world = this.getWorld();
+        if (world instanceof ServerWorld sw) {
+            BlockEntity blockEntity = world.getBlockEntity(pos);
+            List<ItemStack> drops = Block.getDroppedStacks(state, sw, pos, blockEntity, this, tool);
+
+            // Break block without scattering drops in world
+            world.breakBlock(pos, false, this);
+            world.syncWorldEvent(WorldEvents.BLOCK_BROKEN, pos, Block.getRawIdFromState(state));
+
+            // Place drops into robot's 54-slot double chest inventory
+            for (ItemStack drop : drops) {
+                ItemStack remainder = this.inventory.addStack(drop);
+                if (!remainder.isEmpty()) {
+                    ItemEntity itemEntity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, remainder);
+                    itemEntity.setToDefaultPickupDelay();
+                    world.spawnEntity(itemEntity);
+                }
+            }
+
+            world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_NETHER_ORE_BREAK, SoundCategory.NEUTRAL, 0.8f, 1.2f);
+
+            // Tool damage
+            if (tool.isDamageable()) {
+                tool.setDamage(tool.getDamage() + 1);
+                if (tool.getDamage() >= tool.getMaxDamage()) {
+                    world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_BREAK, SoundCategory.NEUTRAL, 1.0f, 1.0f);
+                    setEquippedTool(ItemStack.EMPTY);
+                }
+            }
+        }
+    }
+
+    private boolean isOneShotMineable(BlockState state, ItemStack tool, float hardness) {
+        if (hardness <= 0.0F) return true; // Instabreak (tall grass, flowers, torches)
+
+        // Leaves are always 1-shot with any tool or bare hands
+        if (state.isIn(BlockTags.LEAVES) || state.getBlock().getTranslationKey().contains("leaves")) {
+            return true;
+        }
+
+        Item item = tool.getItem();
+
+        // AXE: One-shots logs, wood, planks, leaves, wooden items
+        if (item instanceof AxeItem) {
+            return state.isIn(BlockTags.LOGS) || state.isIn(BlockTags.PLANKS) ||
+                    state.isIn(BlockTags.AXE_MINEABLE) ||
+                    state.getBlock().getTranslationKey().contains("log") ||
+                    state.getBlock().getTranslationKey().contains("wood") ||
+                    state.getBlock().getTranslationKey().contains("plank");
+        }
+
+        // PICKAXE: One-shots stone, cobblestone, ores, concrete, bricks etc. unless obsidian/ancient debris
+        if (item instanceof PickaxeItem) {
+            if (state.isIn(BlockTags.PICKAXE_MINEABLE) || state.getBlock().getTranslationKey().contains("concrete")) {
+                return hardness < 15.0F; // Obsidian is >= 50.0, crying obsidian >= 50.0
+            }
+            return hardness <= 0.3F;
+        }
+
+        // SHOVEL: One-shots dirt, sand, gravel, clay, snow
+        if (item instanceof ShovelItem) {
+            if (state.isIn(BlockTags.SHOVEL_MINEABLE) ||
+                    state.getBlock().getTranslationKey().contains("dirt") ||
+                    state.getBlock().getTranslationKey().contains("sand") ||
+                    state.getBlock().getTranslationKey().contains("gravel")) {
+                return true;
+            }
+            return hardness <= 0.3F;
+        }
+
+        // SHEARS: One-shots leaves, wool, webs
+        if (item instanceof ShearsItem) {
+            return state.isIn(BlockTags.LEAVES) || state.isIn(BlockTags.WOOL) || state.getBlock().getTranslationKey().contains("web");
+        }
+
+        // HOE: One-shots sculk, hay, sponges
+        if (item instanceof HoeItem) {
+            return state.isIn(BlockTags.HOE_MINEABLE);
+        }
+
+        // SWORD: One-shots bamboo, web
+        if (item instanceof SwordItem) {
+            return state.getBlock().getTranslationKey().contains("bamboo") || state.getBlock().getTranslationKey().contains("web");
+        }
+
+        // Bare hand: only very low hardness blocks
+        return hardness <= 0.25F;
+    }
+
+    private int calculateRequiredHits(BlockState state, ItemStack tool, float hardness) {
+        if (hardness >= 50.0F) {
+            return (tool.getItem() instanceof PickaxeItem) ? 20 : 60;
+        }
+        if (hardness >= 20.0F) {
+            return (tool.getItem() instanceof PickaxeItem) ? 12 : 35;
+        }
+        // Concrete (1.8), Stone (1.5), Wood (2.0) with unsuitable tool: 5-8 hits
+        return (int) Math.max(4, Math.round(hardness * 3.5F));
     }
 
     public boolean startAutoReturnToCharger() {
@@ -422,6 +609,34 @@ public class RcRobotEntity extends Entity {
         this.inputBack = false;
     }
 
+    public ItemStack asItemStack() {
+        ItemStack drop = new ItemStack(EvecualMC.RC_ROBOT_ITEM);
+        NbtCompound nbt = drop.getOrCreateNbt();
+        nbt.putInt("Energy", getEnergy());
+        nbt.putInt("ColorVariant", this.dataTracker.get(COLOR_VARIANT));
+        if (!getPairedPlayerUuid().isEmpty()) {
+            nbt.putString("PairedPlayer", getPairedPlayerUuid());
+        }
+        if (!getEquippedTool().isEmpty()) {
+            nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
+        }
+
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);
+        boolean hasItems = false;
+        for (int i = 0; i < this.inventory.size(); i++) {
+            ItemStack s = this.inventory.getStack(i);
+            list.set(i, s);
+            if (!s.isEmpty()) hasItems = true;
+        }
+        if (hasItems) {
+            NbtCompound invNbt = new NbtCompound();
+            Inventories.writeNbt(invNbt, list);
+            nbt.put("RobotInventory", invNbt);
+        }
+
+        return drop;
+    }
+
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack held = player.getStackInHand(hand);
@@ -449,13 +664,7 @@ public class RcRobotEntity extends Entity {
         // 2. Sneak + Empty hand: Pick up Robot as Item
         if (player.isSneaking() && held.isEmpty()) {
             if (!this.getWorld().isClient()) {
-                ItemStack drop = new ItemStack(EvecualMC.RC_ROBOT_ITEM);
-                NbtCompound nbt = drop.getOrCreateNbt();
-                nbt.putInt("Energy", getEnergy());
-                if (!getEquippedTool().isEmpty()) {
-                    nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
-                }
-
+                ItemStack drop = asItemStack();
                 if (!player.giveItemStack(drop)) {
                     this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), drop));
                 }
@@ -478,6 +687,14 @@ public class RcRobotEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
+        // 4. Normal Right Click with Empty Hand when NO tool is equipped: Open Cargo Inventory!
+        if (held.isEmpty() && getEquippedTool().isEmpty()) {
+            if (!this.getWorld().isClient()) {
+                openInventory(player);
+            }
+            return ActionResult.SUCCESS;
+        }
+
         return ActionResult.PASS;
     }
 
@@ -490,13 +707,8 @@ public class RcRobotEntity extends Entity {
                 return true;
             }
 
-            // Drop as item
-            ItemStack drop = new ItemStack(EvecualMC.RC_ROBOT_ITEM);
-            NbtCompound nbt = drop.getOrCreateNbt();
-            nbt.putInt("Energy", getEnergy());
-            if (!getEquippedTool().isEmpty()) {
-                nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
-            }
+            // Drop as item with full cargo inventory and equipped tool preserved
+            ItemStack drop = asItemStack();
             this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), drop));
             this.discard();
             return true;
@@ -538,6 +750,14 @@ public class RcRobotEntity extends Entity {
         if (nbt.contains("EquippedTool")) {
             setEquippedTool(ItemStack.fromNbt(nbt.getCompound("EquippedTool")));
         }
+        if (nbt.contains("RobotInventory")) {
+            NbtCompound invNbt = nbt.getCompound("RobotInventory");
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);
+            Inventories.readNbt(invNbt, list);
+            for (int i = 0; i < this.inventory.size(); i++) {
+                this.inventory.setStack(i, list.get(i));
+            }
+        }
     }
 
     @Override
@@ -548,5 +768,13 @@ public class RcRobotEntity extends Entity {
         if (!getEquippedTool().isEmpty()) {
             nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
         }
+
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);
+        for (int i = 0; i < this.inventory.size(); i++) {
+            list.set(i, this.inventory.getStack(i));
+        }
+        NbtCompound invNbt = new NbtCompound();
+        Inventories.writeNbt(invNbt, list);
+        nbt.put("RobotInventory", invNbt);
     }
 }

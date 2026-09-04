@@ -281,7 +281,7 @@ public class RcControllerItem extends Item {
             if (nbt.containsUuid("PairedRobot") || "robot".equals(type)) {
                 tooltip.add(Text.literal("§7Paired to: §6RC Robot"));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 256m)" : "§cSTANDBY")));
-                tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Use Tool | C Auto-Dock"));
+                tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Tool | Z Cargo | C Dock"));
             } else if (nbt.containsUuid("PairedDrone") || "drone".equals(type)) {
                 tooltip.add(Text.literal("§7Paired to: §bRC Drone"));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 512m)" : "§cSTANDBY")));

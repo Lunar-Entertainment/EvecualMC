@@ -68,6 +68,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
     private static boolean wasCPressed = false;
     private static boolean wasAttackPressed = false;
+    private static int robotAttackCooldown = 0;
     private static Perspective previousPerspective = Perspective.FIRST_PERSON;
 
     // Camera angles with exponential smoothing for ultra-fluid mouse orbiting
@@ -311,12 +312,70 @@ public class EvecualMCClient implements ClientModInitializer {
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
-                // Open Trunk Key
+                if (robotAttackCooldown > 0) {
+                    robotAttackCooldown--;
+                }
+
+                // Open Trunk / Cargo Key ('Z')
                 while (OPEN_TRUNK_KEY.wasPressed()) {
+                    // 1. If inside car
                     if (client.player.getVehicle() instanceof CarEntity car) {
                         PacketByteBuf buf = PacketByteBufs.create();
                         buf.writeInt(car.getId());
                         ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        continue;
+                    }
+
+                    // 2. RC Robot (when controlling, in camera view, or paired)
+                    RcRobotEntity targetRobot = getTargetRcRobot(client);
+                    if (targetRobot != null && (client.getCameraEntity() == targetRobot || isRcLinkActive())) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(targetRobot.getId());
+                        ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        continue;
+                    }
+
+                    // 3. RC Drone
+                    RcDroneEntity targetDrone = getTargetRcDrone(client);
+                    if (targetDrone != null && (client.getCameraEntity() == targetDrone || isRcLinkActive())) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(targetDrone.getId());
+                        ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        continue;
+                    }
+
+                    // 4. RC Car
+                    RcCarEntity targetRc = getTargetRcCar(client);
+                    if (targetRc != null && (client.getCameraEntity() == targetRc || isRcLinkActive())) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(targetRc.getId());
+                        ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        continue;
+                    }
+
+                    // 5. When NOT controlling: Check if aiming directly at an entity with crosshair
+                    if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit && hit.getEntity() != null) {
+                        Entity e = hit.getEntity();
+                        if (e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity) {
+                            PacketByteBuf buf = PacketByteBufs.create();
+                            buf.writeInt(e.getId());
+                            ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                            continue;
+                        }
+                    }
+
+                    // 6. When NOT controlling: Find nearest vehicle within 6 blocks
+                    if (client.world != null) {
+                        net.minecraft.util.math.Box searchBox = client.player.getBoundingBox().expand(6.0);
+                        java.util.List<Entity> nearEntities = client.world.getOtherEntities(client.player, searchBox,
+                                e -> e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity);
+                        if (!nearEntities.isEmpty()) {
+                            nearEntities.sort(java.util.Comparator.comparingDouble(e -> e.squaredDistanceTo(client.player)));
+                            Entity closest = nearEntities.get(0);
+                            PacketByteBuf buf = PacketByteBufs.create();
+                            buf.writeInt(closest.getId());
+                            ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        }
                     }
                 }
 
@@ -401,26 +460,30 @@ public class EvecualMCClient implements ClientModInitializer {
                             robotBuf.writeBoolean(rcJump);
                             ClientPlayNetworking.send(EvecualMC.RC_ROBOT_INPUT_PACKET_ID, robotBuf);
 
-                            // LMB: Tool Action
-                            boolean attackPressed = client.options.attackKey.wasPressed() || client.options.attackKey.isPressed();
-                            if (attackPressed && !wasAttackPressed) {
-                                wasAttackPressed = true;
-                                targetRobot.performToolAction(targetRcCameraPitch, targetRobot.getYaw() + targetRcCameraYaw);
+                            // LMB: Tool Action (holding LMB repeatedly swings & strikes every 4 ticks)
+                            boolean isAttackDown = client.options.attackKey.isPressed();
+                            if (isAttackDown) {
+                                if (!wasAttackPressed || robotAttackCooldown <= 0) {
+                                    wasAttackPressed = true;
+                                    robotAttackCooldown = 4;
+                                    targetRobot.performToolAction(targetRcCameraPitch, targetRobot.getYaw() + targetRcCameraYaw);
 
-                                PacketByteBuf toolBuf = PacketByteBufs.create();
-                                toolBuf.writeUuid(pairedUuid);
-                                toolBuf.writeFloat(targetRcCameraPitch);
-                                toolBuf.writeFloat(targetRobot.getYaw() + targetRcCameraYaw);
-                                ClientPlayNetworking.send(EvecualMC.RC_ROBOT_TOOL_ACTION_PACKET_ID, toolBuf);
-                            } else if (!client.options.attackKey.isPressed()) {
+                                    PacketByteBuf toolBuf = PacketByteBufs.create();
+                                    toolBuf.writeUuid(pairedUuid);
+                                    toolBuf.writeFloat(targetRcCameraPitch);
+                                    toolBuf.writeFloat(targetRobot.getYaw() + targetRcCameraYaw);
+                                    ClientPlayNetworking.send(EvecualMC.RC_ROBOT_TOOL_ACTION_PACKET_ID, toolBuf);
+                                }
+                            } else {
                                 wasAttackPressed = false;
+                                robotAttackCooldown = 0;
                             }
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRobot;
-                                String camPrompt = isCamView ? "Mouse: Aim | LMB: Use Tool | F: Player View" : "F: Robot Cam";
+                                String camPrompt = isCamView ? "Mouse: Aim | LMB: Tool | Z: Cargo | F: Player View" : "F: Robot Cam | Z: Cargo";
                                 String toolName = targetRobot.getEquippedTool().isEmpty() ? "Bare Hand" : targetRobot.getEquippedTool().getName().getString();
-                                client.player.sendMessage(Text.literal("§6🤖 RC ROBOT: §a" + targetRobot.getEnergy() + " E §7| §bTool: " + toolName + " §7| §eRange: " + (int)client.player.distanceTo(targetRobot) + "m/256m §8| §f[" + camPrompt + "]"), true);
+                                client.player.sendMessage(Text.literal("§6🤖 RC ROBOT: §a" + targetRobot.getEnergy() + " E §7| §bTool: " + toolName + " §7| §eRange: " + (int)client.player.distanceTo(targetRobot) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
                     }

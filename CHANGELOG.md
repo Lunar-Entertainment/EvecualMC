@@ -1,31 +1,51 @@
 # EvecualMC Updates & Changelog
- 
-+## [1.2.3] - 2026-09-04
-+### Added & Improved
-+- **Ultra-Smooth Mouse Camera Turning**:
-+  - Replaced stepped arrow key camera rotation with continuous, fluid mouse-driven look controls across all RC vehicles (RC Car, RC Drone, and RC Robot).
-+  - Intercepts mouse deltas cleanly in `MouseMixin` when RC camera is active, redirecting rotation directly into vehicle orbit tracking without spinning the player's physical avatar.
-+  - Added exponential smoothing (`lerp(0.25F, ...)`) to camera yaw and pitch for smooth, cinematic panning.
-+- **Visible Player in RC Camera View**:
-+  - Configured client `WorldRenderEvents.AFTER_ENTITIES` hook to render the local player character in the world while viewing through the RC camera.
-+  - Players can now clearly see themselves standing in the environment, holding their RC controller or watching the vehicles operate.
-+- **RC Robot Companion (`RcRobotEntity` & `RcRobotItem`)**:
-+  - Added rugged all-terrain RC Robot featuring tank-track locomotion, auto-stepping over full 1-block obstacles, and an optical cybernetic sensor head.
-+  - **Universal RC Controller Integration**: Aim and right-click with the RC Controller to pair with the robot; drive it remotely using `W`/`A`/`S`/`D` and view its forward camera with `F`.
-+  - **Tool Equipping & Dual-Hand Actions**:
-+    - Right-click the robot with any tool (pickaxes, axes, shovels, swords, hoes, shears) to equip it into the robotic arm clamp.
-+    - Right-click with an empty hand while disarmed to retrieve the equipped tool.
-+    - Shift + right-click with an empty hand to pick up the robot into your inventory (perserving battery charge and equipped tool).
-+  - **LMB Remote Tool Use**:
-+    - While remote-controlling the robot in camera view, pressing Left Mouse Button (LMB / attack key) commands the robot to use its equipped tool where the camera is aimed.
-+    - Blocks: Mines and breaks blocks in reach (up to 4.5 blocks), checking tool suitability, dropping items, playing break sounds, producing particles, and applying durability damage to the tool.
-+    - Entities: Attacks hostile or target entities in range, dealing weapon attack damage and knockback.
-+    - Features animated mechanical arm swings and tool strikes in sync with actions.
-+  - **Auto-Docking & Charging**:
-+    - Press `C` to engage auto-docking to nearby RC Chargers or RC Parking Spots.
-+    - Low battery (<5%) triggers automated homing and safety docking.
-+
- ## [1.2.2] - 2026-09-04
+
+## [1.2.4] - 2026-09-04
+### Added & Improved
+- **RC Robot Double Chest Inventory (54 Slots)**:
+  - Upgraded RC Robot storage to a full double chest capacity (54 slots, 6 rows x 9 columns) with the standard double chest container interface.
+  - **Automated Drop Collection**: All items mined by the RC Robot are automatically placed directly into its 54-slot inventory (overflow drops cleanly at the block).
+  - **Vacuum Collector**: Robot automatically vacuums up any nearby dropped items within 1.5 blocks and deposits them into its cargo hold.
+  - **Full Inventory Persistence**: The 54-slot cargo bay is preserved in item NBT when the robot is collected (via Sneak + Right Click or broken) and restored when placed in the world.
+  - **Inventory Inspection Tooltip**: The RC Robot item tooltip now displays the exact number of used cargo slots.
+- **Convenient 'Z' Key Cargo Access**:
+  - Pressing `Z` opens the RC Robot's cargo inventory:
+    - While controlling the robot remotely (link active or in camera view up to 256m).
+    - When standing near or aiming at the RC Robot in the world.
+    - Right-clicking with an empty hand while disarmed also opens the 54-slot inventory.
+  - Updated controller action bar HUD prompt to include `Z: Cargo`.
+- **Authentic Minecraft Tool Mining Physics**:
+  - Implemented authentic block hardness and tool suitability mechanics:
+    - **One-Shot Mining**: An Axe one-shots leaves, logs, planks, and wooden blocks; a Pickaxe one-shots stone, cobblestone, ores, and concrete; a Shovel one-shots dirt, sand, and gravel.
+    - **Progressive Mining with Wrong Tools**: Unsuitable tools (e.g. an Axe hitting Concrete or Stone, or a Pickaxe hitting Logs) do NOT one-shot blocks! They deal progressive mining damage with visual cracking stages (0-9) and hit sounds.
+    - **Continuous Mining Support**: Holding LMB continuously strikes target blocks every 4 ticks (5x/sec) with fluid mechanical arm swings.
+
+## [1.2.3] - 2026-09-04
+### Added & Improved
+- **Ultra-Smooth Mouse Camera Turning**:
+  - Replaced stepped arrow key camera rotation with continuous, fluid mouse-driven look controls across all RC vehicles (RC Car, RC Drone, and RC Robot).
+  - Intercepts mouse deltas cleanly in `MouseMixin` when RC camera is active, redirecting rotation directly into vehicle orbit tracking without spinning the player's physical avatar.
+  - Added exponential smoothing (`lerp(0.25F, ...)`) to camera yaw and pitch for smooth, cinematic panning.
+- **Visible Player in RC Camera View**:
+  - Configured client `WorldRenderEvents.AFTER_ENTITIES` hook to render the local player character in the world while viewing through the RC camera.
+  - Players can now clearly see themselves standing in the environment, holding their RC controller or watching the vehicles operate.
+- **RC Robot Companion (`RcRobotEntity` & `RcRobotItem`)**:
+  - Added rugged all-terrain RC Robot featuring tank-track locomotion, auto-stepping over full 1-block obstacles, and an optical cybernetic sensor head.
+  - **Universal RC Controller Integration**: Aim and right-click with the RC Controller to pair with the robot; drive it remotely using `W`/`A`/`S`/`D` and view its forward camera with `F`.
+  - **Tool Equipping & Dual-Hand Actions**:
+    - Right-click the robot with any tool (pickaxes, axes, shovels, swords, hoes, shears) to equip it into the robotic arm clamp.
+    - Right-click with an empty hand while disarmed to retrieve the equipped tool.
+    - Shift + right-click with an empty hand to pick up the robot into your inventory (perserving battery charge and equipped tool).
+  - **LMB Remote Tool Use**:
+    - While remote-controlling the robot in camera view, pressing Left Mouse Button (LMB / attack key) commands the robot to use its equipped tool where the camera is aimed.
+    - Blocks: Mines and breaks blocks in reach (up to 4.5 blocks), checking tool suitability, dropping items, playing break sounds, producing particles, and applying durability damage to the tool.
+    - Entities: Attacks hostile or target entities in range, dealing weapon attack damage and knockback.
+    - Features animated mechanical arm swings and tool strikes in sync with actions.
+  - **Auto-Docking & Charging**:
+    - Press `C` to engage auto-docking to nearby RC Chargers or RC Parking Spots.
+    - Low battery (<5%) triggers automated homing and safety docking.
+
+## [1.2.2] - 2026-09-04
 ### Added & Improved
 - **Connected Blocks in Shader & Texture Pipeline**:
   - **Connected Glass**: Seamless borderless glass and glass panes with crystal-clear interiors (clears out distracting interior vanilla scratches/streaks) and crisp beveled outer frames for standard glass, tinted glass, and all 16 stained glass colors.

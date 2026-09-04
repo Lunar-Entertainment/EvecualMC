@@ -554,11 +554,14 @@ public class EvecualMC implements ModInitializer {
                         if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
                             car.openTrunk(player);
                         } else if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rc
-                                && player.squaredDistanceTo(rc) < 64.0) {
+                                && (player.squaredDistanceTo(rc) < 64.0 || rc.getPairedPlayerUuid().equals(player.getUuidAsString()))) {
                             rc.openTrunk(player);
                         } else if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone
-                                && player.squaredDistanceTo(drone) < 64.0) {
+                                && (player.squaredDistanceTo(drone) < 64.0 || drone.getPairedPlayerUuid().equals(player.getUuidAsString()))) {
                             drone.openInventory(player);
+                        } else if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot
+                                && (player.squaredDistanceTo(robot) < 64.0 || (robot.getPairedPlayerUuid().equals(player.getUuidAsString()) && player.squaredDistanceTo(robot) <= 65536.0))) {
+                            robot.openInventory(player);
                         }
                     });
                 });
