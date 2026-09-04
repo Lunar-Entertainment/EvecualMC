@@ -33,6 +33,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -249,10 +250,17 @@ public class EvecualMCClient implements ClientModInitializer {
         return cam instanceof RcCarEntity || cam instanceof RcDroneEntity || cam instanceof RcRobotEntity;
     }
 
+    public static BlockPos activeStationPos = null;
+    public static java.util.UUID activeStationVehicleUuid = null;
+    public static String activeStationType = null;
+
     public static boolean isRcLinkActive() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null || client.currentScreen != null) {
             return false;
+        }
+        if (activeStationPos != null && activeStationVehicleUuid != null) {
+            return true;
         }
         net.minecraft.item.ItemStack held = null;
         if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
@@ -269,6 +277,14 @@ public class EvecualMCClient implements ClientModInitializer {
 
     public static RcCarEntity getTargetRcCar(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return null;
+        if (activeStationPos != null && activeStationVehicleUuid != null && "car".equals(activeStationType)) {
+            for (Entity e : client.world.getEntities()) {
+                if (e instanceof RcCarEntity rc && rc.getUuid().equals(activeStationVehicleUuid)) {
+                    return rc;
+                }
+            }
+            return null;
+        }
         net.minecraft.item.ItemStack held = null;
         if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
             held = client.player.getMainHandStack();
@@ -290,6 +306,14 @@ public class EvecualMCClient implements ClientModInitializer {
 
     public static RcDroneEntity getTargetRcDrone(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return null;
+        if (activeStationPos != null && activeStationVehicleUuid != null && "drone".equals(activeStationType)) {
+            for (Entity e : client.world.getEntities()) {
+                if (e instanceof RcDroneEntity drone && drone.getUuid().equals(activeStationVehicleUuid)) {
+                    return drone;
+                }
+            }
+            return null;
+        }
         net.minecraft.item.ItemStack held = null;
         if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
             held = client.player.getMainHandStack();
@@ -311,6 +335,14 @@ public class EvecualMCClient implements ClientModInitializer {
 
     public static RcRobotEntity getTargetRcRobot(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return null;
+        if (activeStationPos != null && activeStationVehicleUuid != null && "robot".equals(activeStationType)) {
+            for (Entity e : client.world.getEntities()) {
+                if (e instanceof RcRobotEntity robot && robot.getUuid().equals(activeStationVehicleUuid)) {
+                    return robot;
+                }
+            }
+            return null;
+        }
         net.minecraft.item.ItemStack held = null;
         if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
             held = client.player.getMainHandStack();
@@ -332,6 +364,18 @@ public class EvecualMCClient implements ClientModInitializer {
 
     public static void toggleRcCamera(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return;
+
+        if (activeStationPos != null) {
+            // In stationary controller mode, exiting camera exits the station back to player control!
+            ClientPlayNetworking.send(EvecualMC.EXIT_RC_STATION_PACKET_ID, PacketByteBufs.empty());
+            activeStationPos = null;
+            activeStationVehicleUuid = null;
+            activeStationType = null;
+            client.setCameraEntity(client.player);
+            client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
+            sendSafeActionBar(client, "§7📡 Disconnected from RC Control Station.");
+            return;
+        }
 
         Entity targetRc = getTargetRcCar(client);
         if (targetRc == null) {
@@ -470,6 +514,55 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register Enter RC Station S2C receiver
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.ENTER_RC_STATION_PACKET_ID, (client, handler, buf, responseSender) -> {
+            BlockPos stationPos = buf.readBlockPos();
+            java.util.UUID vehicleUuid = buf.readUuid();
+            String type = buf.readString();
+
+            client.execute(() -> {
+                activeStationPos = stationPos;
+                activeStationVehicleUuid = vehicleUuid;
+                activeStationType = type;
+
+                Entity vehicle = null;
+                if (client.world != null) {
+                    for (Entity e : client.world.getEntities()) {
+                        if (e.getUuid().equals(vehicleUuid)) {
+                            vehicle = e;
+                            break;
+                        }
+                    }
+                }
+
+                if (vehicle != null) {
+                    previousPerspective = client.options.getPerspective();
+                    client.setCameraEntity(vehicle);
+                    client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
+                    resetRcCameraAngle();
+                    targetRcCameraDistance = 3.5F;
+                    rcCameraDistance = 3.5F;
+                    sendSafeActionBar(client, "§b🖥️ RC Station: §aLINKED §7[Shift/Sneak: Exit]");
+                }
+            });
+        });
+
+        // Register Exit RC Station S2C receiver
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.EXIT_RC_STATION_PACKET_ID, (client, handler, buf, responseSender) -> {
+            client.execute(() -> {
+                if (activeStationPos != null) {
+                    activeStationPos = null;
+                    activeStationVehicleUuid = null;
+                    activeStationType = null;
+                    if (client.player != null) {
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
+                        sendSafeActionBar(client, "§7📡 Disconnected from RC Control Station.");
+                    }
+                }
+            });
+        });
+
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             RcHudManager.tick();
@@ -587,6 +680,53 @@ public class EvecualMCClient implements ClientModInitializer {
                     buf.writeBoolean(right);
                     buf.writeBoolean(sprint);
                     ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
+                }
+
+                // Stationary RC Controller handling
+                if (activeStationPos != null) {
+                    if (client.world == null || client.player == null ||
+                        client.player.squaredDistanceTo(activeStationPos.getX() + 0.5, activeStationPos.getY() + 0.5, activeStationPos.getZ() + 0.5) > 36.0 ||
+                        !client.world.getBlockState(activeStationPos).isOf(EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK)) {
+                        ClientPlayNetworking.send(EvecualMC.EXIT_RC_STATION_PACKET_ID, PacketByteBufs.empty());
+                        activeStationPos = null;
+                        activeStationVehicleUuid = null;
+                        activeStationType = null;
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
+                    } else {
+                        // 1. Lock player movement: stuck in place at terminal
+                        client.player.setVelocity(0, client.player.getVelocity().y, 0);
+                        if (client.player.input != null) {
+                            client.player.input.movementForward = 0.0F;
+                            client.player.input.movementSideways = 0.0F;
+                            client.player.input.jumping = false;
+                        }
+
+                        // 2. Enforce RC Camera view: cannot be in player perspective
+                        Entity targetRc = getTargetRcCar(client);
+                        if (targetRc == null) targetRc = getTargetRcDrone(client);
+                        if (targetRc == null) targetRc = getTargetRcRobot(client);
+
+                        if (targetRc != null && targetRc.isAlive()) {
+                            if (client.getCameraEntity() != targetRc) {
+                                client.setCameraEntity(targetRc);
+                            }
+                            if (client.options.getPerspective() == Perspective.FIRST_PERSON && client.getCameraEntity() == client.player) {
+                                client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
+                            }
+                        }
+
+                        // 3. Shift / Sneak key exits the station
+                        if (client.options.sneakKey.isPressed()) {
+                            ClientPlayNetworking.send(EvecualMC.EXIT_RC_STATION_PACKET_ID, PacketByteBufs.empty());
+                            activeStationPos = null;
+                            activeStationVehicleUuid = null;
+                            activeStationType = null;
+                            client.setCameraEntity(client.player);
+                            client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
+                            sendSafeActionBar(client, "§7📡 Disconnected from RC Control Station.");
+                        }
+                    }
                 }
 
                 // Remote Control: RC Car, RC Drone, and RC Robot inputs

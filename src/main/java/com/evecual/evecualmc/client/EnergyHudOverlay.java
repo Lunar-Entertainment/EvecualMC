@@ -9,6 +9,7 @@ import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
 import com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity;
 import com.evecual.evecualmc.block.entity.RcChargerBlockEntity;
 import com.evecual.evecualmc.block.entity.SolarPanelBlockEntity;
+import com.evecual.evecualmc.block.entity.StationaryRcControllerBlockEntity;
 import com.evecual.evecualmc.entity.CarEntity;
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
@@ -102,6 +103,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderDroneParkingSpotTip(drawContext, client);
             } else if (state.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
                 renderRobotParkingSpotTip(drawContext, client);
+            } else if (be instanceof StationaryRcControllerBlockEntity station) {
+                renderStationaryRcControllerTip(drawContext, client, station);
             }
         }
     }
@@ -342,6 +345,15 @@ public class EnergyHudOverlay implements HudRenderCallback {
         String status = "🤖 Docks & powers down RC Robots (Charges within 16m of Wireless Charger)";
         renderUnifiedHud(context, client, "🤖", "Robot Parking Spot", 0xFFF97316,
                 "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
+    }
+
+    private void renderStationaryRcControllerTip(DrawContext context, MinecraftClient client, StationaryRcControllerBlockEntity terminal) {
+        String pairedName = terminal.getVehicleName();
+        boolean paired = terminal.getPairedVehicleUuid() != null;
+        String status = paired ? "📡 Linked: " + pairedName + " (Right-Click to Operate)" : "⚠️ Not Paired (Pair in hand before placing)";
+        int color = paired ? 0xFF86EFAC : 0xFFF87171;
+        renderUnifiedHud(context, client, "🖥️", "Stationary RC Controller", 0xFF60A5FA,
+                paired ? "LINKED" : "OFFLINE", 0xFFFFFFFF, status, color, null, null);
     }
 
     private void renderCarTip(DrawContext context, MinecraftClient client, CarEntity car) {

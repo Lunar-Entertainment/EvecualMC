@@ -181,6 +181,34 @@ public enum CombinerRecipe {
             }
     ),
 
+    STATIONARY_RC_CONTROLLER(
+            Category.RC,
+            "stationary_rc_controller",
+            "Stationary RC Controller",
+            "Ground-mounted teleoperation terminal. Locks player in place with continuous RC vehicle telemetry.",
+            () -> new ItemStack(EvecualMC.STATIONARY_RC_CONTROLLER_ITEM),
+            new SlotRequirement[]{
+                    new SlotRequirement("RC Controller", 1, false,
+                            s -> s.isOf(EvecualMC.RC_CONTROLLER_ITEM),
+                            () -> new ItemStack(EvecualMC.RC_CONTROLLER_ITEM)),
+                    new SlotRequirement("Terminal Stand", 3, false,
+                            s -> s.isOf(EvecualMC.STEEL_INGOT) || s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(EvecualMC.STEEL_INGOT)),
+                    new SlotRequirement("Monitor Screen", 1, false,
+                            s -> isGlassItem(s.getItem()),
+                            () -> new ItemStack(Items.GLASS_PANE)),
+                    new SlotRequirement("Relay Circuit", 2, false,
+                            s -> s.isOf(Items.REDSTONE),
+                            () -> new ItemStack(Items.REDSTONE)),
+                    new SlotRequirement("Terminal Pedestal", 1, false,
+                            s -> s.isOf(Items.SMOOTH_STONE) || s.isOf(Items.STONE) || s.isOf(Items.COBBLESTONE),
+                            () -> new ItemStack(Items.SMOOTH_STONE)),
+                    new SlotRequirement("Signal Booster", 2, true,
+                            s -> s.isOf(EvecualMC.WIRE_ITEM) || s.isOf(Items.COPPER_INGOT),
+                            () -> new ItemStack(EvecualMC.WIRE_ITEM))
+            }
+    ),
+
     RC_SENDER(
             Category.RC,
             "rc_sender",

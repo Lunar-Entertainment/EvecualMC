@@ -842,6 +842,22 @@ public class RcRobotEntity extends Entity {
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack held = player.getStackInHand(hand);
 
+        // Pairing with RC Controller
+        if (held.getItem() instanceof com.evecual.evecualmc.item.RcControllerItem) {
+            if (!this.getWorld().isClient()) {
+                com.evecual.evecualmc.item.RcControllerItem.pairWithRobot(held, player, this);
+            }
+            return ActionResult.success(this.getWorld().isClient());
+        }
+
+        // Pairing with Stationary RC Controller
+        if (held.getItem() instanceof com.evecual.evecualmc.item.StationaryRcControllerItem) {
+            if (!this.getWorld().isClient()) {
+                com.evecual.evecualmc.item.StationaryRcControllerItem.pairWithRobot(held, player, this);
+            }
+            return ActionResult.success(this.getWorld().isClient());
+        }
+
         // 1. Equip tool if holding a tool or weapon
         if (held.getItem() instanceof ToolItem || held.getItem() instanceof MiningToolItem ||
             held.getItem() instanceof SwordItem || held.getItem() instanceof ShearsItem) {

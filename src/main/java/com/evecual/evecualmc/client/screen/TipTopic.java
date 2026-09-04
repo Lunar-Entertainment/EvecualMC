@@ -555,6 +555,31 @@ public enum TipTopic {
             }
     ),
 
+    STATIONARY_RC_CONTROLLER(
+            "stationary_rc_controller",
+            "Stationary RC Controller",
+            "📡 Ground Station Terminal",
+            () -> new ItemStack(EvecualMC.STATIONARY_RC_CONTROLLER_ITEM),
+            "Heavy-duty ground command terminal that pairs with RC vehicles before placement to provide locked-in remote operations.",
+            new String[]{
+                    "Before placing, right-click any RC Car, RC Drone, or RC Robot while holding the terminal item to link telemetry.",
+                    "Place the terminal onto solid ground and right-click to enter fixed remote control mode.",
+                    "While operating the terminal, the player remains stationary and locked in the vehicle's perspective.",
+                    "Press Sneak (Shift) or F to disconnect and exit terminal mode."
+            },
+            new String[][]{
+                    {"Item Right-Click on RC", "Pairs terminal with targeted vehicle"},
+                    {"Right-Click Placed Terminal", "Operate vehicle from stationary console"},
+                    {"WASD / Movement Keys", "Steer and drive paired vehicle remotely"},
+                    {"Sneak (Shift) / F", "Exit terminal view and return to body"}
+            },
+            new String[]{
+                    "Must be linked to a vehicle while in item form before placing it down.",
+                    "Player camera is locked into vehicle perspective while operating the terminal.",
+                    "Break the terminal to retrieve the item; pairing data is retained when picked up."
+            }
+    ),
+
     ICE_CREAM(
             "ice_cream",
             "Artisan Ice Cream",
@@ -653,6 +678,7 @@ public enum TipTopic {
         if (block == EvecualMC.DRONE_PARKING_SPOT_BLOCK) return DRONE_PARKING_SPOT;
         if (block == EvecualMC.ROBOT_PARKING_SPOT_BLOCK) return ROBOT_PARKING_SPOT;
         if (block == EvecualMC.ELECTRONIC_COMBINER_BLOCK) return ELECTRONIC_COMBINER;
+        if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
         return null;
     }
 
@@ -663,6 +689,7 @@ public enum TipTopic {
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
+        if (item == EvecualMC.STATIONARY_RC_CONTROLLER_ITEM) return STATIONARY_RC_CONTROLLER;
         if (item == EvecualMC.RC_SENDER_ITEM) return RC_SENDER;
         if (item == EvecualMC.RC_RECEIVER_ITEM) return RC_RECEIVER;
         if (item == EvecualMC.SOLAR_PANEL_ITEM) return SOLAR_PANEL;

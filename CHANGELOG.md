@@ -1,5 +1,23 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.6] - 2026-09-04
+### Added & Improved
+- **Stationary RC Controller (Ground Command Terminal)**:
+  - Added the **Stationary RC Controller** (`stationary_rc_controller`), a heavy-duty ground-based block terminal variant of the handheld RC controller.
+  - **Pre-Placement Radio Pairing**:
+    - The terminal must be paired before placement: right-clicking the item onto any RC vehicle (RC Car, RC Drone, or RC Robot) synchronizes frequency and locks telemetry directly to that vehicle.
+    - Custom tooltip dynamically displays paired vehicle name and state.
+  - **Stationary Ground Terminal Operation**:
+    - Once placed on the ground, right-clicking the terminal activates the remote control link.
+    - Unlike handheld controllers, the operator remains stationary and physically immobilized at the console terminal while controlling the vehicle.
+  - **Locked Vehicle Perspective**:
+    - When connected to the terminal, the player camera is strictly locked to the remote vehicle's perspective.
+    - Player perspective is prevented from switching back to first/third-person player view while operating the terminal.
+    - Disconnecting (via Sneak/Shift or pressing F, or walking out of console range) immediately returns camera control to the player.
+  - **Fabrication & Field Guide**:
+    - Added crafting recipes in the Electronic Combiner (under the RC category) and Crafting Table.
+    - Integrated HUD diagnostic overlay and Field Guide entry for the Stationary RC Controller.
+
 ## [1.3.5] - 2026-09-04
 ### Fixed & Improved
 - **Wireless RC Charger Energy Intake & Synchronization**:

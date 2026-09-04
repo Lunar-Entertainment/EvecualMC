@@ -701,6 +701,14 @@ public class RcDroneEntity extends Entity {
             return ActionResult.success(this.getWorld().isClient);
         }
 
+        // Pairing with Stationary RC Controller
+        if (held.getItem() instanceof com.evecual.evecualmc.item.StationaryRcControllerItem) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.item.StationaryRcControllerItem.pairWithDrone(held, player, this);
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
         // Sneaking with empty hand: Pick up the RC drone
         if (player.isSneaking() && held.isEmpty()) {
             if (!this.getWorld().isClient) {

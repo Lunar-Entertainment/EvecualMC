@@ -38,6 +38,7 @@ import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -247,6 +248,18 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "robot_parking_spot"),
             new BlockItem(ROBOT_PARKING_SPOT_BLOCK, new Item.Settings()));
 
+    public static final Block STATIONARY_RC_CONTROLLER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "stationary_rc_controller"),
+            new com.evecual.evecualmc.block.StationaryRcControllerBlock(
+                    FabricBlockSettings.create().strength(1.5f).sounds(BlockSoundGroup.METAL).nonOpaque()));
+
+    public static final Item STATIONARY_RC_CONTROLLER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "stationary_rc_controller"),
+            new com.evecual.evecualmc.item.StationaryRcControllerItem(STATIONARY_RC_CONTROLLER_BLOCK,
+                    new Item.Settings().maxCount(1)));
+
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_cable"),
@@ -297,6 +310,15 @@ public class EvecualMC implements ModInitializer {
                     new Identifier(MOD_ID, "rc_charger"),
                     FabricBlockEntityTypeBuilder
                             .create(com.evecual.evecualmc.block.entity.RcChargerBlockEntity::new, RC_CHARGER_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.StationaryRcControllerBlockEntity> STATIONARY_RC_CONTROLLER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "stationary_rc_controller"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.StationaryRcControllerBlockEntity::new,
+                                    STATIONARY_RC_CONTROLLER_BLOCK)
                             .build());
 
     // Screen Handlers
@@ -368,6 +390,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(RC_DRONE_ITEM);
                 entries.add(RC_ROBOT_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
+                entries.add(STATIONARY_RC_CONTROLLER_ITEM);
                 entries.add(RC_SENDER_ITEM);
                 entries.add(RC_RECEIVER_ITEM);
                 entries.add(RC_CHARGER_ITEM);
@@ -406,6 +429,8 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier TOGGLE_RC_LIGHT_PACKET_ID = new Identifier(MOD_ID, "toggle_rc_light");
     public static final Identifier OPEN_TIP_SCREEN_PACKET_ID = new Identifier(MOD_ID, "open_tip_screen");
     public static final Identifier SELECT_COMBINER_RECIPE_PACKET_ID = new Identifier(MOD_ID, "select_combiner_recipe");
+    public static final Identifier ENTER_RC_STATION_PACKET_ID = new Identifier(MOD_ID, "enter_rc_station");
+    public static final Identifier EXIT_RC_STATION_PACKET_ID = new Identifier(MOD_ID, "exit_rc_station");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -849,6 +874,27 @@ public class EvecualMC implements ModInitializer {
                         if (player.currentScreenHandler instanceof com.evecual.evecualmc.screen.ElectronicCombinerScreenHandler screenHandler
                                 && screenHandler.syncId == syncId) {
                             screenHandler.selectRecipe(recipeIndex, player);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(EXIT_RC_STATION_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            BlockPos ppos = player.getBlockPos();
+                            for (int dx = -5; dx <= 5; dx++) {
+                                for (int dy = -3; dy <= 3; dy++) {
+                                    for (int dz = -5; dz <= 5; dz++) {
+                                        BlockPos check = ppos.add(dx, dy, dz);
+                                        if (player.getWorld().getBlockEntity(check) instanceof com.evecual.evecualmc.block.entity.StationaryRcControllerBlockEntity be) {
+                                            if (player.getUuid().equals(be.getCurrentUserUuid())) {
+                                                be.setCurrentUserUuid(null);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     });
                 });

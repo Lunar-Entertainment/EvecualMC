@@ -30,6 +30,8 @@
   "item.evecualmc.drone_parking_spot": "Drone Parking Spot",
   "block.evecualmc.robot_parking_spot": "Robot Parking Spot",
   "item.evecualmc.robot_parking_spot": "Robot Parking Spot",
+  "block.evecualmc.stationary_rc_controller": "Stationary RC Controller",
+  "item.evecualmc.stationary_rc_controller": "Stationary RC Controller",
   "block.evecualmc.electronic_combiner": "Car Fabricator",
   "item.evecualmc.electronic_combiner": "Car Fabricator",
   "container.evecualmc.electronic_combiner": "Car Fabricator",

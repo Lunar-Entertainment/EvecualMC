@@ -608,6 +608,14 @@ public class RcCarEntity extends Entity {
             return ActionResult.success(this.getWorld().isClient);
         }
 
+        // Pairing with Stationary RC Controller
+        if (held.getItem() instanceof com.evecual.evecualmc.item.StationaryRcControllerItem) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.item.StationaryRcControllerItem.pairWithCar(held, player, this);
+            }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
         // Shift + Empty hand: Pick up the RC car
         if (player.isSneaking() && held.isEmpty()) {
             if (!this.getWorld().isClient) {
