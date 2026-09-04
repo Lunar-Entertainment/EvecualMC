@@ -44,6 +44,10 @@ public class RcCarEntity extends Entity {
     private double currentSpeed = 0.0;
     private float wheelRoll = 0.0F;
 
+    private boolean autoReturning = false;
+    private net.minecraft.util.math.BlockPos targetChargerPos = null;
+    private int autoReturnTicks = 0;
+
     public RcCarEntity(EntityType<?> type, World world) {
         super(type, world);
         this.setStepHeight(1.0F); // Effortlessly drive over slabs and 1-block steps!
@@ -97,7 +101,56 @@ public class RcCarEntity extends Entity {
         return this.currentSpeed;
     }
 
+    public boolean isAutoReturning() {
+        return this.autoReturning;
+    }
+
+    public void onReachedCharger() {
+        this.autoReturning = false;
+        this.targetChargerPos = null;
+        this.currentSpeed = 0.0;
+    }
+
+    public void cancelAutoReturn() {
+        if (this.autoReturning) {
+            this.autoReturning = false;
+            this.targetChargerPos = null;
+        }
+    }
+
+    public boolean startAutoReturnToCharger() {
+        net.minecraft.util.math.BlockPos carPos = this.getBlockPos();
+        net.minecraft.util.math.BlockPos bestCharger = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        for (int x = -50; x <= 50; x++) {
+            for (int y = -8; y <= 8; y++) {
+                for (int z = -50; z <= 50; z++) {
+                    net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
+                    if (this.getWorld().getBlockState(p).isOf(EvecualMC.RC_CHARGER_BLOCK)) {
+                        double dSq = p.getSquaredDistance(carPos);
+                        if (dSq < bestDistSq) {
+                            bestDistSq = dSq;
+                            bestCharger = p;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestCharger != null) {
+            this.autoReturning = true;
+            this.targetChargerPos = bestCharger;
+            this.autoReturnTicks = 0;
+            return true;
+        }
+        return false;
+    }
+
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean sprint, boolean jump) {
+        if (this.autoReturning && (forward || back || left || right)) {
+            cancelAutoReturn();
+        }
         this.inputForward = forward;
         this.inputBack = back;
         this.inputLeft = left;
@@ -127,11 +180,43 @@ public class RcCarEntity extends Entity {
             this.setVelocity(this.getVelocity().add(0, -0.04, 0));
         }
 
-        // Driving physics
         int energy = getEnergy();
         boolean hasPower = energy > 0;
 
-        if (hasPower) {
+        // Auto Return to Charger when battery reaches <= 5% (<= 25 E)
+        if (!this.getWorld().isClient && !this.autoReturning && energy <= 25 && energy > 0) {
+            if (this.age % 100 == 0) { // check every 5 seconds
+                startAutoReturnToCharger();
+            }
+        }
+
+        // Auto-navigation driving physics
+        if (this.autoReturning && this.targetChargerPos != null && hasPower) {
+            this.autoReturnTicks++;
+            if (this.autoReturnTicks > 1200) { // 60s timeout
+                cancelAutoReturn();
+            } else {
+                Vec3d target = new Vec3d(this.targetChargerPos.getX() + 0.5, this.targetChargerPos.getY() + 0.25, this.targetChargerPos.getZ() + 0.5);
+                Vec3d diff = target.subtract(this.getPos());
+                double distSq = diff.x * diff.x + diff.z * diff.z;
+
+                if (distSq < 0.64) {
+                    onReachedCharger();
+                } else {
+                    float desiredYaw = (float) Math.toDegrees(Math.atan2(-diff.x, diff.z));
+                    float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                    float steer = MathHelper.clamp(yawDiff * 0.9f, -32.0f, 32.0f);
+                    setSteeringAngle(steer);
+
+                    this.currentSpeed = Math.min(this.currentSpeed + 0.03, 0.24);
+
+                    // Hop if blocked by a step or obstacle
+                    if (this.horizontalCollision && this.isOnGround()) {
+                        this.setVelocity(this.getVelocity().x, 0.40, this.getVelocity().z);
+                    }
+                }
+            }
+        } else if (hasPower) {
             double topSpeed = this.inputSprint ? 0.36 : 0.22;
             double accel = this.inputSprint ? 0.04 : 0.025;
 

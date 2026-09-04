@@ -20,24 +20,40 @@ void main() {
 
     vec4 light = texture2D(lightmap, lmcoord);
 
-    // Subtle directional diffuse for clean automotive shape
+    // Directional shading with specular gloss
     vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
+    vec3 viewDir = vec3(0.0, 0.0, 1.0);
+    vec3 halfDir = normalize(lightDir + viewDir);
+
     float NdotL = clamp(dot(normal, lightDir), 0.0, 1.0);
-    float diffuse = mix(0.78, 1.05, NdotL);
+    float diffuse = mix(0.75, 1.05, NdotL);
 
-    vec3 shaded = albedo.rgb * light.rgb * diffuse;
+    // Automotive gloss: Specular highlight and Fresnel reflection
+    float spec = pow(max(dot(normal, halfDir), 0.0), 32.0) * 0.30;
+    float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0) * 0.18;
 
-    // Emissive mask ONLY for true headlights, taillights, and cyan LED strips
-    float isCyanLed = max(albedo.b - albedo.r, 0.0) * float(albedo.g > 0.75);
-    float isRedTaillight = float(albedo.r > 0.9 && albedo.g < 0.15 && albedo.b < 0.15);
+    vec3 shaded = albedo.rgb * light.rgb * diffuse + vec3(spec + fresnel * 0.4);
 
+    // --- Special Glowing Places on Vehicles ---
     float emissiveFactor = 0.0;
-    if (isCyanLed > 0.35) {
-        emissiveFactor = 0.75;
-    } else if (isRedTaillight > 0.5) {
-        emissiveFactor = 0.65;
-    } else if (lmcoord.x > 0.88) {
-        emissiveFactor = clamp((lmcoord.x - 0.88) * 3.0, 0.0, 0.5);
+
+    // RC Car glowing antenna tip & headlights: bright cyan
+    bool isCyanLed = (albedo.b > 0.70 && albedo.g > 0.65 && albedo.r < 0.45);
+    // Red sports taillights
+    bool isRedTaillight = (albedo.r > 0.88 && albedo.g < 0.18 && albedo.b < 0.18);
+    // Headlights
+    bool isHeadlight = (albedo.r > 0.90 && albedo.g > 0.88 && albedo.b > 0.70 && lmcoord.y > 0.5);
+
+    if (isCyanLed) {
+        emissiveFactor = 0.90;
+    } else if (isRedTaillight) {
+        emissiveFactor = 0.85;
+    } else if (isHeadlight) {
+        emissiveFactor = 0.80;
+    }
+
+    if (emissiveFactor > 0.0) {
+        shaded = mix(shaded, albedo.rgb * 1.3, emissiveFactor * 0.7);
     }
 
     vec3 emissive = albedo.rgb * emissiveFactor;

@@ -203,6 +203,18 @@ public class EvecualMC implements ModInitializer {
             new BlockItem(PARKING_LINES_BLOCK, new Item.Settings())
     );
 
+    public static final Block RC_CHARGER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "rc_charger"),
+            new com.evecual.evecualmc.block.RcChargerBlock(FabricBlockSettings.create().strength(0.8f).sounds(BlockSoundGroup.METAL).nonOpaque())
+    );
+
+    public static final Item RC_CHARGER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_charger"),
+            new BlockItem(RC_CHARGER_BLOCK, new Item.Settings())
+    );
+
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_cable"),
@@ -244,6 +256,12 @@ public class EvecualMC implements ModInitializer {
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "parking_lines"),
             FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity::new, PARKING_LINES_BLOCK).build()
+    );
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.RcChargerBlockEntity> RC_CHARGER_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "rc_charger"),
+            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.RcChargerBlockEntity::new, RC_CHARGER_BLOCK).build()
     );
 
     // Screen Handlers
@@ -296,6 +314,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(CAR_ITEM);
                 entries.add(RC_CAR_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
+                entries.add(RC_CHARGER_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);
@@ -313,6 +332,7 @@ public class EvecualMC implements ModInitializer {
 
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
+    public static final Identifier RC_CAR_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_car_auto_dock");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
@@ -353,6 +373,25 @@ public class EvecualMC implements ModInitializer {
                     if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
                         if (player.squaredDistanceTo(rcCar) <= 4096.0) { // 64 blocks max range
                             rcCar.setRemoteInputs(forward, back, left, right, sprint, jump);
+                        }
+                    }
+                }
+            });
+        });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_CAR_AUTO_DOCK_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+            java.util.UUID carUuid = buf.readUuid();
+            server.execute(() -> {
+                if (player.getServerWorld() != null) {
+                    Entity target = player.getServerWorld().getEntity(carUuid);
+                    if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
+                        if (player.squaredDistanceTo(rcCar) <= 4096.0) {
+                            boolean started = rcCar.startAutoReturnToCharger();
+                            if (started) {
+                                player.sendMessage(Text.literal("§a⚡ RC Car returning to RC Charger..."), true);
+                            } else {
+                                player.sendMessage(Text.literal("§c⚡ No RC Charger found within 50 blocks!"), true);
+                            }
                         }
                     }
                 }
@@ -463,15 +502,15 @@ public class EvecualMC implements ModInitializer {
                     return;
                 }
 
-                // Search for nearest ParkingLinesBlock within 15 blocks (matching any part of the 3x2 bay)
+                // Search for nearest ParkingLinesBlock within 50 blocks (matching any part of the 3x2 bay)
                 net.minecraft.util.math.BlockPos carPos = car.getBlockPos();
                 net.minecraft.util.math.BlockPos bestSpot = null;
                 net.minecraft.util.math.Direction bestFacing = null;
                 double bestDistSq = Double.MAX_VALUE;
 
-                for (int x = -15; x <= 15; x++) {
-                    for (int y = -4; y <= 4; y++) {
-                        for (int z = -15; z <= 15; z++) {
+                for (int x = -50; x <= 50; x++) {
+                    for (int y = -8; y <= 8; y++) {
+                        for (int z = -50; z <= 50; z++) {
                             net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
                             net.minecraft.block.BlockState s = player.getWorld().getBlockState(p);
                             if (s.isOf(PARKING_LINES_BLOCK)) {
@@ -523,7 +562,7 @@ public class EvecualMC implements ModInitializer {
                     player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), false);
                     player.sendMessage(Text.literal("§a🅿️ Auto-parking engaged... Aligning to parking bay."), true);
                 } else {
-                    player.sendMessage(Text.literal("§c🅿️ No parking bay found within 15 blocks!"), false);
+                    player.sendMessage(Text.literal("§c🅿️ No parking bay found within 50 blocks!"), false);
                 }
             });
         });

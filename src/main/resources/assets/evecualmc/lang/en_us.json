@@ -16,6 +16,8 @@
   "item.evecualmc.rc_car": "Remote Control Car",
   "entity.evecualmc.rc_car": "Remote Control Car",
   "item.evecualmc.rc_controller": "RC Controller",
+  "block.evecualmc.rc_charger": "RC Car Fast Charger",
+  "item.evecualmc.rc_charger": "RC Car Fast Charger",
   "block.evecualmc.electronic_combiner": "Car Fabricator",
   "item.evecualmc.electronic_combiner": "Car Fabricator",
   "container.evecualmc.electronic_combiner": "Car Fabricator",

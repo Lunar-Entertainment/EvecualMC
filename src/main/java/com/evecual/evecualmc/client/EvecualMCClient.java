@@ -72,10 +72,11 @@ public class EvecualMCClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.RcCarEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.RcCarEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.RC_CAR_ENTITY, com.evecual.evecualmc.client.render.RcCarEntityRenderer::new);
 
-        // Cutout render layer for wire block, solar panel, and parking lines
+        // Cutout render layer for wire block, solar panel, parking lines, and RC charger
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.SOLAR_PANEL_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.PARKING_LINES_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.RC_CHARGER_BLOCK, RenderLayer.getCutout());
 
         // Register Charger Waypoint Network Sync
         ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CHARGER_WAYPOINT_PACKET_ID, (client, handler, buf, responseSender) -> {
@@ -180,16 +181,8 @@ public class EvecualMCClient implements ClientModInitializer {
                     ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
                 }
 
-                // 4. 'C' Key to Auto Park Vehicle into nearest Parking Lines bay
+                // 4. 'C' Key handling
                 boolean cDown = (client.currentScreen == null && InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_C)) || AUTO_PARK_KEY.isPressed();
-                if (cDown) {
-                    if (!wasCPressed) {
-                        wasCPressed = true;
-                        ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
-                    }
-                } else {
-                    wasCPressed = false;
-                }
 
                 // 5. RC Controller Remote Driving Control
                 net.minecraft.item.ItemStack heldController = null;
@@ -199,10 +192,29 @@ public class EvecualMCClient implements ClientModInitializer {
                     heldController = client.player.getOffHandStack();
                 }
 
+                boolean isRcActive = false;
                 if (heldController != null && heldController.hasNbt() && client.currentScreen == null) {
                     net.minecraft.nbt.NbtCompound nbt = heldController.getNbt();
                     if (nbt != null && nbt.containsUuid("PairedCar") && nbt.getBoolean("ActiveLink")) {
+                        isRcActive = true;
                         java.util.UUID pairedUuid = nbt.getUuid("PairedCar");
+
+                        // Immobilize player while RC Link is active
+                        client.player.input.movementForward = 0.0F;
+                        client.player.input.movementSideways = 0.0F;
+                        client.player.input.jumping = false;
+                        client.player.setVelocity(0.0, client.player.getVelocity().y, 0.0);
+
+                        // 'C' Key while RC link is active: Auto Return to RC Charger!
+                        if (cDown) {
+                            if (!wasCPressed) {
+                                wasCPressed = true;
+                                PacketByteBuf dockBuf = PacketByteBufs.create();
+                                dockBuf.writeUuid(pairedUuid);
+                                ClientPlayNetworking.send(EvecualMC.RC_CAR_AUTO_DOCK_PACKET_ID, dockBuf);
+                            }
+                        }
+
                         if (client.world != null) {
                             com.evecual.evecualmc.entity.RcCarEntity targetRc = null;
                             for (Entity e : client.world.getEntities()) {
@@ -233,11 +245,25 @@ public class EvecualMCClient implements ClientModInitializer {
                                 ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
 
                                 if (client.player.age % 10 == 0) {
-                                    client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[W/A/S/D to Drive, Space to Hop]"), true);
+                                    client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[W/A/S/D to Drive, Space Hop, C Return Charger]"), true);
                                 }
                             }
                         }
                     }
+                }
+
+                // Normal car auto park if not in RC mode
+                if (!isRcActive) {
+                    if (cDown) {
+                        if (!wasCPressed) {
+                            wasCPressed = true;
+                            ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, PacketByteBufs.empty());
+                        }
+                    } else {
+                        wasCPressed = false;
+                    }
+                } else if (!cDown) {
+                    wasCPressed = false;
                 }
             }
         });
