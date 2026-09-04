@@ -96,6 +96,16 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "rc_controller"),
             new com.evecual.evecualmc.item.RcControllerItem(new Item.Settings().maxCount(1)));
 
+    public static final Item RC_SENDER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_sender"),
+            new Item(new Item.Settings()));
+
+    public static final Item RC_RECEIVER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_receiver"),
+            new Item(new Item.Settings()));
+
     public static final Item VANILLA_ICE_CREAM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "vanilla_ice_cream"),
@@ -347,6 +357,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(RC_DRONE_ITEM);
                 entries.add(RC_ROBOT_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
+                entries.add(RC_SENDER_ITEM);
+                entries.add(RC_RECEIVER_ITEM);
                 entries.add(RC_CHARGER_ITEM);
                 entries.add(RC_PARKING_SPOT_ITEM);
                 entries.add(DRONE_PARKING_SPOT_ITEM);
@@ -381,6 +393,7 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier CANCEL_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_auto_park_s2c");
     public static final Identifier TOGGLE_RC_LIGHT_PACKET_ID = new Identifier(MOD_ID, "toggle_rc_light");
     public static final Identifier OPEN_TIP_SCREEN_PACKET_ID = new Identifier(MOD_ID, "open_tip_screen");
+    public static final Identifier SELECT_COMBINER_RECIPE_PACKET_ID = new Identifier(MOD_ID, "select_combiner_recipe");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -812,6 +825,18 @@ public class EvecualMC implements ModInitializer {
                                     true);
                         } else {
                             player.sendMessage(Text.literal("§c🅿️ No parking bay found within 50 blocks!"), false);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(SELECT_COMBINER_RECIPE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    int syncId = buf.readInt();
+                    int recipeIndex = buf.readInt();
+                    server.execute(() -> {
+                        if (player.currentScreenHandler instanceof com.evecual.evecualmc.screen.ElectronicCombinerScreenHandler screenHandler
+                                && screenHandler.syncId == syncId) {
+                            screenHandler.selectRecipe(recipeIndex, player);
                         }
                     });
                 });

@@ -20,6 +20,8 @@
   "item.evecualmc.rc_robot": "Remote Control Robot",
   "entity.evecualmc.rc_robot": "Remote Control Robot",
   "item.evecualmc.rc_controller": "RC Controller",
+  "item.evecualmc.rc_sender": "RC Sender",
+  "item.evecualmc.rc_receiver": "RC Receiver",
   "block.evecualmc.rc_charger": "RC Charger",
   "item.evecualmc.rc_charger": "RC Charger",
   "block.evecualmc.rc_parking_spot": "RC Parking Spot",

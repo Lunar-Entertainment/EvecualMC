@@ -491,6 +491,48 @@ public enum TipTopic {
             }
     ),
 
+    RC_SENDER(
+            "rc_sender",
+            "RC Sender",
+            "📡 Telecommand Module",
+            () -> new ItemStack(EvecualMC.RC_SENDER_ITEM),
+            "Micro-scale RF broadcast transceiver module required to remotely control drones, rovers, and worker robots.",
+            new String[]{
+                    "Essential electronic component for crafting the RC Car, RC Drone, and RC Robot in the Electronic Combiner.",
+                    "Broadcasts telecommand signals and high-bandwidth sensor feeds back to paired handheld controllers.",
+                    "Can be fabricated in the Electronic Combiner under the RC category."
+            },
+            new String[][]{
+                    {"Electronic Combiner", "Craft using Lightning Rod, Redstone, Steel Ingot, and Wire"},
+                    {"Vehicle Blueprint", "Placed into Slot 0 when fabricating RC vehicles"}
+            },
+            new String[]{
+                    "Every remote vehicle (Car, Drone, Robot) requires one RC Sender in its construction.",
+                    "Transmits long-range telecommand packets seamlessly through walls and solid obstacles."
+            }
+    ),
+
+    RC_RECEIVER(
+            "rc_receiver",
+            "RC Receiver",
+            "📟 Crystal Decoder Module",
+            () -> new ItemStack(EvecualMC.RC_RECEIVER_ITEM),
+            "High-precision multi-channel telemetry crystal receiver tuned for remote command transmitters.",
+            new String[]{
+                    "Core telemetry processing unit required to assemble the RC Controller in the Electronic Combiner.",
+                    "Decodes multi-frequency radio signals into directional steering and actuator inputs.",
+                    "Fabricated in the Electronic Combiner under the RC category."
+            },
+            new String[][]{
+                    {"Electronic Combiner", "Craft using Redstone Comparator, Quartz, Steel Ingot, and Wire"},
+                    {"Controller Blueprint", "Placed into Slot 0 when fabricating the RC Controller"}
+            },
+            new String[]{
+                    "Without an RC Receiver, handheld remote controllers cannot decode vehicle telemetry.",
+                    "Features crystal oscillators for high-reliability low-latency radio communication."
+            }
+    ),
+
     ICE_CREAM(
             "ice_cream",
             "Artisan Ice Cream",
@@ -598,6 +640,8 @@ public enum TipTopic {
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
+        if (item == EvecualMC.RC_SENDER_ITEM) return RC_SENDER;
+        if (item == EvecualMC.RC_RECEIVER_ITEM) return RC_RECEIVER;
         if (item == EvecualMC.SOLAR_PANEL_ITEM) return SOLAR_PANEL;
         if (item == EvecualMC.BATTERY_ITEM) return BATTERY;
         if (item == EvecualMC.WIRE_ITEM) return WIRE;

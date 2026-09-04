@@ -45,6 +45,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
     private int energy = 0;
     private int progress = 0;
+    private int selectedRecipeIndex = 0;
 
     protected final PropertyDelegate propertyDelegate = new PropertyDelegate() {
         @Override
@@ -54,6 +55,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
                 case 1 -> MAX_PROGRESS;
                 case 2 -> ElectronicCombinerBlockEntity.this.energy;
                 case 3 -> MAX_ENERGY;
+                case 4 -> ElectronicCombinerBlockEntity.this.selectedRecipeIndex;
                 default -> 0;
             };
         }
@@ -63,12 +65,13 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
             switch (index) {
                 case 0 -> ElectronicCombinerBlockEntity.this.progress = value;
                 case 2 -> ElectronicCombinerBlockEntity.this.energy = value;
+                case 4 -> ElectronicCombinerBlockEntity.this.selectedRecipeIndex = value;
             }
         }
 
         @Override
         public int size() {
-            return 4;
+            return 5;
         }
     };
 
@@ -79,14 +82,15 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
     public static void tick(World world, BlockPos pos, BlockState state, ElectronicCombinerBlockEntity be) {
         if (world.isClient) return;
 
-        if (be.hasValidRecipe() && be.energy >= 1) {
+        com.evecual.evecualmc.recipe.CombinerRecipe recipe = com.evecual.evecualmc.recipe.CombinerRecipe.getRecipeByIndex(be.selectedRecipeIndex);
+        if (recipe != null && be.canCraftCurrentRecipe(recipe) && be.energy >= 1) {
             be.progress++;
             if (be.progress % 2 == 0) {
                 be.energy--; // Drains energy during assembly
             }
 
             if (be.progress >= MAX_PROGRESS) {
-                be.craftItem();
+                be.craftCurrentRecipe(recipe);
                 be.progress = 0;
             }
             be.markDirty();
@@ -100,97 +104,46 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
         }
     }
 
-    private boolean isGlassItem(Item item) {
-        if (item == Items.GLASS || item == Items.GLASS_PANE || item == Items.TINTED_GLASS) return true;
-        if (item instanceof BlockItem bi) {
-            Block b = bi.getBlock();
-            return b instanceof GlassBlock || b instanceof StainedGlassBlock || b instanceof StainedGlassPaneBlock || b instanceof TintedGlassBlock;
+    private boolean canCraftCurrentRecipe(com.evecual.evecualmc.recipe.CombinerRecipe recipe) {
+        if (!recipe.canCraft(this.inventory.subList(0, 6))) {
+            return false;
         }
-        return false;
+        ItemStack targetOutput = recipe.createOutput(this.inventory.subList(0, 6));
+        ItemStack currentOutput = this.inventory.get(6);
+        if (currentOutput.isEmpty()) return true;
+        if (!ItemStack.canCombine(currentOutput, targetOutput)) return false;
+        return (currentOutput.getCount() + targetOutput.getCount()) <= currentOutput.getMaxCount();
     }
 
-    private boolean hasValidRecipe() {
-        ItemStack engine = this.inventory.get(0);
-        ItemStack hull = this.inventory.get(1);
-        ItemStack glass = this.inventory.get(2);
-        ItemStack leather = this.inventory.get(3);
-        ItemStack output = this.inventory.get(6);
+    private void craftCurrentRecipe(com.evecual.evecualmc.recipe.CombinerRecipe recipe) {
+        ItemStack output = recipe.createOutput(this.inventory.subList(0, 6));
+        recipe.consumeInputs(this.inventory.subList(0, 6));
 
-        boolean hasEngine = engine.isOf(EvecualMC.ENGINE) || engine.isOf(EvecualMC.UPGRADED_ENGINE);
-        boolean hasHull = hull.isOf(EvecualMC.STEEL_INGOT) || hull.isOf(Items.IRON_INGOT);
-        boolean hasGlass = isGlassItem(glass.getItem());
-        boolean hasLeather = leather.isOf(Items.LEATHER);
+        ItemStack currentOutput = this.inventory.get(6);
+        if (currentOutput.isEmpty()) {
+            this.setStack(6, output);
+        } else if (ItemStack.canCombine(currentOutput, output)) {
+            currentOutput.increment(output.getCount());
+        }
+    }
 
-        boolean canOutput = output.isEmpty() || (output.isOf(EvecualMC.CAR_ITEM) && output.getCount() < output.getMaxCount());
+    public int getSelectedRecipeIndex() {
+        return this.selectedRecipeIndex;
+    }
 
-        return hasEngine && hasHull && hasGlass && hasLeather && canOutput;
+    public void setSelectedRecipeIndex(int index) {
+        this.selectedRecipeIndex = index;
+        this.progress = 0;
+        markDirty();
+        sync();
     }
 
     public static int getGlassColorFromItem(Item item) {
-        if (item == Items.TINTED_GLASS) return 1; // Smoked Tinted
-        if (item == Items.WHITE_STAINED_GLASS || item == Items.WHITE_STAINED_GLASS_PANE) return 2;
-        if (item == Items.LIGHT_GRAY_STAINED_GLASS || item == Items.GRAY_STAINED_GLASS) return 3;
-        if (item == Items.BLACK_STAINED_GLASS || item == Items.BLACK_STAINED_GLASS_PANE) return 1;
-        if (item == Items.RED_STAINED_GLASS || item == Items.RED_STAINED_GLASS_PANE) return 4;
-        if (item == Items.ORANGE_STAINED_GLASS || item == Items.ORANGE_STAINED_GLASS_PANE) return 5;
-        if (item == Items.YELLOW_STAINED_GLASS || item == Items.YELLOW_STAINED_GLASS_PANE) return 6;
-        if (item == Items.LIME_STAINED_GLASS || item == Items.LIME_STAINED_GLASS_PANE || item == Items.GREEN_STAINED_GLASS) return 7;
-        if (item == Items.CYAN_STAINED_GLASS || item == Items.LIGHT_BLUE_STAINED_GLASS) return 8;
-        if (item == Items.BLUE_STAINED_GLASS || item == Items.BLUE_STAINED_GLASS_PANE) return 9;
-        if (item == Items.PURPLE_STAINED_GLASS || item == Items.MAGENTA_STAINED_GLASS) return 10;
-        if (item == Items.PINK_STAINED_GLASS || item == Items.PINK_STAINED_GLASS_PANE) return 11;
-        return 0; // Clear Glass
+        return com.evecual.evecualmc.recipe.CombinerRecipe.getGlassColorFromItem(item);
     }
 
     public static int getCarColorFromDye(ItemStack stack) {
-        if (stack.isEmpty()) return 0; // Default Red when empty!
-        Item item = stack.getItem();
-        if (item == Items.BLUE_DYE || item == Items.CYAN_DYE || item == Items.LIGHT_BLUE_DYE) return 1;
-        if (item == Items.BLACK_DYE || item == Items.GRAY_DYE || item == Items.LIGHT_GRAY_DYE) return 2;
-        if (item == Items.LIME_DYE || item == Items.GREEN_DYE) return 3;
-        if (item == Items.WHITE_DYE) return 4;
-        if (item == Items.YELLOW_DYE || item == Items.ORANGE_DYE) return 5;
-        return 0; // Default Red
-    }
-
-    private void craftItem() {
-        ItemStack engine = this.inventory.get(0);
-        ItemStack hull = this.inventory.get(1);
-        ItemStack glass = this.inventory.get(2);
-        ItemStack leather = this.inventory.get(3);
-        ItemStack color = this.inventory.get(4);
-        ItemStack trunk = this.inventory.get(5);
-
-        boolean isUpgradedEngine = engine.isOf(EvecualMC.UPGRADED_ENGINE);
-        int glassColor = getGlassColorFromItem(glass.getItem());
-        int carColor = getCarColorFromDye(color);
-        int trunkTier = (!trunk.isEmpty() && (trunk.isOf(EvecualMC.TRUNK_UPGRADE) || trunk.isOf(Items.CHEST))) ? 1 : 0;
-
-        // Decrement inputs
-        this.removeStack(0, 1);
-        this.removeStack(1, 1);
-        this.removeStack(2, 1);
-        this.removeStack(3, 1);
-        if (!color.isEmpty()) {
-            this.removeStack(4, 1);
-        }
-        if (!trunk.isEmpty()) {
-            this.removeStack(5, 1);
-        }
-
-        ItemStack output = this.inventory.get(6);
-        ItemStack car = new ItemStack(EvecualMC.CAR_ITEM, 1);
-        NbtCompound nbt = car.getOrCreateNbt();
-        nbt.putInt("ColorVariant", carColor);
-        nbt.putInt("GlassColor", glassColor);
-        nbt.putBoolean("UpgradedEngine", isUpgradedEngine);
-        nbt.putInt("TrunkTier", trunkTier);
-
-        if (output.isEmpty()) {
-            this.setStack(6, car);
-        } else if (output.isOf(EvecualMC.CAR_ITEM)) {
-            output.increment(1);
-        }
+        return com.evecual.evecualmc.recipe.CombinerRecipe.getCarColorFromDye(stack);
     }
 
     @Override
@@ -255,6 +208,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
         Inventories.writeNbt(nbt, this.inventory);
         nbt.putInt("Energy", this.energy);
         nbt.putInt("Progress", this.progress);
+        nbt.putInt("SelectedRecipe", this.selectedRecipeIndex);
     }
 
     @Override
@@ -263,6 +217,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
         Inventories.readNbt(nbt, this.inventory);
         this.energy = nbt.getInt("Energy");
         this.progress = nbt.getInt("Progress");
+        this.selectedRecipeIndex = nbt.getInt("SelectedRecipe");
     }
 
     @Nullable
@@ -337,7 +292,10 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
 
     @Override
     public boolean canInsert(int slot, ItemStack stack, @Nullable Direction dir) {
-        return slot != 6;
+        if (slot == 6) return false;
+        com.evecual.evecualmc.recipe.CombinerRecipe recipe = com.evecual.evecualmc.recipe.CombinerRecipe.getRecipeByIndex(this.selectedRecipeIndex);
+        if (recipe == null) return false;
+        return recipe.isValidInput(slot, stack);
     }
 
     @Override

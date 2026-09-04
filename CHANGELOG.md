@@ -1,5 +1,30 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.3] - 2026-09-04
+### Added & Improved
+- **Electronic Combiner Multi-Stage Blueprint System & Strict Slot Validation**:
+  - **Category-Based Interface**:
+    - Opening the Electronic Combiner initially presents two high-tech category options: **🚗 Vehicles** and **📡 Radio Control (RC)**.
+    - Selecting **Vehicles** presents ridable road vehicle blueprints (**Electric Car**).
+    - Selecting **RC** presents all radio-controlled systems and components: **🏎️ RC Car**, **🚁 RC Drone**, **🤖 RC Robot**, **🎮 RC Controller**, **📡 RC Sender**, and **📟 RC Receiver**.
+  - **Strict Slot Insertion Validation**:
+    - Every slot strictly enforces its designated ingredient: players cannot insert mismatched items or clutter slots with unauthorized items.
+    - Quick-move / Shift-click intelligently routes matching materials exclusively into their designated recipe slots.
+  - **Visual Blueprint Guidance & Requirement Checklist**:
+    - Ghost holographic items render in empty slots indicating where each required component belongs.
+    - Numeric count badges show exact quantities required (e.g. `4x` Steel Ingot, `1x` RC Sender).
+    - Real-time slot status highlights met requirements in green and unfulfilled counts in red/amber.
+    - Detailed hover tooltips list component names, exact counts (`In Slot: X / Y`), and whether they are required or optional.
+  - **Tech Tree Integration & New Electronics**:
+    - Registered **RC Sender** (`rc_sender`) and **RC Receiver** (`rc_receiver`) items with custom pixel art textures.
+    - Enforced the tech tree hierarchy: RC Car, RC Drone, and RC Robot strictly require an **RC Sender** in Slot 0.
+    - The RC Controller strictly requires an **RC Receiver** in Slot 0.
+    - Both RC Sender and RC Receiver can be crafted directly in the Electronic Combiner under the RC category.
+  - **Seamless Navigation & Refund Protection**:
+    - Added `⬅ Menu` and `⬅ Back` buttons enabling smooth navigation between categories, blueprints, and the crafting view.
+    - Returning to the menu or changing blueprints automatically refunds non-matching items in crafting slots to the player's inventory to prevent item loss.
+    - Added Field Guide entries for RC Sender and RC Receiver in the in-game Tip Menu.
+
 ## [1.3.2] - 2026-09-04
 ### Added & Improved
 - **Two-Tier Layered RC HUD (Persistent Telemetry & Prominent Temporary Info Notifications)**:

@@ -1,6 +1,8 @@
 package com.evecual.evecualmc.screen;
 
 import com.evecual.evecualmc.EvecualMC;
+import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
+import com.evecual.evecualmc.recipe.CombinerRecipe;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -17,7 +19,7 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
     private final PropertyDelegate propertyDelegate;
 
     public ElectronicCombinerScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(INVENTORY_SIZE), new ArrayPropertyDelegate(4));
+        this(syncId, playerInventory, new SimpleInventory(INVENTORY_SIZE), new ArrayPropertyDelegate(5));
     }
 
     public ElectronicCombinerScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate delegate) {
@@ -29,18 +31,36 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
         this.addProperties(delegate);
 
         // 6 Input Slots: Row 1 (y=21), Row 2 (y=43)
-        this.addSlot(new Slot(inventory, 0, 24, 21)); // 0: Engine
-        this.addSlot(new Slot(inventory, 1, 44, 21)); // 1: Hull (Steel / Iron)
-        this.addSlot(new Slot(inventory, 2, 64, 21)); // 2: Glass (Clear or Stained)
-        this.addSlot(new Slot(inventory, 3, 24, 43)); // 3: Leather
-        this.addSlot(new Slot(inventory, 4, 44, 43)); // 4: Colour (Dye - optional, default Red)
-        this.addSlot(new Slot(inventory, 5, 64, 43)); // 5: Trunk Upgrade (optional, default Standard)
+        // Strictly filtered per selected recipe
+        for (int i = 0; i < 6; i++) {
+            final int slotIndex = i;
+            int slotX = 24 + (i % 3) * 20;
+            int slotY = 21 + (i / 3) * 22;
+            this.addSlot(new Slot(inventory, i, slotX, slotY) {
+                @Override
+                public boolean canInsert(ItemStack stack) {
+                    CombinerRecipe recipe = getSelectedRecipe();
+                    if (recipe == null) return false;
+                    return recipe.isValidInput(slotIndex, stack);
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return getSelectedRecipeIndex() > 0;
+                }
+            });
+        }
 
         // Output Slot (Slot 6)
         this.addSlot(new Slot(inventory, 6, 129, 34) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return false;
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return getSelectedRecipeIndex() > 0;
             }
         });
 
@@ -73,8 +93,37 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
         return this.propertyDelegate.get(3);
     }
 
+    public int getSelectedRecipeIndex() {
+        return this.propertyDelegate.get(4);
+    }
+
+    public CombinerRecipe getSelectedRecipe() {
+        return CombinerRecipe.getRecipeByIndex(getSelectedRecipeIndex());
+    }
+
     public boolean isCrafting() {
         return getProgress() > 0;
+    }
+
+    public void selectRecipe(int recipeIndex, PlayerEntity player) {
+        if (this.inventory instanceof ElectronicCombinerBlockEntity be) {
+            be.setSelectedRecipeIndex(recipeIndex);
+        } else {
+            this.propertyDelegate.set(4, recipeIndex);
+        }
+
+        CombinerRecipe newRecipe = CombinerRecipe.getRecipeByIndex(recipeIndex);
+        // Refund any items that do not match the new recipe to player inventory
+        for (int i = 0; i < 6; i++) {
+            ItemStack current = this.inventory.getStack(i);
+            if (!current.isEmpty()) {
+                if (newRecipe == null || !newRecipe.isValidInput(i, current)) {
+                    player.getInventory().offerOrDrop(current);
+                    this.inventory.setStack(i, ItemStack.EMPTY);
+                }
+            }
+        }
+        this.inventory.markDirty();
     }
 
     @Override
@@ -88,8 +137,27 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
                 if (!this.insertItem(originalStack, INVENTORY_SIZE, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.insertItem(originalStack, 0, 6, false)) {
-                return ItemStack.EMPTY;
+            } else {
+                CombinerRecipe recipe = getSelectedRecipe();
+                if (recipe == null) {
+                    return ItemStack.EMPTY;
+                }
+                boolean inserted = false;
+                for (int i = 0; i < 6; i++) {
+                    CombinerRecipe.SlotRequirement req = recipe.getSlotRequirement(i);
+                    if (req != null && req.isValid(originalStack)) {
+                        Slot targetSlot = this.slots.get(i);
+                        if (targetSlot.canInsert(originalStack)) {
+                            if (this.insertItem(originalStack, i, i + 1, false)) {
+                                inserted = true;
+                                if (originalStack.isEmpty()) break;
+                            }
+                        }
+                    }
+                }
+                if (!inserted) {
+                    return ItemStack.EMPTY;
+                }
             }
 
             if (originalStack.isEmpty()) {
