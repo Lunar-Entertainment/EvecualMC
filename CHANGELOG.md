@@ -1,5 +1,19 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.0] - 2026-09-04
+### Added & Improved
+- **Fixed Text Overlap in In-Game Tip Menu & Field Guide**:
+  - Expanded dialog dimensions (420x260) to provide ample room for multi-line explanations and long controls.
+  - Added scissor clipping and dynamic multi-line word wrapping for step-by-step setup guides, overview summaries, and control badge labels to eliminate text spilling over borders.
+  - Implemented smooth scrollbar and mouse-wheel scrolling for the Topics sidebar, preventing sidebar entries from overlapping the bottom border or help text.
+  - Truncated long sidebar topic names cleanly with ellipses.
+- **Universal Golden-Bordered HUD Tooltips for All Mod Blocks & Entities (Matching Design)**:
+  - Upgraded the in-game crosshair HUD overlay to match the golden/amber glowing border and deep slate backdrop from the reference design across all mod components.
+  - Automatically sizes the HUD box to match text content, preventing text truncation or overlap between titles, live energy indicators, and status messages.
+  - Added rich tooltips for all blocks and entities: Solar Panel, Battery, Combiner, Car Charger, Charger Extension, Power Wire, Parking Bay, RC Charger, RC Parking Spot, Drone Helipad, Electric Car, RC Car, RC Drone, and RC Robot.
+- **All Mod Items Added to the Field Guide**:
+  - Added dedicated topics and entries for every remaining mod item: RC Controller, Steel Ingot, Electric Engine, Turbo Engine, Trunk Expansion, Charger Cable, and Artisan Ice Creams (Vanilla, Chocolate, Sweet Berry, Electric).
+
 ## [1.2.9] - 2026-09-04
 ### Added & Improved
 - **Interactive Field Guide & Tip Menu for All Mod Blocks & Entities**:

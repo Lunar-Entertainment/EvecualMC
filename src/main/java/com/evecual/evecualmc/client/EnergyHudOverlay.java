@@ -1,11 +1,18 @@
 package com.evecual.evecualmc.client;
 
 import com.evecual.evecualmc.EvecualMC;
+import com.evecual.evecualmc.block.ParkingLinesBlock;
 import com.evecual.evecualmc.block.entity.BatteryBlockEntity;
 import com.evecual.evecualmc.block.entity.ChargerBlockEntity;
+import com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity;
 import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
+import com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity;
+import com.evecual.evecualmc.block.entity.RcChargerBlockEntity;
 import com.evecual.evecualmc.block.entity.SolarPanelBlockEntity;
 import com.evecual.evecualmc.entity.CarEntity;
+import com.evecual.evecualmc.entity.RcCarEntity;
+import com.evecual.evecualmc.entity.RcDroneEntity;
+import com.evecual.evecualmc.entity.RcRobotEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -13,11 +20,13 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
 public class EnergyHudOverlay implements HudRenderCallback {
@@ -28,27 +37,37 @@ public class EnergyHudOverlay implements HudRenderCallback {
         if (client == null || client.world == null || client.player == null) return;
         if (client.options.hudHidden) return;
 
-        // 1. Render active Vehicle Charger Waypoint ONLY if player is inside a car
+        // 1. Render active Vehicle Charger Waypoint if player is inside a car
         if (client.player.getVehicle() instanceof CarEntity) {
             renderChargerWaypoints(drawContext, client);
         }
 
         HitResult hit = client.crosshairTarget;
+
+        // 2. Check if riding a car
+        if (client.player.getVehicle() instanceof CarEntity car) {
+            renderCarTip(drawContext, client, car);
+            return;
+        }
+
         if (hit == null) return;
 
-        // 2. Check if looking at an entity (like the electric car)
+        // 3. Check if looking at an entity
         if (hit instanceof EntityHitResult entityHit) {
             Entity entity = entityHit.getEntity();
             if (entity instanceof CarEntity car) {
                 renderCarTip(drawContext, client, car);
                 return;
+            } else if (entity instanceof RcCarEntity rcCar) {
+                renderRcCarTip(drawContext, client, rcCar);
+                return;
+            } else if (entity instanceof RcDroneEntity rcDrone) {
+                renderRcDroneTip(drawContext, client, rcDrone);
+                return;
+            } else if (entity instanceof RcRobotEntity rcRobot) {
+                renderRcRobotTip(drawContext, client, rcRobot);
+                return;
             }
-        }
-
-        // 3. Check if riding a car
-        if (client.player.getVehicle() instanceof CarEntity car) {
-            renderCarTip(drawContext, client, car);
-            return;
         }
 
         // 4. Check if looking at a block
@@ -66,8 +85,18 @@ public class EnergyHudOverlay implements HudRenderCallback {
             } else if (be instanceof ChargerBlockEntity charger) {
                 ChargerWaypointManager.addWaypoint(pos);
                 renderChargerTip(drawContext, client, charger);
+            } else if (be instanceof ChargerExtensionBlockEntity extension) {
+                renderChargerExtensionTip(drawContext, client, extension);
+            } else if (be instanceof RcChargerBlockEntity rcCharger) {
+                renderRcChargerTip(drawContext, client, rcCharger);
             } else if (state.isOf(EvecualMC.WIRE_BLOCK)) {
-                renderWireTip(drawContext, client);
+                renderWireTip(drawContext, client, state);
+            } else if (state.isOf(EvecualMC.PARKING_LINES_BLOCK)) {
+                renderParkingLinesTip(drawContext, client, pos, state);
+            } else if (state.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+                renderRcParkingSpotTip(drawContext, client);
+            } else if (state.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+                renderDroneParkingSpotTip(drawContext, client);
             }
         }
     }
@@ -135,145 +164,220 @@ public class EnergyHudOverlay implements HudRenderCallback {
         }
     }
 
-    private void renderSolarTip(DrawContext context, MinecraftClient client, SolarPanelBlockEntity solar) {
+    /**
+     * Unified Modern HUD Renderer matching the golden-bordered, dark-glassmorphic style
+     */
+    private void renderUnifiedHud(DrawContext context, MinecraftClient client,
+                                  String iconEmoji, String title, int titleColor,
+                                  String rightHeader, int rightHeaderColor,
+                                  String status, int statusColor,
+                                  Double progressRatio, Integer progressFillColor) {
+        TextRenderer tr = client.textRenderer;
         int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 150;
-        int boxHeight = 44;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
 
+        String headerLeft = (iconEmoji.isEmpty() ? "" : iconEmoji + " ") + title;
+        int leftWidth = tr.getWidth(headerLeft);
+        int rightWidth = rightHeader != null && !rightHeader.isEmpty() ? tr.getWidth(rightHeader) : 0;
+        int statusWidth = status != null && !status.isEmpty() ? tr.getWidth(status) : 0;
+
+        int contentWidth = Math.max(leftWidth + (rightWidth > 0 ? rightWidth + 24 : 0), statusWidth);
+        int boxWidth = Math.max(170, contentWidth + 20);
+        int hasBar = (progressRatio != null && progressFillColor != null) ? 1 : 0;
+        int boxHeight = (status != null && !status.isEmpty() ? 28 : 16) + (hasBar * 12) + 6;
+
+        int x = (screenWidth - boxWidth) / 2;
+        int y = 16;
+
+        // Dark background (matching the user's reference image)
+        context.fill(x, y, x + boxWidth, y + boxHeight, 0xF00A111E);
+        // Golden/Amber glowing border (0xFFF59E0B)
+        context.drawBorder(x, y, boxWidth, boxHeight, 0xFFF59E0B);
+
+        int curY = y + 5;
+        // Draw Left Title
+        context.drawText(tr, Text.literal(headerLeft), x + 8, curY, titleColor, true);
+
+        // Draw Right Header (Energy buffer / counter)
+        if (rightHeader != null && !rightHeader.isEmpty()) {
+            context.drawText(tr, Text.literal(rightHeader), x + boxWidth - 8 - rightWidth, curY, rightHeaderColor, true);
+        }
+
+        // Draw Status Line
+        if (status != null && !status.isEmpty()) {
+            curY += 12;
+            context.drawText(tr, Text.literal(status), x + 8, curY, statusColor, true);
+        }
+
+        // Draw Progress Bar
+        if (hasBar == 1) {
+            curY += 12;
+            drawProgressBar(context, x + 8, curY, boxWidth - 16, 7, progressRatio, progressFillColor);
+        }
+    }
+
+    private void renderSolarTip(DrawContext context, MinecraftClient client, SolarPanelBlockEntity solar) {
         long energy = solar.getEnergy();
         long maxEnergy = solar.getMaxEnergy();
         int genRate = solar.getGenerationRate();
 
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFFF59E0B);
-
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("☀ Solar Panel"), x + 8, y + 5, 0xFFFDE047, true);
-        String energyStr = energy + " / " + maxEnergy + " E";
-        context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
-
+        String rightHeader = energy + " / " + maxEnergy + " E";
         String genStr = genRate > 0 ? "⚡ Generating: +" + genRate + " E/s" : "🌙 Inactive (No Sunlight)";
         int statusColor = genRate > 0 ? 0xFF86EFAC : 0xFF94A3B8;
-        context.drawText(tr, Text.literal(genStr), x + 8, y + 16, statusColor, true);
 
-        drawProgressBar(context, x + 8, y + 28, boxWidth - 16, 8, (double) energy / Math.max(1, maxEnergy), 0xFFFBBF24);
+        renderUnifiedHud(context, client, "☀", "Solar Panel", 0xFFFDE047,
+                rightHeader, 0xFFFFFFFF, genStr, statusColor,
+                (double) energy / Math.max(1, maxEnergy), 0xFFFBBF24);
     }
 
     private void renderBatteryTip(DrawContext context, MinecraftClient client, BatteryBlockEntity battery) {
-        int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 150;
-        int boxHeight = 44;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
-
         long energy = battery.getEnergy();
         long maxEnergy = battery.getMaxEnergy();
-
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFF3B82F6);
-
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("🔋 Battery"), x + 8, y + 5, 0xFF60A5FA, true);
-        String energyStr = energy + " / " + maxEnergy + " E";
-        context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
-
         int pct = (int) (energy * 100 / Math.max(1, maxEnergy));
-        context.drawText(tr, Text.literal("Charge: " + pct + "%"), x + 8, y + 16, 0xFF93C5FD, true);
 
-        drawProgressBar(context, x + 8, y + 28, boxWidth - 16, 8, (double) energy / Math.max(1, maxEnergy), 0xFF3B82F6);
+        String rightHeader = energy + " / " + maxEnergy + " E";
+        String status = "Charge: " + pct + "% (Stores power for network)";
+
+        renderUnifiedHud(context, client, "🔋", "Battery", 0xFF60A5FA,
+                rightHeader, 0xFFFFFFFF, status, 0xFF93C5FD,
+                (double) energy / Math.max(1, maxEnergy), 0xFF3B82F6);
     }
 
     private void renderCombinerTip(DrawContext context, MinecraftClient client, ElectronicCombinerBlockEntity combiner) {
-        int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 160;
-        int boxHeight = 44;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
-
         long energy = combiner.getEnergy();
         long maxEnergy = combiner.getMaxEnergy();
-
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFFA855F7);
-
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("⚙ Car Fabricator"), x + 8, y + 5, 0xFFC084FC, true);
-        String energyStr = energy + " / " + maxEnergy + " E";
-        context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
-
-        String status = combiner.isCrafting() ? "⚡ Assembling Car..." : "Idle (Needs Items/Power)";
+        String status = combiner.isCrafting() ? "⚡ Assembling Vehicle..." : "Idle (Insert Blueprint & Power)";
         int color = combiner.isCrafting() ? 0xFF86EFAC : 0xFF94A3B8;
-        context.drawText(tr, Text.literal(status), x + 8, y + 16, color, true);
 
-        drawProgressBar(context, x + 8, y + 28, boxWidth - 16, 8, (double) energy / Math.max(1, maxEnergy), 0xFFA855F7);
+        renderUnifiedHud(context, client, "⚙", "Electronic Combiner", 0xFFC084FC,
+                energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, maxEnergy), 0xFFA855F7);
     }
 
     private void renderChargerTip(DrawContext context, MinecraftClient client, ChargerBlockEntity charger) {
-        int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 210;
-        int boxHeight = 44;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
-
         long energy = charger.getEnergy();
         long maxEnergy = charger.getMaxEnergy();
-
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFF10B981);
-
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("⚡ Vehicle Charger"), x + 8, y + 5, 0xFF34D399, true);
-        String energyStr = energy + " / " + maxEnergy + " E";
-        context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
-
-        String status = charger.isCharging() ? "⚡ Charging Vehicle..." : "Ready - Attach Vehicle Charger Extension";
+        String status = charger.isCharging() ? "⚡ Charging Vehicle..." : "Ready (Connect Charger Extension)";
         int color = charger.isCharging() ? 0xFF86EFAC : 0xFF94A3B8;
-        context.drawText(tr, Text.literal(status), x + 8, y + 16, color, true);
 
-        drawProgressBar(context, x + 8, y + 28, boxWidth - 16, 8, (double) energy / Math.max(1, maxEnergy), 0xFF10B981);
+        renderUnifiedHud(context, client, "⚡", "Car Charger", 0xFF34D399,
+                energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, maxEnergy), 0xFF10B981);
+    }
+
+    private void renderChargerExtensionTip(DrawContext context, MinecraftClient client, ChargerExtensionBlockEntity extension) {
+        String status;
+        int color;
+        if (extension.isConnected()) {
+            status = "⚡ Connected: Actively charging car (Press X to unplug)";
+            color = 0xFF86EFAC;
+        } else if (extension.hasCable()) {
+            status = "🟡 Tether Installed: Park car & press X to connect";
+            color = 0xFFFCD34D;
+        } else {
+            status = "⚪ Missing Cable: Right-click with Charger Cable";
+            color = 0xFF94A3B8;
+        }
+
+        renderUnifiedHud(context, client, "🔌", "Charger Extension", 0xFF38BDF8,
+                "", 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderRcChargerTip(DrawContext context, MinecraftClient client, RcChargerBlockEntity rcCharger) {
+        long energy = rcCharger.getEnergy();
+        long maxEnergy = rcCharger.getMaxEnergy();
+        String status = "⚡ Wireless Pad (16m broadcast radius to parking spots)";
+
+        renderUnifiedHud(context, client, "⚡", "RC Charger Pad", 0xFF38BDF8,
+                energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
+                (double) energy / Math.max(1, maxEnergy), 0xFF06B6D4);
+    }
+
+    private void renderWireTip(DrawContext context, MinecraftClient client, BlockState state) {
+        int conn = 0;
+        if (state.get(net.minecraft.state.property.Properties.NORTH)) conn++;
+        if (state.get(net.minecraft.state.property.Properties.SOUTH)) conn++;
+        if (state.get(net.minecraft.state.property.Properties.EAST)) conn++;
+        if (state.get(net.minecraft.state.property.Properties.WEST)) conn++;
+        if (state.get(net.minecraft.state.property.Properties.UP)) conn++;
+        if (state.get(net.minecraft.state.property.Properties.DOWN)) conn++;
+
+        String status = "🔌 Connected to " + conn + " terminal" + (conn == 1 ? "" : "s");
+        renderUnifiedHud(context, client, "🔌", "Power Wire", 0xFFFCD34D,
+                "", 0xFFFFFFFF, status, 0xFF94A3B8, null, null);
+    }
+
+    private void renderParkingLinesTip(DrawContext context, MinecraftClient client, BlockPos pos, BlockState state) {
+        Direction facing = state.get(ParkingLinesBlock.FACING);
+        Direction right = facing.rotateYClockwise();
+        com.evecual.evecualmc.block.ParkingLinesPart part = state.get(ParkingLinesBlock.PART);
+        BlockPos origin = ParkingLinesBlock.getOriginPos(pos, facing, right, part);
+        BlockEntity be = client.world != null ? client.world.getBlockEntity(origin) : null;
+
+        boolean occupied = (be instanceof ParkingLinesBlockEntity plbe && plbe.isCarParked());
+        String status = occupied ? "🚗 Bay Occupied: Electric car parked" : "🅿️ Bay Free (Press C in car to auto-park)";
+        int color = occupied ? 0xFF86EFAC : 0xFFFCD34D;
+
+        renderUnifiedHud(context, client, "🅿️", "Parking Bay", 0xFFFCD34D,
+                "", 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderRcParkingSpotTip(DrawContext context, MinecraftClient client) {
+        String status = "🅿️ Docks & powers down RC Cars/Robots (Charges within 16m of RC Charger)";
+        renderUnifiedHud(context, client, "🅿️", "RC Parking Spot", 0xFFFCD34D,
+                "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
+    }
+
+    private void renderDroneParkingSpotTip(DrawContext context, MinecraftClient client) {
+        String status = "🚁 Lands & shuts down RC Drones (Charges within 16m of RC Charger)";
+        renderUnifiedHud(context, client, "🚁", "Drone Helipad", 0xFF38BDF8,
+                "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
     }
 
     private void renderCarTip(DrawContext context, MinecraftClient client, CarEntity car) {
-        int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 160;
-        int boxHeight = 44;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
-
         int energy = car.getEnergy();
         int maxEnergy = car.getMaxEnergy();
-
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFFEF4444);
-
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("🚗 Electric Car"), x + 8, y + 5, 0xFFF87171, true);
-        String energyStr = energy + " / " + maxEnergy + " E";
-        context.drawText(tr, Text.literal(energyStr), x + boxWidth - 8 - tr.getWidth(energyStr), y + 5, 0xFFF1F5F9, true);
-
         int pct = energy * 100 / Math.max(1, maxEnergy);
-        String status = "Battery: " + pct + "%" + (energy <= 0 ? " (Empty!)" : "");
+        String status = "Battery: " + pct + "%" + (energy <= 0 ? " (Empty!)" : " (Drive with WASD)");
         int color = energy > 200 ? 0xFF86EFAC : (energy > 50 ? 0xFFFBBF24 : 0xFFF87171);
-        context.drawText(tr, Text.literal(status), x + 8, y + 16, color, true);
 
-        drawProgressBar(context, x + 8, y + 28, boxWidth - 16, 8, (double) energy / Math.max(1, maxEnergy), 0xFFEF4444);
+        renderUnifiedHud(context, client, "🚗", "Electric Car", 0xFFF87171,
+                energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, maxEnergy), 0xFFEF4444);
     }
 
-    private void renderWireTip(DrawContext context, MinecraftClient client) {
-        int screenWidth = client.getWindow().getScaledWidth();
-        int boxWidth = 130;
-        int boxHeight = 24;
-        int x = (screenWidth - boxWidth) / 2;
-        int y = 24;
+    private void renderRcCarTip(DrawContext context, MinecraftClient client, RcCarEntity rcCar) {
+        int energy = rcCar.getEnergy();
+        int max = RcCarEntity.MAX_ENERGY;
+        int pct = energy * 100 / Math.max(1, max);
+        String status = "Battery: " + pct + "% | Pair with RC Controller";
 
-        context.fill(x, y, x + boxWidth, y + boxHeight, 0xE00F172A);
-        context.drawBorder(x, y, boxWidth, boxHeight, 0xFFF59E0B);
+        renderUnifiedHud(context, client, "🏎️", "RC Car", 0xFF38BDF8,
+                energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
+                (double) energy / Math.max(1, max), 0xFF0284C7);
+    }
 
-        TextRenderer tr = client.textRenderer;
-        context.drawText(tr, Text.literal("🔌 Electrical Wire"), x + 8, y + 4, 0xFFFCD34D, true);
-        context.drawText(tr, Text.literal("Connects Power"), x + 8, y + 14, 0xFF94A3B8, true);
+    private void renderRcDroneTip(DrawContext context, MinecraftClient client, RcDroneEntity drone) {
+        int energy = drone.getEnergy();
+        int max = RcDroneEntity.MAX_ENERGY;
+        int pct = energy * 100 / Math.max(1, max);
+        String status = "Battery: " + pct + "% | Aerial flight range: 512m";
+
+        renderUnifiedHud(context, client, "🚁", "RC Drone", 0xFF34D399,
+                energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFF86EFAC,
+                (double) energy / Math.max(1, max), 0xFF10B981);
+    }
+
+    private void renderRcRobotTip(DrawContext context, MinecraftClient client, RcRobotEntity robot) {
+        int energy = robot.getEnergy();
+        int max = RcRobotEntity.MAX_ENERGY;
+        int pct = energy * 100 / Math.max(1, max);
+        ItemStack tool = robot.getEquippedTool();
+        String toolName = tool.isEmpty() ? "None" : tool.getName().getString();
+        String status = "Tool: " + toolName + " | Battery: " + pct + "%";
+
+        renderUnifiedHud(context, client, "🤖", "RC Robot", 0xFFFBBF24,
+                energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFFFDE047,
+                (double) energy / Math.max(1, max), 0xFFF59E0B);
     }
 
     private void drawProgressBar(DrawContext context, int x, int y, int width, int height, double ratio, int fillColor) {

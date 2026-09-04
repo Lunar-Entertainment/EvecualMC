@@ -354,6 +354,163 @@ public enum TipTopic {
                     "Add any dye into the color slot to customize the factory coat paint of the finished vehicle.",
                     "Can fabricate Electric Cars, RC Cars, RC Drones, RC Robots, and Turbo Engine upgrades."
             }
+    ),
+
+    RC_CONTROLLER(
+            "rc_controller",
+            "RC Controller",
+            "📡 Remote Transmitter",
+            () -> new ItemStack(EvecualMC.RC_CONTROLLER_ITEM),
+            "Handheld digital transceiver providing precision telemetry and remote command for all RC vehicles.",
+            new String[]{
+                    "Aim crosshair at an RC Car, Drone, or Robot and right-click to pair.",
+                    "Press 'F' to project your vision directly into the paired vehicle's onboard camera.",
+                    "Holds long-range radio link up to 256 blocks (or 512 blocks for RC Drones).",
+                    "Press 'C' to transmit an autonomous return-to-base docking command."
+            },
+            new String[][]{
+                    {"Right-Click", "Pair / Disconnect with aimed RC vehicle"},
+                    {"F", "Engage / Disengage remote camera feed"},
+                    {"C", "Send automatic return-to-base homing signal"}
+            },
+            new String[]{
+                    "Hovering over the controller shows the paired vehicle's ID, type, and live telemetry.",
+                    "Unpair instantly by parking the vehicle in an RC or Drone Parking Spot.",
+                    "One controller can be easily re-paired to switch between car, drone, and excavator robot."
+            }
+    ),
+
+    STEEL_INGOT(
+            "steel_ingot",
+            "Steel Ingot",
+            "🔨 Industrial Alloy",
+            () -> new ItemStack(EvecualMC.STEEL_INGOT),
+            "Heavy reinforced metallurgical alloy engineered for vehicle chassis and high-stress mechanical frameworks.",
+            new String[]{
+                    "Smelt Iron Ingots in a Blast Furnace or forge with coal to produce high-strength Steel.",
+                    "Serves as the core structural building block for vehicle chassis, frames, and motors.",
+                    "Essential material for building the Electronic Combiner and Car Chargers."
+            },
+            new String[][]{
+                    {"Blast Furnace", "Smelt Iron Ingot with Coal / Carbon to forge Steel"},
+                    {"Crafting Table", "Craft into engines, frames, chargers, and combiner workstations"}
+            },
+            new String[]{
+                    "Stockpile plenty of Steel Ingots before constructing your first fleet of electric vehicles.",
+                    "Significantly more blast and impact resistant than ordinary iron.",
+                    "Used across both ground vehicle chassis and drone airframe fabrication."
+            }
+    ),
+
+    ENGINE(
+            "electric_engine",
+            "Electric Engine",
+            "⚡ Powertrain Core",
+            () -> new ItemStack(EvecualMC.ENGINE),
+            "High-torque brushless AC induction motor designed for silent, instantaneous acceleration.",
+            new String[]{
+                    "Core propulsion component required to craft Electric Cars, RC Cars, and Robots.",
+                    "Delivers instant torque with 100% efficiency and zero emissions.",
+                    "Can be upgraded into an Advanced Turbo Engine in the Electronic Combiner."
+            },
+            new String[][]{
+                    {"Electronic Combiner", "Insert into the Engine blueprint slot to fabricate vehicles"},
+                    {"Crafting Table", "Assembled from Copper Wire, Steel Ingots, and Redstone"}
+            },
+            new String[]{
+                    "Provides excellent low-end torque capable of climbing steep 45-degree hills.",
+                    "Pair with upgraded battery cells to maximize continuous operating range.",
+                    "Zero maintenance required—no oil, spark plugs, or fuel canisters."
+            }
+    ),
+
+    UPGRADED_ENGINE(
+            "upgraded_electric_engine",
+            "Turbo Engine",
+            "🚀 High-Output Motor",
+            () -> new ItemStack(EvecualMC.UPGRADED_ENGINE),
+            "Hyper-tuned electric motor featuring dual stator coils delivering +40% top speed and supercharged boost.",
+            new String[]{
+                    "Fabricate in the Electronic Combiner or assemble with gold and advanced coils.",
+                    "Right-click an existing Electric Passenger Car while holding this item to install.",
+                    "Drastically boosts acceleration and top cruising speed."
+            },
+            new String[][]{
+                    {"Right-Click on Car", "Install Turbo Engine directly onto placed vehicle"},
+                    {"Combiner Slot", "Insert into Combiner for factory-turbo vehicle builds"}
+            },
+            new String[]{
+                    "Installed Turbo status is preserved permanently even when the car is picked up as an item.",
+                    "Enables high-speed highway cruising and aggressive power drifting on curves.",
+                    "Compatible with standard Vehicle Chargers."
+            }
+    ),
+
+    TRUNK_UPGRADE(
+            "trunk_upgrade",
+            "Trunk Expansion",
+            "📦 Cargo Capacity Mod",
+            () -> new ItemStack(EvecualMC.TRUNK_UPGRADE),
+            "Modular luggage rack and reinforced cargo partition that expands vehicle trunk storage to 27 full slots.",
+            new String[]{
+                    "Right-click on any standard Electric Passenger Car to instantly expand trunk space.",
+                    "Upgrades trunk capacity from 18 slots to a full 27-slot chest size.",
+                    "Can also be applied at manufacturing time in the Electronic Combiner."
+            },
+            new String[][]{
+                    {"Right-Click on Car", "Install Trunk Upgrade on vehicle"},
+                    {"Sneak + Right-Click Car", "Access expanded 27-slot storage compartment"}
+            },
+            new String[]{
+                    "Stored items are safely preserved inside the car even when picked up into inventory.",
+                    "Ideal for long-distance mining expeditions, supply runs, and nomadic journeys.",
+                    "Visual indicator in the driver HUD confirms expanded trunk tier."
+            }
+    ),
+
+    CHARGER_CABLE(
+            "charger_cable",
+            "Charger Cable",
+            "⚡ Heavy-Duty Tether",
+            () -> new ItemStack(EvecualMC.CHARGER_CABLE),
+            "Ultra-flexible high-amperage charging tether connecting Charger Extensions directly to vehicles.",
+            new String[]{
+                    "Right-click an empty Charger Extension post to equip and install the cable.",
+                    "When equipped, press 'X' while in a parked car to automatically connect and charge.",
+                    "Can also be right-clicked directly onto a nearby car to begin rapid charging."
+            },
+            new String[][]{
+                    {"Right-Click Extension", "Equip cable onto Charger Extension post"},
+                    {"'X' Key (In Car)", "Remotely plug in or disconnect cable from driver seat"},
+                    {"Empty Hand on Cable", "Manually disconnect tether"}
+            },
+            new String[]{
+                    "Breaking a Charger Extension automatically drops the installed cable safely.",
+                    "Has an extended 16-block reach, allowing one post to charge multiple parking bays.",
+                    "Visual high-voltage cable renders seamlessly between the post and vehicle port."
+            }
+    ),
+
+    ICE_CREAM(
+            "ice_cream",
+            "Artisan Ice Cream",
+            "🍦 Chilled Refreshment",
+            () -> new ItemStack(EvecualMC.VANILLA_ICE_CREAM),
+            "Delicious handcrafted frozen dairy treats available in Vanilla, Chocolate, Sweet Berry, and Electric flavor.",
+            new String[]{
+                    "Crafted using Milk, Sugar, Ice, and flavor ingredients (Cocoa, Sweet Berries, or Redstone).",
+                    "Provides substantial nutrition and soothing saturation for weary drivers.",
+                    "Electric Ice Cream infuses the player with an energizing Speed and Haste boost."
+            },
+            new String[][]{
+                    {"Right-Click (Eat)", "Consume delicious ice cream for hunger and buffs"},
+                    {"Crafting Table", "Combine Milk, Sugar, and Snow/Ice with flavorings"}
+            },
+            new String[]{
+                    "Keep a stack in your vehicle's glovebox or trunk for road trip snacks.",
+                    "Electric flavor grants a burst of energetic speed perfect for pit stops.",
+                    "Enjoyable treat during long journeys across hot desert biomes."
+            }
     );
 
     public final String id;
@@ -440,18 +597,26 @@ public enum TipTopic {
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
-        if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CAR;
+        if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
         if (item == EvecualMC.SOLAR_PANEL_ITEM) return SOLAR_PANEL;
         if (item == EvecualMC.BATTERY_ITEM) return BATTERY;
         if (item == EvecualMC.WIRE_ITEM) return WIRE;
         if (item == EvecualMC.CHARGER_ITEM) return CHARGER;
         if (item == EvecualMC.CHARGER_EXTENSION_ITEM) return CHARGER_EXTENSION;
-        if (item == EvecualMC.CHARGER_CABLE) return CHARGER_EXTENSION;
+        if (item == EvecualMC.CHARGER_CABLE) return CHARGER_CABLE;
         if (item == EvecualMC.PARKING_LINES_ITEM) return PARKING_LINES;
         if (item == EvecualMC.RC_CHARGER_ITEM) return RC_CHARGER;
         if (item == EvecualMC.RC_PARKING_SPOT_ITEM) return RC_PARKING_SPOT;
         if (item == EvecualMC.DRONE_PARKING_SPOT_ITEM) return DRONE_PARKING_SPOT;
         if (item == EvecualMC.ELECTRONIC_COMBINER_ITEM) return ELECTRONIC_COMBINER;
+        if (item == EvecualMC.STEEL_INGOT) return STEEL_INGOT;
+        if (item == EvecualMC.ENGINE) return ENGINE;
+        if (item == EvecualMC.UPGRADED_ENGINE) return UPGRADED_ENGINE;
+        if (item == EvecualMC.TRUNK_UPGRADE) return TRUNK_UPGRADE;
+        if (item == EvecualMC.VANILLA_ICE_CREAM || item == EvecualMC.CHOCOLATE_ICE_CREAM
+                || item == EvecualMC.SWEET_BERRY_ICE_CREAM || item == EvecualMC.ELECTRIC_ICE_CREAM) {
+            return ICE_CREAM;
+        }
         return null;
     }
 }
