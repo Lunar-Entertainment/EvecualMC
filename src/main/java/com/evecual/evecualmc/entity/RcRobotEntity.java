@@ -288,7 +288,7 @@ public class RcRobotEntity extends Entity {
         }
 
         // Check if parked in a Robot Parking Spot block
-        boolean inSpot = isInParkingSpot();
+        boolean inSpot = !this.autoReturning && isInParkingSpot();
 
         if (inSpot && !this.getWorld().isClient()) {
             if (!this.explicitlyPairedInSpot && !getPairedPlayerUuid().isEmpty()) {
@@ -667,22 +667,69 @@ public class RcRobotEntity extends Entity {
         return (int) Math.max(4, Math.round(hardness * 3.5F));
     }
 
+    public BlockPos getParkingSpotPos() {
+        BlockPos pos = this.getBlockPos();
+        if (this.getWorld().getBlockState(pos).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) return pos;
+        if (this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) return pos.down();
+        return null;
+    }
+
+    public boolean isInParkingSpot() {
+        if (this.autoReturning) return false;
+        BlockPos spotPos = getParkingSpotPos();
+        if (spotPos == null) return false;
+        double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
+        double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
+        return dx <= 0.32 && dz <= 0.32;
+    }
+
     public boolean startAutoReturnToCharger() {
+        BlockPos center = this.getBlockPos();
         BlockPos nearest = null;
         double nearestDistSq = Double.MAX_VALUE;
-        BlockPos center = this.getBlockPos();
-        int radius = 64;
 
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -16; dy <= 16; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    BlockPos p = center.add(dx, dy, dz);
-                    BlockState s = this.getWorld().getBlockState(p);
-                    if (s.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
-                        double d = this.squaredDistanceTo(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
-                        if (d < nearestDistSq) {
-                            nearestDistSq = d;
-                            nearest = p;
+        int minChunkX = (center.getX() - 64) >> 4;
+        int maxChunkX = (center.getX() + 64) >> 4;
+        int minChunkZ = (center.getZ() - 64) >> 4;
+        int maxChunkZ = (center.getZ() + 64) >> 4;
+
+        int minY = Math.max(this.getWorld().getBottomY(), center.getY() - 16);
+        int maxY = Math.min(this.getWorld().getTopY(), center.getY() + 16);
+
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                if (!this.getWorld().isChunkLoaded(cx, cz)) continue;
+                net.minecraft.world.chunk.Chunk chunk = this.getWorld().getChunk(cx, cz);
+                if (chunk == null) continue;
+
+                int minSec = Math.max(0, (minY - chunk.getBottomY()) >> 4);
+                int maxSec = Math.min(chunk.getSectionArray().length - 1, (maxY - chunk.getBottomY()) >> 4);
+
+                for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
+                    net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
+                    if (section == null || section.isEmpty()) continue;
+
+                    int secY = chunk.sectionIndexToCoord(secIdx) << 4;
+                    for (int lx = 0; lx < 16; lx++) {
+                        int wx = (cx << 4) + lx;
+                        if (Math.abs(wx - center.getX()) > 64) continue;
+                        for (int lz = 0; lz < 16; lz++) {
+                            int wz = (cz << 4) + lz;
+                            if (Math.abs(wz - center.getZ()) > 64) continue;
+                            for (int ly = 0; ly < 16; ly++) {
+                                int wy = secY + ly;
+                                if (wy < minY || wy > maxY) continue;
+
+                                BlockState bs = section.getBlockState(lx, ly, lz);
+                                if (bs.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
+                                    BlockPos p = new BlockPos(wx, wy, wz);
+                                    double dSq = p.getSquaredDistance(center);
+                                    if (dSq < nearestDistSq) {
+                                        nearestDistSq = dSq;
+                                        nearest = p;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -705,8 +752,13 @@ public class RcRobotEntity extends Entity {
         this.currentSpeed = 0.0;
         this.setVelocity(Vec3d.ZERO);
         this.stuckTicks = 0;
+        this.explicitlyPairedInSpot = false;
         String pUuid = getPairedPlayerUuid();
         if (pUuid != null && !pUuid.isEmpty()) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuid);
+                setPairedPlayerUuid("");
+            }
             try {
                 PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
                 if (player != null) {
@@ -718,12 +770,6 @@ public class RcRobotEntity extends Entity {
 
     public boolean isAutoReturning() {
         return this.autoReturning;
-    }
-
-    public boolean isInParkingSpot() {
-        BlockPos pos = this.getBlockPos();
-        return this.getWorld().getBlockState(pos).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK) ||
-               this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK);
     }
 
     private void tickAutoReturn() {
@@ -742,8 +788,10 @@ public class RcRobotEntity extends Entity {
         double tz = targetChargerPos.getZ() + 0.5;
         double distSq = this.squaredDistanceTo(tx, this.getY(), tz);
 
-        if (distSq < 1.0) {
+        if (distSq < 0.09) {
+            this.setPosition(tx, this.getY(), tz);
             onReachedCharger();
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);
             return;
         }
 

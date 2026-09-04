@@ -5,6 +5,7 @@ import com.evecual.evecualmc.energy.EnergyStorage;
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
 import com.evecual.evecualmc.entity.RcRobotEntity;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -17,6 +18,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,10 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, RcChargerBlockEntity be) {
+        if (world.isClient) return;
+
+        ServerWorld serverWorld = (ServerWorld) world;
+
         // 1. Periodically discover all valid parking spots within the 16-block broadcast radius
         be.scanTimer++;
         if (be.scanTimer % 40 == 1 || be.connectedSpots.isEmpty()) {
@@ -60,30 +66,33 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
             }
         }
 
-        // 2. Idle "Charge Ready" particle effect on all in-range parking spots when charger is powered
-        if (be.energy > 0) {
-            if (!world.isClient() && world instanceof ServerWorld serverWorld) {
-                for (BlockPos spotPos : be.connectedSpots) {
-                    if (world.random.nextFloat() < 0.35f) {
-                        double px = spotPos.getX() + 0.15 + world.random.nextDouble() * 0.7;
-                        double py = spotPos.getY() + 0.08;
-                        double pz = spotPos.getZ() + 0.15 + world.random.nextDouble() * 0.7;
-                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0.0, 0.02, 0.0, 0.0);
-                    }
-                }
-            } else if (world.isClient()) {
-                for (BlockPos spotPos : be.connectedSpots) {
-                    if (world.random.nextFloat() < 0.25f) {
-                        double px = spotPos.getX() + 0.15 + world.random.nextDouble() * 0.7;
-                        double py = spotPos.getY() + 0.08;
-                        double pz = spotPos.getZ() + 0.15 + world.random.nextDouble() * 0.7;
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0.0, 0.02, 0.0);
-                    }
+        // 2. Direct active pull from adjacent battery if touching
+        if (be.energy < MAX_ENERGY) {
+            for (Direction dir : Direction.values()) {
+                BlockEntity neighborBe = world.getBlockEntity(pos.offset(dir));
+                if (neighborBe instanceof BatteryBlockEntity battery && battery.getEnergy() > 0) {
+                    long needed = MAX_ENERGY - be.energy;
+                    long pull = Math.min(needed, Math.min(battery.getEnergy(), 10));
+                    long extracted = battery.extractEnergy(pull, false);
+                    be.insertEnergy(extracted, false);
+                    if (be.energy >= MAX_ENERGY) break;
                 }
             }
         }
 
-        // 3. Wireless Inductive Charging to parked vehicles in their respective spots
+        // 3. Periodic idle "Charge Ready" sparks on all connected parking spots when powered
+        if (be.energy > 0) {
+            for (BlockPos spotPos : be.connectedSpots) {
+                if (world.random.nextFloat() < 0.35f) {
+                    double px = spotPos.getX() + 0.15 + world.random.nextDouble() * 0.7;
+                    double py = spotPos.getY() + 0.08;
+                    double pz = spotPos.getZ() + 0.15 + world.random.nextDouble() * 0.7;
+                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0.0, 0.02, 0.0, 0.0);
+                }
+            }
+        }
+
+        // 4. Wireless Inductive Charging to parked vehicles in their respective spots
         if (be.energy > 0) {
             Box searchBox = new Box(pos).expand(BROADCAST_RADIUS);
 
@@ -97,18 +106,18 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                     int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
                     car.setEnergy(car.getEnergy() + transfer);
 
-                    if (world.isClient && world.random.nextFloat() < 0.45f) {
+                    if (world.random.nextFloat() < 0.45f) {
                         double t = world.random.nextDouble();
                         double px = MathHelper.lerp(t, pos.getX() + 0.5, car.getX());
                         double py = MathHelper.lerp(t, pos.getY() + 0.5, car.getY() + 0.15);
                         double pz = MathHelper.lerp(t, pos.getZ() + 0.5, car.getZ());
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0, 0.02, 0, 0);
 
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK,
                                 car.getX() + (world.random.nextDouble() - 0.5) * 0.35,
                                 car.getY() + 0.15,
                                 car.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                                0, 0.08, 0);
+                                1, 0, 0.08, 0, 0);
                     }
 
                     if (car.age % 25 == 0) {
@@ -127,18 +136,18 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                     int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
                     drone.setEnergy(drone.getEnergy() + transfer);
 
-                    if (world.isClient && world.random.nextFloat() < 0.45f) {
+                    if (world.random.nextFloat() < 0.45f) {
                         double t = world.random.nextDouble();
                         double px = MathHelper.lerp(t, pos.getX() + 0.5, drone.getX());
                         double py = MathHelper.lerp(t, pos.getY() + 0.5, drone.getY() + 0.15);
                         double pz = MathHelper.lerp(t, pos.getZ() + 0.5, drone.getZ());
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0, 0.02, 0, 0);
 
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK,
                                 drone.getX() + (world.random.nextDouble() - 0.5) * 0.35,
                                 drone.getY() + 0.15,
                                 drone.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                                0, 0.08, 0);
+                                1, 0, 0.08, 0, 0);
                     }
 
                     if (drone.age % 25 == 0) {
@@ -157,18 +166,18 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                     int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
                     robot.setEnergy(robot.getEnergy() + transfer);
 
-                    if (world.isClient && world.random.nextFloat() < 0.45f) {
+                    if (world.random.nextFloat() < 0.45f) {
                         double t = world.random.nextDouble();
                         double px = MathHelper.lerp(t, pos.getX() + 0.5, robot.getX());
                         double py = MathHelper.lerp(t, pos.getY() + 0.5, robot.getY() + 0.15);
                         double pz = MathHelper.lerp(t, pos.getZ() + 0.5, robot.getZ());
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0, 0.02, 0, 0);
 
-                        world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK,
                                 robot.getX() + (world.random.nextDouble() - 0.5) * 0.35,
                                 robot.getY() + 0.15,
                                 robot.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                                0, 0.08, 0);
+                                1, 0, 0.08, 0, 0);
                     }
 
                     if (robot.age % 25 == 0) {
@@ -181,6 +190,12 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
 
     public List<BlockPos> getConnectedSpots() {
         return this.connectedSpots;
+    }
+
+    public void sync() {
+        if (this.world != null && !this.world.isClient) {
+            this.world.updateListeners(this.pos, this.getCachedState(), this.getCachedState(), Block.NOTIFY_LISTENERS);
+        }
     }
 
     @Override
@@ -196,9 +211,10 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
     @Override
     public long insertEnergy(long amount, boolean simulate) {
         long accepted = Math.min(amount, MAX_ENERGY - this.energy);
-        if (!simulate) {
+        if (!simulate && accepted > 0) {
             this.energy += (int) accepted;
             markDirty();
+            sync();
         }
         return accepted;
     }
@@ -206,9 +222,10 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
     @Override
     public long extractEnergy(long amount, boolean simulate) {
         long extracted = Math.min(amount, this.energy);
-        if (!simulate) {
+        if (!simulate && extracted > 0) {
             this.energy -= (int) extracted;
             markDirty();
+            sync();
         }
         return extracted;
     }

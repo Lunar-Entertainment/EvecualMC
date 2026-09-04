@@ -193,10 +193,20 @@ public class RcCarEntity extends Entity {
         return this.autoReturning;
     }
 
+    public BlockPos getParkingSpotPos() {
+        BlockPos pos = this.getBlockPos();
+        if (this.getWorld().getBlockState(pos).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) return pos;
+        if (this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) return pos.down();
+        return null;
+    }
+
     public boolean isInParkingSpot() {
-        net.minecraft.util.math.BlockPos pos = this.getBlockPos();
-        return this.getWorld().getBlockState(pos).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK) ||
-               this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK);
+        if (this.autoReturning) return false;
+        BlockPos spotPos = getParkingSpotPos();
+        if (spotPos == null) return false;
+        double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
+        double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
+        return dx <= 0.32 && dz <= 0.32;
     }
 
     public void setExplicitlyPairedInSpot(boolean val) {
@@ -211,8 +221,14 @@ public class RcCarEntity extends Entity {
         this.setSteeringAngle(0.0F);
         this.stuckTicks = 0;
         this.reverseTicks = 0;
+        this.wasInParkingSpot = true;
+        this.explicitlyPairedInSpot = false;
         String pUuid = getPairedPlayerUuid();
         if (pUuid != null && !pUuid.isEmpty()) {
+            if (!this.getWorld().isClient) {
+                com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuid);
+                setPairedPlayerUuid("");
+            }
             try {
                 PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
                 if (player != null) {
@@ -232,20 +248,52 @@ public class RcCarEntity extends Entity {
     }
 
     public boolean startAutoReturnToCharger() {
-        net.minecraft.util.math.BlockPos carPos = this.getBlockPos();
-        net.minecraft.util.math.BlockPos bestCharger = null;
+        BlockPos carPos = this.getBlockPos();
+        BlockPos bestCharger = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        for (int x = -50; x <= 50; x++) {
-            for (int y = -8; y <= 8; y++) {
-                for (int z = -50; z <= 50; z++) {
-                    net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
-                    net.minecraft.block.BlockState bs = this.getWorld().getBlockState(p);
-                    if (bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
-                        double dSq = p.getSquaredDistance(carPos);
-                        if (dSq < bestDistSq) {
-                            bestDistSq = dSq;
-                            bestCharger = p;
+        int minChunkX = (carPos.getX() - 64) >> 4;
+        int maxChunkX = (carPos.getX() + 64) >> 4;
+        int minChunkZ = (carPos.getZ() - 64) >> 4;
+        int maxChunkZ = (carPos.getZ() + 64) >> 4;
+
+        int minY = Math.max(this.getWorld().getBottomY(), carPos.getY() - 16);
+        int maxY = Math.min(this.getWorld().getTopY(), carPos.getY() + 16);
+
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                if (!this.getWorld().isChunkLoaded(cx, cz)) continue;
+                net.minecraft.world.chunk.Chunk chunk = this.getWorld().getChunk(cx, cz);
+                if (chunk == null) continue;
+
+                int minSec = Math.max(0, (minY - chunk.getBottomY()) >> 4);
+                int maxSec = Math.min(chunk.getSectionArray().length - 1, (maxY - chunk.getBottomY()) >> 4);
+
+                for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
+                    net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
+                    if (section == null || section.isEmpty()) continue;
+
+                    int secY = chunk.sectionIndexToCoord(secIdx) << 4;
+                    for (int lx = 0; lx < 16; lx++) {
+                        int wx = (cx << 4) + lx;
+                        if (Math.abs(wx - carPos.getX()) > 64) continue;
+                        for (int lz = 0; lz < 16; lz++) {
+                            int wz = (cz << 4) + lz;
+                            if (Math.abs(wz - carPos.getZ()) > 64) continue;
+                            for (int ly = 0; ly < 16; ly++) {
+                                int wy = secY + ly;
+                                if (wy < minY || wy > maxY) continue;
+
+                                BlockState bs = section.getBlockState(lx, ly, lz);
+                                if (bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+                                    BlockPos p = new BlockPos(wx, wy, wz);
+                                    double dSq = p.getSquaredDistance(carPos);
+                                    if (dSq < bestDistSq) {
+                                        bestDistSq = dSq;
+                                        bestCharger = p;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -365,8 +413,8 @@ public class RcCarEntity extends Entity {
                 double dz = targetZ - this.getZ();
                 double distSq = dx * dx + dz * dz;
 
-                // Stop only when squarely docked on top of the charging pad (within 0.25m of center)
-                if (distSq <= 0.0625) {
+                // Stop only when squarely docked on top of the charging pad (within 0.30m of center)
+                if (distSq <= 0.09) {
                     this.setPosition(targetX, targetY, targetZ);
                     onReachedCharger();
                     this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);

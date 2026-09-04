@@ -42,7 +42,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
                 visited.add(neighbor);
             } else {
                 BlockEntity neighborBe = world.getBlockEntity(neighbor);
-                if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity) && neighborBe != this) {
+                if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity || neighborBe instanceof RcChargerBlockEntity) && neighborBe != this) {
                     consumers.add((EnergyStorage) neighborBe);
                 }
             }
@@ -61,7 +61,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
                     queue.add(next);
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
-                    if ((nextBe instanceof ElectronicCombinerBlockEntity || nextBe instanceof ChargerBlockEntity) && nextBe != this) {
+                    if ((nextBe instanceof ElectronicCombinerBlockEntity || nextBe instanceof ChargerBlockEntity || nextBe instanceof RcChargerBlockEntity) && nextBe != this) {
                         consumers.add((EnergyStorage) nextBe);
                     }
                 }
@@ -74,7 +74,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
 
                 long needed = consumer.getMaxEnergy() - consumer.getEnergy();
                 if (needed > 0) {
-                    long toSend = Math.min(this.energy, Math.min(needed, 5));
+                    long toSend = Math.min(this.energy, Math.min(needed, 10));
                     long inserted = consumer.insertEnergy(toSend, false);
                     this.energy -= inserted;
                     this.markDirty();

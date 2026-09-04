@@ -1,5 +1,22 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.5] - 2026-09-04
+### Fixed & Improved
+- **Wireless RC Charger Energy Intake & Synchronization**:
+  - Fixed `BatteryBlockEntity` to recognize `RcChargerBlockEntity` as an active consumer during direct neighbor checks and 64-hop wire network BFS traversal.
+  - Increased wire network transfer rate to 10 EU/tick to efficiently charge the Wireless RC Charger (up to 2000 EU capacity).
+  - Added direct intake from adjacent batteries in `RcChargerBlockEntity.tick()`.
+  - Added client network synchronization (`sync()`) on energy insertion, extraction, and updates so real-time charge levels accurately reflect on HUD overlays and diagnostic screens.
+- **Drone Auto-Return & Landing Overhaul**:
+  - Fixed search algorithm bug where `x += 2, y += 2, z += 2` skipped 87.5% of coordinates. Implemented an exhaustive, lag-free chunk section search covering the full 64-block radius without skipping any blocks.
+  - Added fixed cruise altitude stabilization to prevent altitude drift during return.
+  - Refined the 3-stage autopilot: climb to safe cruising altitude, traverse directly over the helipad center, and execute a controlled vertical descent straight onto the pad.
+  - Docks smoothly with recharge audio and particle effects upon touching down.
+- **Vehicle Platform Centering & Anti-Premature Docking**:
+  - Overhauled `isInParkingSpot()` across all vehicles (`RcCarEntity`, `RcDroneEntity`, `RcRobotEntity`): vehicles now require their horizontal center to be within ±0.32–0.35m of the pad's center.
+  - Eliminated premature unpairing and engine cutoff when only a fraction of a vehicle's hitbox entered a pad's block coordinate.
+  - Auto-return navigation now guides vehicles all the way to the center of their parking pads before shutting down and unpairing.
+
 ## [1.3.4] - 2026-09-04
 ### Added & Improved
 - **Wireless RC Charger (Full Cube Power Station & Wire Terminal)**:

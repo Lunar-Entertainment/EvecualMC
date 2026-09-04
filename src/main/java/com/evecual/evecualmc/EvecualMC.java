@@ -471,9 +471,9 @@ public class EvecualMC implements ModInitializer {
                                 if (player.squaredDistanceTo(rcCar) <= 65536.0) { // 256 blocks max range
                                     boolean started = rcCar.startAutoReturnToCharger();
                                     if (started) {
-                                        player.sendMessage(Text.literal("§a⚡ RC Car returning to RC Charger..."), true);
+                                        player.sendMessage(Text.literal("§a⚡ RC Car returning to Parking Spot..."), true);
                                     } else {
-                                        player.sendMessage(Text.literal("§c⚡ No RC Charger found within 50 blocks!"),
+                                        player.sendMessage(Text.literal("§c⚡ No RC Parking Spot found within 64 blocks!"),
                                                 true);
                                     }
                                 }
@@ -520,9 +520,9 @@ public class EvecualMC implements ModInitializer {
                                 if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range
                                     boolean started = drone.startAutoReturnToCharger();
                                     if (started) {
-                                        player.sendMessage(Text.literal("§a⚡ RC Drone returning to RC Charger pad..."), true);
+                                        player.sendMessage(Text.literal("§a⚡ RC Drone returning to Helipad..."), true);
                                     } else {
-                                        player.sendMessage(Text.literal("§c⚡ No RC Charger found within 64 blocks!"),
+                                        player.sendMessage(Text.literal("§c⚡ No Drone Helipad found within 64 blocks!"),
                                                 true);
                                     }
                                 }
@@ -585,9 +585,9 @@ public class EvecualMC implements ModInitializer {
                                 if (player.squaredDistanceTo(robot) <= 65536.0) {
                                     boolean started = robot.startAutoReturnToCharger();
                                     if (started) {
-                                        player.sendMessage(Text.literal("§a⚡ RC Robot returning to RC Charger / spot..."), true);
+                                        player.sendMessage(Text.literal("§a⚡ RC Robot returning to Robot Parking Spot..."), true);
                                     } else {
-                                        player.sendMessage(Text.literal("§c⚡ No RC Charger or Parking Spot found within 64 blocks!"), true);
+                                        player.sendMessage(Text.literal("§c⚡ No Robot Parking Spot found within 64 blocks!"), true);
                                     }
                                 }
                             }
