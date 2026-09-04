@@ -264,7 +264,7 @@ public class RcDroneEntity extends Entity {
                 for (int z = -100; z <= 100; z += 2) {
                     BlockPos p = dronePos.add(x, y, z);
                     net.minecraft.block.BlockState bs = this.getWorld().getBlockState(p);
-                    if (bs.isOf(EvecualMC.RC_CHARGER_BLOCK) || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+                    if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
                         double dSq = p.getSquaredDistance(dronePos);
                         if (dSq < bestDistSq) {
                             bestDistSq = dSq;

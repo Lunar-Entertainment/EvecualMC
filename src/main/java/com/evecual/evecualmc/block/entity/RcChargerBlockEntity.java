@@ -3,6 +3,8 @@ package com.evecual.evecualmc.block.entity;
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.energy.EnergyStorage;
 import com.evecual.evecualmc.entity.RcCarEntity;
+import com.evecual.evecualmc.entity.RcDroneEntity;
+import com.evecual.evecualmc.entity.RcRobotEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -10,119 +12,84 @@ import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
     public static final int MAX_ENERGY = 2000;
-    private int energy = 0; // Starts with 0 energy; requires external power from Solar Panels, Batteries, or Wires!
+    public static final double BROADCAST_RADIUS = 16.0;
+    public static final double BROADCAST_RADIUS_SQ = BROADCAST_RADIUS * BROADCAST_RADIUS;
+
+    private int energy = 0;
+    private int scanTimer = 0;
+    private final List<BlockPos> connectedSpots = new ArrayList<>();
 
     public RcChargerBlockEntity(BlockPos pos, BlockState state) {
         super(EvecualMC.RC_CHARGER_BLOCK_ENTITY, pos, state);
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, RcChargerBlockEntity be) {
-        // 1. Direct charging for RC Cars parked squarely on the charger pad
-        Box area = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 0.6, pos.getZ() + 0.95);
-        List<RcCarEntity> cars = world.getEntitiesByClass(RcCarEntity.class, area, RcCarEntity::isAlive);
-
-        for (RcCarEntity car : cars) {
-            // Stop auto-returning once docked
-            if (car.isAutoReturning()) {
-                car.onReachedCharger();
-            }
-
-            if (be.energy > 0 && car.getEnergy() < RcCarEntity.MAX_ENERGY) {
-                int needed = RcCarEntity.MAX_ENERGY - car.getEnergy();
-                int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
-                car.setEnergy(car.getEnergy() + transfer);
-
-                // Visual spark particles
-                if (world.isClient && world.random.nextFloat() < 0.45f) {
-                    world.addParticle(ParticleTypes.ELECTRIC_SPARK,
-                            car.getX() + (world.random.nextDouble() - 0.5) * 0.35,
-                            car.getY() + 0.15,
-                            car.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                            0, 0.08, 0);
-                }
-
-                // Sound feedback occasionally
-                if (car.age % 25 == 0) {
-                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 2.0f);
+        // 1. Periodically discover all valid parking spots within the 16-block broadcast radius
+        be.scanTimer++;
+        if (be.scanTimer % 40 == 1 || be.connectedSpots.isEmpty()) {
+            be.connectedSpots.clear();
+            int rad = (int) BROADCAST_RADIUS;
+            for (int dx = -rad; dx <= rad; dx++) {
+                for (int dy = -8; dy <= 8; dy++) {
+                    for (int dz = -rad; dz <= rad; dz++) {
+                        if (dx * dx + dy * dy + dz * dz <= BROADCAST_RADIUS_SQ) {
+                            BlockPos checkPos = pos.add(dx, dy, dz);
+                            BlockState bs = world.getBlockState(checkPos);
+                            if (bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK) ||
+                                bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK) ||
+                                bs.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
+                                be.connectedSpots.add(checkPos.toImmutable());
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // 2. Direct charging for RC Drones landed or hovering directly on the charger pad
-        Box droneArea = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 1.2, pos.getZ() + 0.95);
-        List<com.evecual.evecualmc.entity.RcDroneEntity> drones = world.getEntitiesByClass(com.evecual.evecualmc.entity.RcDroneEntity.class, droneArea, com.evecual.evecualmc.entity.RcDroneEntity::isAlive);
-
-        for (com.evecual.evecualmc.entity.RcDroneEntity drone : drones) {
-            // Stop auto-returning once docked
-            if (drone.isAutoReturning()) {
-                drone.onReachedCharger();
-            }
-
-            if (be.energy > 0 && drone.getEnergy() < com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY) {
-                int needed = com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY - drone.getEnergy();
-                int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
-                drone.setEnergy(drone.getEnergy() + transfer);
-
-                // Visual spark particles
-                if (world.isClient && world.random.nextFloat() < 0.45f) {
-                    world.addParticle(ParticleTypes.ELECTRIC_SPARK,
-                            drone.getX() + (world.random.nextDouble() - 0.5) * 0.35,
-                            drone.getY() + 0.15,
-                            drone.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                            0, 0.08, 0);
-                }
-
-                if (drone.age % 25 == 0) {
-                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 2.2f);
-                }
-            }
-        }
-
-        // 3. Direct charging for RC Robots standing squarely on the charger pad
-        Box robotArea = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 1.2, pos.getZ() + 0.95);
-        List<com.evecual.evecualmc.entity.RcRobotEntity> robots = world.getEntitiesByClass(com.evecual.evecualmc.entity.RcRobotEntity.class, robotArea, com.evecual.evecualmc.entity.RcRobotEntity::isAlive);
-
-        for (com.evecual.evecualmc.entity.RcRobotEntity robot : robots) {
-            if (robot.isAutoReturning()) {
-                robot.onReachedCharger();
-            }
-
-            if (be.energy > 0 && robot.getEnergy() < com.evecual.evecualmc.entity.RcRobotEntity.MAX_ENERGY) {
-                int needed = com.evecual.evecualmc.entity.RcRobotEntity.MAX_ENERGY - robot.getEnergy();
-                int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
-                robot.setEnergy(robot.getEnergy() + transfer);
-
-                if (world.isClient && world.random.nextFloat() < 0.45f) {
-                    world.addParticle(ParticleTypes.ELECTRIC_SPARK,
-                            robot.getX() + (world.random.nextDouble() - 0.5) * 0.35,
-                            robot.getY() + 0.15,
-                            robot.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
-                            0, 0.08, 0);
-                }
-
-                if (robot.age % 25 == 0) {
-                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 1.8f);
-                }
-            }
-        }
-
-        // 4. Wireless Inductive Charging to RC Parking Spots and Drone Parking Spots within 16 blocks radius
+        // 2. Idle "Charge Ready" particle effect on all in-range parking spots when charger is powered
         if (be.energy > 0) {
-            Box searchBox = new Box(pos).expand(16.0);
+            if (!world.isClient() && world instanceof ServerWorld serverWorld) {
+                for (BlockPos spotPos : be.connectedSpots) {
+                    if (world.random.nextFloat() < 0.35f) {
+                        double px = spotPos.getX() + 0.15 + world.random.nextDouble() * 0.7;
+                        double py = spotPos.getY() + 0.08;
+                        double pz = spotPos.getZ() + 0.15 + world.random.nextDouble() * 0.7;
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0.0, 0.02, 0.0, 0.0);
+                    }
+                }
+            } else if (world.isClient()) {
+                for (BlockPos spotPos : be.connectedSpots) {
+                    if (world.random.nextFloat() < 0.25f) {
+                        double px = spotPos.getX() + 0.15 + world.random.nextDouble() * 0.7;
+                        double py = spotPos.getY() + 0.08;
+                        double pz = spotPos.getZ() + 0.15 + world.random.nextDouble() * 0.7;
+                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0.0, 0.02, 0.0);
+                    }
+                }
+            }
+        }
 
-            // Wirelessly charge RC Cars parked in an RC Parking Spot
-            List<RcCarEntity> parkedCars = world.getEntitiesByClass(RcCarEntity.class, searchBox, c -> c.isAlive() && c.isInParkingSpot());
+        // 3. Wireless Inductive Charging to parked vehicles in their respective spots
+        if (be.energy > 0) {
+            Box searchBox = new Box(pos).expand(BROADCAST_RADIUS);
+
+            // A. RC Cars parked in RC Parking Spot
+            List<RcCarEntity> parkedCars = world.getEntitiesByClass(RcCarEntity.class, searchBox,
+                    c -> c.isAlive() && c.isInParkingSpot() && pos.getSquaredDistance(c.getBlockPos()) <= BROADCAST_RADIUS_SQ);
             for (RcCarEntity car : parkedCars) {
                 if (be.energy <= 0) break;
                 if (car.getEnergy() < RcCarEntity.MAX_ENERGY) {
@@ -130,12 +97,11 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                     int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
                     car.setEnergy(car.getEnergy() + transfer);
 
-                    // Wireless particle transmission beam
                     if (world.isClient && world.random.nextFloat() < 0.45f) {
                         double t = world.random.nextDouble();
-                        double px = net.minecraft.util.math.MathHelper.lerp(t, pos.getX() + 0.5, car.getX());
-                        double py = net.minecraft.util.math.MathHelper.lerp(t, pos.getY() + 0.3, car.getY() + 0.15);
-                        double pz = net.minecraft.util.math.MathHelper.lerp(t, pos.getZ() + 0.5, car.getZ());
+                        double px = MathHelper.lerp(t, pos.getX() + 0.5, car.getX());
+                        double py = MathHelper.lerp(t, pos.getY() + 0.5, car.getY() + 0.15);
+                        double pz = MathHelper.lerp(t, pos.getZ() + 0.5, car.getZ());
                         world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
 
                         world.addParticle(ParticleTypes.ELECTRIC_SPARK,
@@ -151,21 +117,21 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                 }
             }
 
-            // Wirelessly charge RC Drones landed in a Drone Parking Spot
-            List<com.evecual.evecualmc.entity.RcDroneEntity> parkedDrones = world.getEntitiesByClass(com.evecual.evecualmc.entity.RcDroneEntity.class, searchBox, d -> d.isAlive() && d.isInParkingSpot());
-            for (com.evecual.evecualmc.entity.RcDroneEntity drone : parkedDrones) {
+            // B. RC Drones landed in Drone Helipad
+            List<RcDroneEntity> parkedDrones = world.getEntitiesByClass(RcDroneEntity.class, searchBox,
+                    d -> d.isAlive() && d.isInParkingSpot() && pos.getSquaredDistance(d.getBlockPos()) <= BROADCAST_RADIUS_SQ);
+            for (RcDroneEntity drone : parkedDrones) {
                 if (be.energy <= 0) break;
-                if (drone.getEnergy() < com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY) {
-                    int needed = com.evecual.evecualmc.entity.RcDroneEntity.MAX_ENERGY - drone.getEnergy();
+                if (drone.getEnergy() < RcDroneEntity.MAX_ENERGY) {
+                    int needed = RcDroneEntity.MAX_ENERGY - drone.getEnergy();
                     int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
                     drone.setEnergy(drone.getEnergy() + transfer);
 
-                    // Wireless particle transmission beam
                     if (world.isClient && world.random.nextFloat() < 0.45f) {
                         double t = world.random.nextDouble();
-                        double px = net.minecraft.util.math.MathHelper.lerp(t, pos.getX() + 0.5, drone.getX());
-                        double py = net.minecraft.util.math.MathHelper.lerp(t, pos.getY() + 0.3, drone.getY() + 0.15);
-                        double pz = net.minecraft.util.math.MathHelper.lerp(t, pos.getZ() + 0.5, drone.getZ());
+                        double px = MathHelper.lerp(t, pos.getX() + 0.5, drone.getX());
+                        double py = MathHelper.lerp(t, pos.getY() + 0.5, drone.getY() + 0.15);
+                        double pz = MathHelper.lerp(t, pos.getZ() + 0.5, drone.getZ());
                         world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
 
                         world.addParticle(ParticleTypes.ELECTRIC_SPARK,
@@ -180,7 +146,41 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                     }
                 }
             }
+
+            // C. RC Robots docked in Robot Parking Spot
+            List<RcRobotEntity> parkedRobots = world.getEntitiesByClass(RcRobotEntity.class, searchBox,
+                    r -> r.isAlive() && r.isInParkingSpot() && pos.getSquaredDistance(r.getBlockPos()) <= BROADCAST_RADIUS_SQ);
+            for (RcRobotEntity robot : parkedRobots) {
+                if (be.energy <= 0) break;
+                if (robot.getEnergy() < RcRobotEntity.MAX_ENERGY) {
+                    int needed = RcRobotEntity.MAX_ENERGY - robot.getEnergy();
+                    int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
+                    robot.setEnergy(robot.getEnergy() + transfer);
+
+                    if (world.isClient && world.random.nextFloat() < 0.45f) {
+                        double t = world.random.nextDouble();
+                        double px = MathHelper.lerp(t, pos.getX() + 0.5, robot.getX());
+                        double py = MathHelper.lerp(t, pos.getY() + 0.5, robot.getY() + 0.15);
+                        double pz = MathHelper.lerp(t, pos.getZ() + 0.5, robot.getZ());
+                        world.addParticle(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 0, 0.02, 0);
+
+                        world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                                robot.getX() + (world.random.nextDouble() - 0.5) * 0.35,
+                                robot.getY() + 0.15,
+                                robot.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
+                                0, 0.08, 0);
+                    }
+
+                    if (robot.age % 25 == 0) {
+                        world.playSound(null, robot.getBlockPos(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.25f, 1.8f);
+                    }
+                }
+            }
         }
+    }
+
+    public List<BlockPos> getConnectedSpots() {
+        return this.connectedSpots;
     }
 
     @Override

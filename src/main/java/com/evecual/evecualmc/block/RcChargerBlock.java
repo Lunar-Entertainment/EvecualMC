@@ -17,13 +17,12 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 public class RcChargerBlock extends BlockWithEntity {
-    // Low-profile 4-pixel high charging pad for RC cars
-    private static final VoxelShape SHAPE = Block.createCuboidShape(0.0, 0.0, 0.0, 16.0, 4.0, 16.0);
 
     public RcChargerBlock(Settings settings) {
         super(settings);
@@ -31,7 +30,7 @@ public class RcChargerBlock extends BlockWithEntity {
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return SHAPE;
+        return VoxelShapes.fullCube();
     }
 
     @Override

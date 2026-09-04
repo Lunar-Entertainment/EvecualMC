@@ -207,7 +207,7 @@ public class EvecualMC implements ModInitializer {
             Registries.BLOCK,
             new Identifier(MOD_ID, "rc_charger"),
             new com.evecual.evecualmc.block.RcChargerBlock(
-                    FabricBlockSettings.create().strength(0.8f).sounds(BlockSoundGroup.METAL).nonOpaque()));
+                    FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL)));
 
     public static final Item RC_CHARGER_ITEM = Registry.register(
             Registries.ITEM,
@@ -235,6 +235,17 @@ public class EvecualMC implements ModInitializer {
             Registries.ITEM,
             new Identifier(MOD_ID, "drone_parking_spot"),
             new BlockItem(DRONE_PARKING_SPOT_BLOCK, new Item.Settings()));
+
+    public static final Block ROBOT_PARKING_SPOT_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "robot_parking_spot"),
+            new com.evecual.evecualmc.block.RobotParkingSpotBlock(
+                    FabricBlockSettings.create().strength(0.5f).sounds(BlockSoundGroup.METAL).nonOpaque().noCollision()));
+
+    public static final Item ROBOT_PARKING_SPOT_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "robot_parking_spot"),
+            new BlockItem(ROBOT_PARKING_SPOT_BLOCK, new Item.Settings()));
 
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
@@ -362,6 +373,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(RC_CHARGER_ITEM);
                 entries.add(RC_PARKING_SPOT_ITEM);
                 entries.add(DRONE_PARKING_SPOT_ITEM);
+                entries.add(ROBOT_PARKING_SPOT_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);

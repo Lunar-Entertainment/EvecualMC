@@ -52,7 +52,8 @@ public class WireBlock extends Block {
                 || state.isOf(EvecualMC.SOLAR_PANEL_BLOCK)
                 || state.isOf(EvecualMC.BATTERY_BLOCK)
                 || state.isOf(EvecualMC.ELECTRONIC_COMBINER_BLOCK)
-                || state.isOf(EvecualMC.CHARGER_BLOCK);
+                || state.isOf(EvecualMC.CHARGER_BLOCK)
+                || state.isOf(EvecualMC.RC_CHARGER_BLOCK);
     }
 
     @Override

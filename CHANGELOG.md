@@ -1,5 +1,28 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.4] - 2026-09-04
+### Added & Improved
+- **Wireless RC Charger (Full Cube Power Station & Wire Terminal)**:
+  - Upgraded the RC Charger from a flat pad into a full metallic cube terminal: the **Wireless RC Charger**.
+  - Enabled electrical wires (`WireBlock`) to directly connect to the Wireless RC Charger on all six faces.
+  - Wirelessly broadcasts charging power across a 16-block radius to all designated parking spots.
+- **Dedicated Robot Parking Spot (`robot_parking_spot`)**:
+  - Added the **Robot Parking Spot** block and item specifically engineered for RC Excavator Robots.
+  - Features custom industrial metallic pad textures with amber hazard stripes and robotic iconography.
+  - Registered block, block item, models, blockstates, and creative tab entries.
+- **Vehicle Docking Separation & Glitch Fixes**:
+  - Removed the glitch where the charger block itself acted as a parking spot or auto-return target.
+  - Strict 1-to-1 parking spot alignment:
+    - **RC Car**: Only docks and auto-returns to **RC Parking Spot** (`rc_parking_spot`).
+    - **RC Drone**: Only docks and auto-returns to **Drone Helipad** (`drone_parking_spot`).
+    - **RC Robot**: Only docks and auto-returns to **Robot Parking Spot** (`robot_parking_spot`).
+  - Vehicles shut down motors and unpair cleanly when entering their designated parking spots.
+- **Active "Charge Ready" Particle Transmission Effects**:
+  - When the Wireless RC Charger has power (`energy > 0`), it emits a pulsing electric spark idle effect on all in-range parking spots (Car, Drone, and Robot), visually indicating that the spot is connected and ready to charge.
+  - Active charging between the wireless station and parked vehicles produces animated electric arc beams and audio hums.
+- **Diagnostics & Field Guide Updates**:
+  - Added dedicated Field Guide and HUD tips for the Robot Parking Spot and updated Wireless RC Charger information.
+
 ## [1.3.3] - 2026-09-04
 ### Added & Improved
 - **Electronic Combiner Multi-Stage Blueprint System & Strict Slot Validation**:

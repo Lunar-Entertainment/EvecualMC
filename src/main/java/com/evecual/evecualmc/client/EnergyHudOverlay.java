@@ -100,6 +100,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderRcParkingSpotTip(drawContext, client);
             } else if (state.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
                 renderDroneParkingSpotTip(drawContext, client);
+            } else if (state.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
+                renderRobotParkingSpotTip(drawContext, client);
             }
         }
     }
@@ -288,10 +290,10 @@ public class EnergyHudOverlay implements HudRenderCallback {
     private void renderRcChargerTip(DrawContext context, MinecraftClient client, RcChargerBlockEntity rcCharger) {
         long energy = rcCharger.getEnergy();
         long maxEnergy = rcCharger.getMaxEnergy();
-        String status = "⚡ Wireless Pad (16m broadcast radius to parking spots)";
+        String status = "⚡ Wireless Induction Station (16m radius to parking spots)";
 
-        renderUnifiedHud(context, client, "⚡", "RC Charger Pad", 0xFF38BDF8,
-                energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
+        renderUnifiedHud(context, client, "⚡", "Wireless RC Charger", 0xFF38BDF8,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, 0xFF67E8F9,
                 (double) energy / Math.max(1, maxEnergy), 0xFF06B6D4);
     }
 
@@ -325,14 +327,20 @@ public class EnergyHudOverlay implements HudRenderCallback {
     }
 
     private void renderRcParkingSpotTip(DrawContext context, MinecraftClient client) {
-        String status = "🅿️ Docks & powers down RC Cars/Robots (Charges within 16m of RC Charger)";
+        String status = "🅿️ Docks & powers down RC Cars (Charges within 16m of Wireless Charger)";
         renderUnifiedHud(context, client, "🅿️", "RC Parking Spot", 0xFFFCD34D,
                 "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
     }
 
     private void renderDroneParkingSpotTip(DrawContext context, MinecraftClient client) {
-        String status = "🚁 Lands & shuts down RC Drones (Charges within 16m of RC Charger)";
+        String status = "🚁 Lands & shuts down RC Drones (Charges within 16m of Wireless Charger)";
         renderUnifiedHud(context, client, "🚁", "Drone Helipad", 0xFF38BDF8,
+                "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
+    }
+
+    private void renderRobotParkingSpotTip(DrawContext context, MinecraftClient client) {
+        String status = "🤖 Docks & powers down RC Robots (Charges within 16m of Wireless Charger)";
+        renderUnifiedHud(context, client, "🤖", "Robot Parking Spot", 0xFFF97316,
                 "", 0xFFFFFFFF, status, 0xFFE2E8F0, null, null);
     }
 

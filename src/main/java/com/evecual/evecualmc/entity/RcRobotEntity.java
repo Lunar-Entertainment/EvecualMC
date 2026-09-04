@@ -287,16 +287,20 @@ public class RcRobotEntity extends Entity {
             this.dataTracker.set(ARM_SWING, 0.0F);
         }
 
-        // Check if parked in a Parking Spot block
-        BlockPos currentPos = this.getBlockPos();
-        BlockState belowState = this.getWorld().getBlockState(currentPos);
-        BlockState groundState = this.getWorld().getBlockState(currentPos.down());
-        boolean inSpot = belowState.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK) || groundState.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK);
+        // Check if parked in a Robot Parking Spot block
+        boolean inSpot = isInParkingSpot();
 
         if (inSpot && !this.getWorld().isClient()) {
             if (!this.explicitlyPairedInSpot && !getPairedPlayerUuid().isEmpty()) {
+                String pUuid = getPairedPlayerUuid();
                 com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(
-                        this.getWorld(), this.getUuid(), getPairedPlayerUuid());
+                        this.getWorld(), this.getUuid(), pUuid);
+                try {
+                    PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                    if (player != null) {
+                        player.sendMessage(Text.literal("§e🅿️ RC Robot docked! Vehicle turned off and unpaired."), true);
+                    }
+                } catch (Exception ignored) {}
                 setPairedPlayerUuid("");
                 this.inputForward = false;
                 this.inputBack = false;
@@ -674,7 +678,7 @@ public class RcRobotEntity extends Entity {
                 for (int dz = -radius; dz <= radius; dz++) {
                     BlockPos p = center.add(dx, dy, dz);
                     BlockState s = this.getWorld().getBlockState(p);
-                    if (s.isOf(EvecualMC.RC_CHARGER_BLOCK) || s.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+                    if (s.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
                         double d = this.squaredDistanceTo(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
                         if (d < nearestDistSq) {
                             nearestDistSq = d;
@@ -714,6 +718,12 @@ public class RcRobotEntity extends Entity {
 
     public boolean isAutoReturning() {
         return this.autoReturning;
+    }
+
+    public boolean isInParkingSpot() {
+        BlockPos pos = this.getBlockPos();
+        return this.getWorld().getBlockState(pos).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK) ||
+               this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK);
     }
 
     private void tickAutoReturn() {

@@ -144,23 +144,23 @@ public enum TipTopic {
 
     RC_CHARGER(
             "rc_charger",
-            "RC Charger Pad",
-            "⚡ Wireless Inductive Pad",
+            "Wireless RC Charger",
+            "⚡ Wireless Power Station",
             () -> new ItemStack(EvecualMC.RC_CHARGER_ITEM),
-            "High-frequency wireless inductive charging pad storing up to 5,000 EU.",
+            "High-capacity induction broadcasting station that wirelessly charges RC Parking Spots across a 16-block radius.",
             new String[]{
-                    "Rapidly recharges RC Cars, RC Drones, and RC Robots positioned squarely on the pad.",
-                    "Wirelessly broadcasts charging energy to all RC and Drone Parking Spots within a 16-block radius.",
-                    "Functions as an autonomous homing beacon for remote vehicles across a 50-block range."
+                    "Full block terminal that connects directly to Wires, Solar Panels, and Batteries.",
+                    "Wirelessly broadcasts electricity to RC Parking Spots, Drone Helipads, and Robot Parking Spots within 16 blocks.",
+                    "When powered, emits idle spark indicators on all charge-ready connected parking spots."
             },
             new String[][]{
                     {"Right-Click", "Open Live Power Diagnostics & Guide"},
-                    {"'C' Key (RC Link)", "Command RC vehicle to auto-dock on pad"}
+                    {"Power Input", "Accepts energy seamlessly from Wires, Solar Panels, and Batteries"}
             },
             new String[]{
-                    "A single RC Charger can wirelessly power an entire fleet parked across multiple parking spots.",
-                    "Vehicles automatically return to this pad if battery reaches 5% while within 50 blocks.",
-                    "Supplied via standard Wires, Solar Panels, or Battery storage networks."
+                    "The Wireless RC Charger itself is a power broadcast station, not a parking pad.",
+                    "Park vehicles on their designated parking spots (Car, Drone, or Robot) to charge wirelessly.",
+                    "A single charger can easily power an entire garage containing cars, drones, and utility robots."
             }
     ),
 
@@ -169,20 +169,20 @@ public enum TipTopic {
             "RC Parking Spot",
             "🅿️ Ground Vehicle Dock",
             () -> new ItemStack(EvecualMC.RC_PARKING_SPOT_ITEM),
-            "Precision ground docking bay for RC Cars and RC Robots.",
+            "Precision ground docking bay engineered specifically for RC Cars.",
             new String[]{
-                    "When an RC Car or Robot enters this spot, it powers down motors and unpairs to save power.",
-                    "Wirelessly receives recharge energy whenever an RC Charger is within a 16-block radius.",
+                    "When an RC Car enters this spot, it powers down motors and unpairs to conserve battery.",
+                    "Wirelessly receives recharge energy whenever a Wireless RC Charger is within a 16-block radius.",
                     "Provides a designated home base where vehicles stay safe from hostile mobs."
             },
             new String[][]{
                     {"Right-Click", "Open Ground Docking Guide"},
-                    {"'C' Key (RC Link)", "Autopilot car/robot directly into this spot"}
+                    {"'C' Key (RC Link)", "Autopilot car directly into this spot"}
             },
             new String[]{
-                    "Keeps parked vehicles charged at 100% so they are always ready for deployment.",
+                    "Keeps parked cars charged at 100% so they are always ready for deployment.",
                     "To deploy a parked vehicle, simply aim the RC Controller and right-click to re-pair.",
-                    "Place multiple spots in a row to create an organized staging depot for your mining robot fleet."
+                    "Emits electric sparks when an active Wireless RC Charger is within 16 blocks."
             }
     ),
 
@@ -194,7 +194,7 @@ public enum TipTopic {
             "Targeted rooftop and ground helipad engineered specifically for RC Drones.",
             new String[]{
                     "When an RC Drone lands on this pad, motors safely shut down and remote connection unpairs.",
-                    "Wirelessly draws energy from any active RC Charger located within a 16-block radius.",
+                    "Wirelessly draws energy from any active Wireless RC Charger located within a 16-block radius.",
                     "Serves as a designated high-altitude or courtyard landing zone for aerial missions."
             },
             new String[][]{
@@ -204,7 +204,29 @@ public enum TipTopic {
             new String[]{
                     "During auto-dock, drones ascend to cruising altitude, fly straight over, and land vertically.",
                     "Build landing pads on castle towers, fortress walls, or rooftop gardens for instant deployment.",
-                    "Charges drones quietly with zero emissions or cable clutter."
+                    "Emits electric sparks when an active Wireless RC Charger is within 16 blocks."
+            }
+    ),
+
+    ROBOT_PARKING_SPOT(
+            "robot_parking_spot",
+            "Robot Parking Spot",
+            "🤖 Robot Docking Bay",
+            () -> new ItemStack(EvecualMC.ROBOT_PARKING_SPOT_ITEM),
+            "Heavy-duty industrial ground docking bay engineered specifically for RC Excavator Robots.",
+            new String[]{
+                    "When an RC Robot enters this spot, it powers down motors and unpairs to conserve battery.",
+                    "Wirelessly receives recharge power whenever a Wireless RC Charger is within a 16-block radius.",
+                    "Provides an organized staging bay for automated excavation and mining operations."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Robot Docking Guide"},
+                    {"'C' Key (RC Link)", "Command paired robot to navigate and dock in this spot"}
+            },
+            new String[]{
+                    "Keeps mining robots charged at 100% capacity so they are ready for digging work.",
+                    "Aim RC Controller and right-click to deploy and resume mining operations.",
+                    "Features amber hazard indicators and pulses with sparks when in range of an active charger."
             }
     ),
 
@@ -629,6 +651,7 @@ public enum TipTopic {
         if (block == EvecualMC.RC_CHARGER_BLOCK) return RC_CHARGER;
         if (block == EvecualMC.RC_PARKING_SPOT_BLOCK) return RC_PARKING_SPOT;
         if (block == EvecualMC.DRONE_PARKING_SPOT_BLOCK) return DRONE_PARKING_SPOT;
+        if (block == EvecualMC.ROBOT_PARKING_SPOT_BLOCK) return ROBOT_PARKING_SPOT;
         if (block == EvecualMC.ELECTRONIC_COMBINER_BLOCK) return ELECTRONIC_COMBINER;
         return null;
     }
@@ -652,6 +675,7 @@ public enum TipTopic {
         if (item == EvecualMC.RC_CHARGER_ITEM) return RC_CHARGER;
         if (item == EvecualMC.RC_PARKING_SPOT_ITEM) return RC_PARKING_SPOT;
         if (item == EvecualMC.DRONE_PARKING_SPOT_ITEM) return DRONE_PARKING_SPOT;
+        if (item == EvecualMC.ROBOT_PARKING_SPOT_ITEM) return ROBOT_PARKING_SPOT;
         if (item == EvecualMC.ELECTRONIC_COMBINER_ITEM) return ELECTRONIC_COMBINER;
         if (item == EvecualMC.STEEL_INGOT) return STEEL_INGOT;
         if (item == EvecualMC.ENGINE) return ENGINE;

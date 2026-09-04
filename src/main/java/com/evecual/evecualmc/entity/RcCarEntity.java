@@ -241,7 +241,7 @@ public class RcCarEntity extends Entity {
                 for (int z = -50; z <= 50; z++) {
                     net.minecraft.util.math.BlockPos p = carPos.add(x, y, z);
                     net.minecraft.block.BlockState bs = this.getWorld().getBlockState(p);
-                    if (bs.isOf(EvecualMC.RC_CHARGER_BLOCK) || bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+                    if (bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
                         double dSq = p.getSquaredDistance(carPos);
                         if (dSq < bestDistSq) {
                             bestDistSq = dSq;
