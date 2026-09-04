@@ -1,5 +1,23 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.2] - 2026-09-04
+### Added & Improved
+- **Connected Blocks in Shader & Texture Pipeline**:
+  - **Connected Glass**: Seamless borderless glass and glass panes with crystal-clear interiors (clears out distracting interior vanilla scratches/streaks) and crisp beveled outer frames for standard glass, tinted glass, and all 16 stained glass colors.
+  - **Connected Bookshelves**: Continuous horizontal shelf connection removing vertical inner borders, creating seamless long wooden library bookshelves.
+  - **Connected Mineral / Ore Blocks**: Unified metallic and gemstone paneling for Iron, Gold, Diamond, Emerald, Lapis, Redstone, Netherite, and Copper blocks that connect into massive sleek panels with smooth luster and perimeter bevel highlights.
+  - **Connected Emissive Ores & Veins**: Dynamic mineral vein emission for Coal, Iron, Copper, Gold, Redstone, Emerald, Lapis, Diamond, and Nether Quartz ores (and all Deepslate variants). Veins glow with vibrant elemental colors that radiate and bloom across adjacent ore blocks.
+  - **Evecual Tech Connected Blocks**: Connected parking bay stripes for RC & Drone parking spots, and seamless multi-block solar panel arrays.
+  - **Iris Shader Enhancements (`EvecualTechShader`)**:
+    - Added `block.properties` block ID definitions (10001: Glass, 10002: Bookshelf, 10003: Ore Blocks, 10004: Ores, 10005: Evecual Tech).
+    - Added normalized face UV and block-type aware shader passes in `gbuffers_terrain` and `gbuffers_textured`.
+    - Added in-shader toggle options in `shaders.properties`: `CONNECTED_BLOCKS`, `CONNECTED_GLASS`, `EMISSIVE_ORES`, and `ORE_GLOW_INTENSITY` (Subtle, Vibrant, Radiant).
+    - Repacked updated `EvecualTechShader.zip` to both mod `shader/` and client `run/shaderpacks/`.
+  - **Continuity & Indium Runtime Support**:
+    - Bundled complete CTM connected texture sets (47-tile and horizontal) in `assets/minecraft/optifine/ctm/` and `assets/evecualmc/optifine/ctm/`.
+    - Added `indium-1.0.34+mc1.20.1.jar` into `run/mods/` to enable FRAPI for Continuity on Sodium.
+    - Configured `options.txt` with active Continuity resource packs.
+
 ## [1.2.1] - 2026-09-04
 ### Added & Improved
 - **RC Parking Spot & Drone Parking Spot**:
