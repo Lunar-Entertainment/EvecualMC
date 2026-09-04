@@ -2,14 +2,6 @@
 
 /*
  * Evecual Tech Shader - Composite Pass (Next-Gen Cyber-Tech Engine)
- * Features:
- *  - Volumetric Sun God Rays (Crepuscular Rays)
- *  - Screen-Space Ambient Occlusion (SSAO)
- *  - High-Definition Dual-Scale Emissive Bloom
- *  - Procedural Multi-Layered Atmospheric Clouds
- *  - Velocity-Vector Camera Motion Blur
- *  - Chromatic Aberration & Lens Vignette
- *  - ACES Filmic Color Grading & Tech Vibrance
  */
 
 #define QUALITY 2             // [0 1 2 3]
@@ -21,6 +13,8 @@
 #define CHROMATIC_ABERRATION  // [true false]
 #define MOTION_BLUR           // [true false]
 #define MOTION_BLUR_SAMPLES 7 // [3 5 7]
+#define TECH_CONTRAST 1.06    // [0.90 1.00 1.06 1.12]
+#define TECH_VIBRANCE 1.12    // [0.90 1.00 1.12 1.20]
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
@@ -77,7 +71,7 @@ float fbm(vec2 p) {
     return v;
 }
 
-// Linearize standard depth buffer
+// Linearize depth buffer
 float linearizeDepth(float d) {
     return (2.0 * 0.1) / (100.0 + 0.1 - d * (100.0 - 0.1));
 }
@@ -135,26 +129,29 @@ void main() {
     vec3 sceneColor = baseColor.rgb;
 
     #ifdef SSAO
-    // Screen Space Ambient Occlusion for grounded contact shadows
+    // Screen Space Ambient Occlusion for grounded contact shadows (unrolled for GLSL 120 compatibility)
     if (depth < 0.999) {
-        float totalAO = 0.0;
         float centerLinDepth = linearizeDepth(depth);
-        vec2 aoOffsets[8] = vec2[](
-            vec2(-1.5,  0.5), vec2( 1.5, -0.5),
-            vec2( 0.5,  1.5), vec2(-0.5, -1.5),
-            vec2(-2.5, -2.5), vec2( 2.5,  2.5),
-            vec2( 3.0, -1.0), vec2(-3.0,  1.0)
-        );
+        float totalAO = 0.0;
 
-        for (int i = 0; i < 8; i++) {
-            vec2 samplePos = clamp(texcoord + aoOffsets[i] * pixelSize * 2.8, 0.0, 1.0);
-            float sampleDepth = texture2D(depthtex0, samplePos).r;
-            float sampleLinDepth = linearizeDepth(sampleDepth);
-            float diff = centerLinDepth - sampleLinDepth;
-            if (diff > 0.0002 && diff < 0.018) {
-                totalAO += 1.0;
-            }
-        }
+        float d1 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2(-1.5,  0.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d2 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2( 1.5, -0.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d3 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2( 0.5,  1.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d4 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2(-0.5, -1.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d5 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2(-2.5, -2.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d6 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2( 2.5,  2.5) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d7 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2( 3.0, -1.0) * pixelSize * 2.8, 0.0, 1.0)).r);
+        float d8 = linearizeDepth(texture2D(depthtex0, clamp(texcoord + vec2(-3.0,  1.0) * pixelSize * 2.8, 0.0, 1.0)).r);
+
+        if (centerLinDepth - d1 > 0.0002 && centerLinDepth - d1 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d2 > 0.0002 && centerLinDepth - d2 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d3 > 0.0002 && centerLinDepth - d3 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d4 > 0.0002 && centerLinDepth - d4 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d5 > 0.0002 && centerLinDepth - d5 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d6 > 0.0002 && centerLinDepth - d6 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d7 > 0.0002 && centerLinDepth - d7 < 0.018) totalAO += 1.0;
+        if (centerLinDepth - d8 > 0.0002 && centerLinDepth - d8 < 0.018) totalAO += 1.0;
+
         float aoFactor = clamp(1.0 - (totalAO / 8.0) * 0.45, 0.55, 1.0);
         sceneColor *= aoFactor;
     }
@@ -209,43 +206,36 @@ void main() {
 
     vec3 bloom = vec3(0.0);
 
-    #if BLOOM > 0
-        #if BLOOM == 1
-        // Medium 4-tap bloom
-        vec2 offsets[4] = vec2[](
-            vec2(-2.0, -2.0), vec2( 2.0, -2.0),
-            vec2(-2.0,  2.0), vec2( 2.0,  2.0)
-        );
-        for (int i = 0; i < 4; i++) {
-            bloom += texture2D(colortex1, texcoord + offsets[i] * pixelSize * 2.2).rgb * 0.25;
-        }
-        #elif BLOOM == 2
-        // High 12-tap multi-scale Gaussian bloom
-        vec2 offsetsMed[8] = vec2[](
-            vec2(-1.5, -1.5), vec2( 1.5, -1.5),
-            vec2(-1.5,  1.5), vec2( 1.5,  1.5),
-            vec2(-3.0,  0.0), vec2( 3.0,  0.0),
-            vec2( 0.0, -3.0), vec2( 0.0,  3.0)
-        );
-        for (int i = 0; i < 8; i++) {
-            bloom += texture2D(colortex1, texcoord + offsetsMed[i] * pixelSize * 2.0).rgb * 0.08;
-        }
+    #if BLOOM == 1
+    // Medium 4-tap bloom
+    bloom += texture2D(colortex1, texcoord + vec2(-2.0, -2.0) * pixelSize * 2.2).rgb * 0.25;
+    bloom += texture2D(colortex1, texcoord + vec2( 2.0, -2.0) * pixelSize * 2.2).rgb * 0.25;
+    bloom += texture2D(colortex1, texcoord + vec2(-2.0,  2.0) * pixelSize * 2.2).rgb * 0.25;
+    bloom += texture2D(colortex1, texcoord + vec2( 2.0,  2.0) * pixelSize * 2.2).rgb * 0.25;
+    #endif
 
-        vec2 offsetsWide[4] = vec2[](
-            vec2(-5.0, -5.0), vec2( 5.0, -5.0),
-            vec2(-5.0,  5.0), vec2( 5.0,  5.0)
-        );
-        for (int i = 0; i < 4; i++) {
-            bloom += texture2D(colortex1, texcoord + offsetsWide[i] * pixelSize * 3.8).rgb * 0.09;
-        }
-        #endif
+    #if BLOOM == 2
+    // High 12-tap multi-scale Gaussian bloom
+    bloom += texture2D(colortex1, texcoord + vec2(-1.5, -1.5) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2( 1.5, -1.5) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2(-1.5,  1.5) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2( 1.5,  1.5) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2(-3.0,  0.0) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2( 3.0,  0.0) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2( 0.0, -3.0) * pixelSize * 2.0).rgb * 0.08;
+    bloom += texture2D(colortex1, texcoord + vec2( 0.0,  3.0) * pixelSize * 2.0).rgb * 0.08;
+
+    bloom += texture2D(colortex1, texcoord + vec2(-5.0, -5.0) * pixelSize * 3.8).rgb * 0.09;
+    bloom += texture2D(colortex1, texcoord + vec2( 5.0, -5.0) * pixelSize * 3.8).rgb * 0.09;
+    bloom += texture2D(colortex1, texcoord + vec2(-5.0,  5.0) * pixelSize * 3.8).rgb * 0.09;
+    bloom += texture2D(colortex1, texcoord + vec2( 5.0,  5.0) * pixelSize * 3.8).rgb * 0.09;
     #endif
 
     // Composite scene with bloom
     vec3 color = sceneColor + bloom * 0.70;
 
     // ACES Filmic Tonemapping
-    vec3 graded = acesFilm(color * 1.12);
+    vec3 graded = acesFilm(color * 1.06);
 
     // Color Grading: Tech contrast and vibrance
     float luma = dot(graded, vec3(0.299, 0.587, 0.114));
@@ -259,3 +249,4 @@ void main() {
 
     gl_FragData[0] = vec4(graded, baseColor.a);
 }
+
