@@ -86,6 +86,11 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "rc_drone"),
             new com.evecual.evecualmc.item.RcDroneItem(new Item.Settings().maxCount(1)));
 
+    public static final Item RC_ROBOT_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "rc_robot"),
+            new com.evecual.evecualmc.item.RcRobotItem(new Item.Settings().maxCount(1)));
+
     public static final Item RC_CONTROLLER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_controller"),
@@ -314,6 +319,15 @@ public class EvecualMC implements ModInitializer {
                     .trackRangeChunks(34) // 544 blocks (> 512m)
                     .build());
 
+    public static final EntityType<com.evecual.evecualmc.entity.RcRobotEntity> RC_ROBOT_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "rc_robot"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcRobotEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.RcRobotEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.7f, 0.9f))
+                    .trackRangeChunks(18) // 288 blocks (> 256m)
+                    .build());
+
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
@@ -331,6 +345,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(CAR_ITEM);
                 entries.add(RC_CAR_ITEM);
                 entries.add(RC_DRONE_ITEM);
+                entries.add(RC_ROBOT_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
                 entries.add(RC_CHARGER_ITEM);
                 entries.add(RC_PARKING_SPOT_ITEM);
@@ -355,6 +370,9 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier RC_CAR_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_car_auto_dock");
     public static final Identifier RC_DRONE_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_drone_input");
     public static final Identifier RC_DRONE_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_drone_auto_dock");
+    public static final Identifier RC_ROBOT_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_robot_input");
+    public static final Identifier RC_ROBOT_TOOL_ACTION_PACKET_ID = new Identifier(MOD_ID, "rc_robot_tool_action");
+    public static final Identifier RC_ROBOT_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_robot_auto_dock");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
@@ -461,6 +479,66 @@ public class EvecualMC implements ModInitializer {
                                     } else {
                                         player.sendMessage(Text.literal("§c⚡ No RC Charger found within 64 blocks!"),
                                                 true);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_ROBOT_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID robotUuid = buf.readUuid();
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
+                    boolean jump = buf.readBoolean();
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(robotUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
+                                if (player.squaredDistanceTo(robot) <= 65536.0) { // 256m
+                                    robot.setRemoteInputs(forward, back, left, right, sprint, jump);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_ROBOT_TOOL_ACTION_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID robotUuid = buf.readUuid();
+                    float lookPitch = buf.readFloat();
+                    float lookYaw = buf.readFloat();
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(robotUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
+                                if (player.squaredDistanceTo(robot) <= 65536.0) {
+                                    robot.performToolAction(lookPitch, lookYaw);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_ROBOT_AUTO_DOCK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID robotUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(robotUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
+                                if (player.squaredDistanceTo(robot) <= 65536.0) {
+                                    boolean started = robot.startAutoReturnToCharger();
+                                    if (started) {
+                                        player.sendMessage(Text.literal("§a⚡ RC Robot returning to RC Charger / spot..."), true);
+                                    } else {
+                                        player.sendMessage(Text.literal("§c⚡ No RC Charger or Parking Spot found within 64 blocks!"), true);
                                     }
                                 }
                             }

@@ -2,6 +2,7 @@ package com.evecual.evecualmc.item;
 
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
+import com.evecual.evecualmc.entity.RcRobotEntity;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -35,6 +36,7 @@ public class RcControllerItem extends Item {
         NbtCompound nbt = stack.getOrCreateNbt();
         nbt.putUuid("PairedCar", car.getUuid());
         nbt.remove("PairedDrone");
+        nbt.remove("PairedRobot");
         nbt.putString("PairedType", "car");
         nbt.putBoolean("ActiveLink", true);
         car.setPairedPlayerUuid(player.getUuidAsString());
@@ -50,6 +52,7 @@ public class RcControllerItem extends Item {
         NbtCompound nbt = stack.getOrCreateNbt();
         nbt.putUuid("PairedDrone", drone.getUuid());
         nbt.remove("PairedCar");
+        nbt.remove("PairedRobot");
         nbt.putString("PairedType", "drone");
         nbt.putBoolean("ActiveLink", true);
         drone.setPairedPlayerUuid(player.getUuidAsString());
@@ -61,12 +64,29 @@ public class RcControllerItem extends Item {
         return true;
     }
 
+    public static boolean pairWithRobot(ItemStack stack, PlayerEntity player, RcRobotEntity robot) {
+        NbtCompound nbt = stack.getOrCreateNbt();
+        nbt.putUuid("PairedRobot", robot.getUuid());
+        nbt.remove("PairedCar");
+        nbt.remove("PairedDrone");
+        nbt.putString("PairedType", "robot");
+        nbt.putBoolean("ActiveLink", true);
+        robot.setPairedPlayerUuid(player.getUuidAsString());
+        robot.setExplicitlyPairedInSpot(true);
+
+        player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Robot! §7(Range: 256m, LMB to use tool)"), true);
+        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
+        return true;
+    }
+
     public static void unpair(ItemStack stack, @Nullable PlayerEntity player) {
         if (stack.hasNbt()) {
             NbtCompound nbt = stack.getNbt();
             if (nbt != null) {
                 nbt.remove("PairedCar");
                 nbt.remove("PairedDrone");
+                nbt.remove("PairedRobot");
                 nbt.remove("PairedType");
                 nbt.putBoolean("ActiveLink", false);
             }
@@ -84,7 +104,8 @@ public class RcControllerItem extends Item {
                         NbtCompound nbt = stack.getNbt();
                         if (nbt != null) {
                             if ((nbt.containsUuid("PairedCar") && nbt.getUuid("PairedCar").equals(vehicleUuid)) ||
-                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid))) {
+                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid)) ||
+                                (nbt.containsUuid("PairedRobot") && nbt.getUuid("PairedRobot").equals(vehicleUuid))) {
                                 unpair(stack, player);
                             }
                         }
@@ -95,7 +116,8 @@ public class RcControllerItem extends Item {
                         NbtCompound nbt = stack.getNbt();
                         if (nbt != null) {
                             if ((nbt.containsUuid("PairedCar") && nbt.getUuid("PairedCar").equals(vehicleUuid)) ||
-                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid))) {
+                                (nbt.containsUuid("PairedDrone") && nbt.getUuid("PairedDrone").equals(vehicleUuid)) ||
+                                (nbt.containsUuid("PairedRobot") && nbt.getUuid("PairedRobot").equals(vehicleUuid))) {
                                 unpair(stack, player);
                             }
                         }
@@ -110,7 +132,7 @@ public class RcControllerItem extends Item {
         ItemStack stack = user.getStackInHand(hand);
         NbtCompound nbt = stack.getOrCreateNbt();
 
-        // Check for nearby RC Drone or RC Car to pair with (within 8 blocks)
+        // Check for nearby RC Drone, RC Robot, or RC Car to pair with (within 8 blocks)
         net.minecraft.util.math.Vec3d eyePos = user.getEyePos();
         net.minecraft.util.math.Vec3d lookVec = user.getRotationVec(1.0f);
         net.minecraft.util.math.Box searchBox = user.getBoundingBox().expand(8.0);
@@ -118,7 +140,18 @@ public class RcControllerItem extends Item {
         Entity targetVehicle = null;
         double minDistance = Double.MAX_VALUE;
 
-        // 1. Search for Drones in view
+        // 1. Search for Robots in view
+        for (RcRobotEntity robot : world.getEntitiesByClass(RcRobotEntity.class, searchBox, Entity::isAlive)) {
+            net.minecraft.util.math.Vec3d toEntity = robot.getPos().add(0, 0.4, 0).subtract(eyePos).normalize();
+            double dot = lookVec.dotProduct(toEntity);
+            double dist = user.squaredDistanceTo(robot);
+            if (dot > 0.4 && dist < minDistance) {
+                minDistance = dist;
+                targetVehicle = robot;
+            }
+        }
+
+        // 2. Search for Drones in view
         for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, searchBox, Entity::isAlive)) {
             net.minecraft.util.math.Vec3d toEntity = drone.getPos().add(0, 0.2, 0).subtract(eyePos).normalize();
             double dot = lookVec.dotProduct(toEntity);
@@ -129,7 +162,7 @@ public class RcControllerItem extends Item {
             }
         }
 
-        // 2. Search for Cars in view
+        // 3. Search for Cars in view
         for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, searchBox, Entity::isAlive)) {
             net.minecraft.util.math.Vec3d toEntity = car.getPos().add(0, 0.2, 0).subtract(eyePos).normalize();
             double dot = lookVec.dotProduct(toEntity);
@@ -142,9 +175,15 @@ public class RcControllerItem extends Item {
 
         // Fallback search in tight 4-block radius if not directly looked at
         if (targetVehicle == null) {
-            for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(4.0), Entity::isAlive)) {
-                targetVehicle = drone;
+            for (RcRobotEntity robot : world.getEntitiesByClass(RcRobotEntity.class, user.getBoundingBox().expand(4.0), Entity::isAlive)) {
+                targetVehicle = robot;
                 break;
+            }
+            if (targetVehicle == null) {
+                for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(4.0), Entity::isAlive)) {
+                    targetVehicle = drone;
+                    break;
+                }
             }
             if (targetVehicle == null) {
                 for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, user.getBoundingBox().expand(4.0), Entity::isAlive)) {
@@ -154,12 +193,14 @@ public class RcControllerItem extends Item {
             }
         }
 
-        boolean hasPairing = nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone");
+        boolean hasPairing = nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone") || nbt.containsUuid("PairedRobot");
 
         // If player sneaks or is unpaired and a vehicle is found, pair immediately!
         if (targetVehicle != null && (user.isSneaking() || !hasPairing)) {
             if (!world.isClient) {
-                if (targetVehicle instanceof RcDroneEntity drone) {
+                if (targetVehicle instanceof RcRobotEntity robot) {
+                    pairWithRobot(stack, user, robot);
+                } else if (targetVehicle instanceof RcDroneEntity drone) {
                     pairWithDrone(stack, user, drone);
                 } else if (targetVehicle instanceof RcCarEntity car) {
                     pairWithCar(stack, user, car);
@@ -170,7 +211,7 @@ public class RcControllerItem extends Item {
 
         if (!hasPairing) {
             if (!world.isClient) {
-                user.sendMessage(Text.literal("§c📡 Not Paired! Right-click near an RC Car or Drone to pair."), true);
+                user.sendMessage(Text.literal("§c📡 Not Paired! Right-click near an RC Car, Drone, or Robot to pair."), true);
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
                         SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.8f, 0.8f);
             }
@@ -182,52 +223,80 @@ public class RcControllerItem extends Item {
         nbt.putBoolean("ActiveLink", newActive);
 
         boolean isDrone = nbt.containsUuid("PairedDrone") || "drone".equals(nbt.getString("PairedType"));
+        boolean isRobot = nbt.containsUuid("PairedRobot") || "robot".equals(nbt.getString("PairedType"));
 
         if (!world.isClient) {
             if (newActive) {
-                if (isDrone) {
+                if (isRobot) {
+                    user.sendMessage(Text.literal("§6🤖 RC Robot Link: §aENABLED §7[W/A/S/D Move, LMB Use Tool, F Camera]"), true);
+                } else if (isDrone) {
                     user.sendMessage(Text.literal("§b🚁 RC Drone Flight Link: §aENABLED §7[W/A/S/D Fly, Space Up, Shift Down, F Camera]"), true);
                 } else {
-                    user.sendMessage(Text.literal("§b🏎️ RC Car Driving Link: §aENABLED §7[W/A/S/D Drive, Space Hop, F Camera]"), true);
+                    user.sendMessage(Text.literal("§a📡 RC Car Remote Link: §aENABLED §7[W/A/S/D Drive, F Camera]"), true);
                 }
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                        SoundEvents.BLOCK_NOTE_BLOCK_BIT.value(), SoundCategory.PLAYERS, 0.8f, 1.8f);
+                        SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.PLAYERS, 0.6f, 1.8f);
             } else {
-                user.sendMessage(Text.literal("§7📡 RC Remote Link: §cDISABLED"), true);
+                user.sendMessage(Text.literal("§7📡 RC Remote Link: §cSTANDBY"), true);
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                        SoundEvents.BLOCK_NOTE_BLOCK_BIT.value(), SoundCategory.PLAYERS, 0.8f, 1.0f);
+                        SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.PLAYERS, 0.6f, 1.4f);
             }
         }
 
         return TypedActionResult.success(stack, world.isClient);
     }
 
+    public static @Nullable UUID getPairedCarUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().containsUuid("PairedCar")) {
+            return stack.getNbt().getUuid("PairedCar");
+        }
+        return null;
+    }
+
+    public static @Nullable UUID getPairedDroneUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().containsUuid("PairedDrone")) {
+            return stack.getNbt().getUuid("PairedDrone");
+        }
+        return null;
+    }
+
+    public static @Nullable UUID getPairedRobotUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().containsUuid("PairedRobot")) {
+            return stack.getNbt().getUuid("PairedRobot");
+        }
+        return null;
+    }
+
+    public static boolean isLinkActive(ItemStack stack) {
+        return stack.hasNbt() && stack.getNbt() != null && stack.getNbt().getBoolean("ActiveLink");
+    }
+
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        NbtCompound nbt = stack.getNbt();
-        if (nbt != null && nbt.containsUuid("PairedDrone")) {
-            UUID droneUuid = nbt.getUuid("PairedDrone");
+        if (stack.hasNbt() && stack.getNbt() != null) {
+            NbtCompound nbt = stack.getNbt();
             boolean active = nbt.getBoolean("ActiveLink");
-            String shortId = droneUuid.toString().substring(0, 8);
-            tooltip.add(Text.literal("§a📡 Paired: §bRC Drone #" + shortId));
-            tooltip.add(Text.literal("§e📶 Max Range: §f512 blocks"));
-            tooltip.add(Text.literal(active ? "§b⚡ Link: §aACTIVE" : "§7⚡ Link: §cSTANDBY"));
-            tooltip.add(Text.literal("§8• §7Right-click to toggle remote flight mode"));
-            tooltip.add(Text.literal("§8• §7W/A/S/D Fly, Space Up, Shift Down, Ctrl Boost"));
-            tooltip.add(Text.literal("§8• §7Press F for FPV Camera, Arrows to Orbit"));
-        } else if (nbt != null && nbt.containsUuid("PairedCar")) {
-            UUID carUuid = nbt.getUuid("PairedCar");
-            boolean active = nbt.getBoolean("ActiveLink");
-            String shortId = carUuid.toString().substring(0, 8);
-            tooltip.add(Text.literal("§a📡 Paired: §fRC Car #" + shortId));
-            tooltip.add(Text.literal("§e📶 Max Range: §f256 blocks"));
-            tooltip.add(Text.literal(active ? "§b⚡ Link: §aACTIVE" : "§7⚡ Link: §cSTANDBY"));
-            tooltip.add(Text.literal("§8• §7Right-click to toggle remote drive mode"));
-            tooltip.add(Text.literal("§8• §7Use W/A/S/D to steer & drive, Space to Hop"));
-            tooltip.add(Text.literal("§8• §7Press F for Chase Camera, Arrows to Orbit"));
+            String type = nbt.getString("PairedType");
+
+            if (nbt.containsUuid("PairedRobot") || "robot".equals(type)) {
+                tooltip.add(Text.literal("§7Paired to: §6RC Robot"));
+                tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 256m)" : "§cSTANDBY")));
+                tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Use Tool | C Auto-Dock"));
+            } else if (nbt.containsUuid("PairedDrone") || "drone".equals(type)) {
+                tooltip.add(Text.literal("§7Paired to: §bRC Drone"));
+                tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 512m)" : "§cSTANDBY")));
+                tooltip.add(Text.literal("§8Controls: W/S Pitch | A/D Roll | Space/Shift Alt | C Auto-Dock"));
+            } else if (nbt.containsUuid("PairedCar")) {
+                tooltip.add(Text.literal("§7Paired to: §aRC Car"));
+                tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 256m)" : "§cSTANDBY")));
+                tooltip.add(Text.literal("§8Controls: W/S Throttle | A/D Steering | C Auto-Park"));
+            } else {
+                tooltip.add(Text.literal("§7Paired to: §cNone"));
+                tooltip.add(Text.literal("§8Aim and Right-click near an RC Car, Drone, or Robot to pair."));
+            }
         } else {
-            tooltip.add(Text.literal("§c📡 Status: Unpaired"));
-            tooltip.add(Text.literal("§8• §7Sneak + Right-click on an RC Car or Drone to pair"));
+            tooltip.add(Text.literal("§7Paired to: §cNone"));
+            tooltip.add(Text.literal("§8Aim and Right-click near an RC Car, Drone, or Robot to pair."));
         }
         super.appendTooltip(stack, world, tooltip, context);
     }
