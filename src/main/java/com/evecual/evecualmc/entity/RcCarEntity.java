@@ -288,6 +288,11 @@ public class RcCarEntity extends Entity {
     }
 
     @Override
+    public boolean canHit() {
+        return !this.isRemoved();
+    }
+
+    @Override
     public boolean isCollidable() {
         return true;
     }

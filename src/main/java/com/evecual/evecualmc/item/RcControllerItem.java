@@ -47,9 +47,40 @@ public class RcControllerItem extends Item {
         ItemStack stack = user.getStackInHand(hand);
         NbtCompound nbt = stack.getOrCreateNbt();
 
+        // Check for nearby RC Car to pair with (within 8 blocks)
+        net.minecraft.util.math.Vec3d eyePos = user.getEyePos();
+        net.minecraft.util.math.Vec3d lookVec = user.getRotationVec(1.0f);
+        net.minecraft.util.math.Box searchBox = user.getBoundingBox().expand(8.0);
+
+        RcCarEntity targetCar = null;
+        double minDistance = Double.MAX_VALUE;
+        for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, searchBox, Entity::isAlive)) {
+            net.minecraft.util.math.Vec3d toCar = car.getPos().add(0, 0.2, 0).subtract(eyePos).normalize();
+            double dot = lookVec.dotProduct(toCar);
+            double dist = user.squaredDistanceTo(car);
+            if (dot > 0.5 && dist < minDistance) { // In view cone
+                minDistance = dist;
+                targetCar = car;
+            }
+        }
+        if (targetCar == null) {
+            for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, user.getBoundingBox().expand(4.0), Entity::isAlive)) {
+                targetCar = car;
+                break;
+            }
+        }
+
+        // If player sneaks or is unpaired and a car is found, pair immediately!
+        if (targetCar != null && (user.isSneaking() || !nbt.containsUuid("PairedCar"))) {
+            if (!world.isClient) {
+                pairWithCar(stack, user, targetCar);
+            }
+            return TypedActionResult.success(stack, world.isClient);
+        }
+
         if (!nbt.containsUuid("PairedCar")) {
             if (!world.isClient) {
-                user.sendMessage(Text.literal("§c📡 Not Paired! Sneak + Right-Click an RC Car to pair."), true);
+                user.sendMessage(Text.literal("§c📡 Not Paired! Right-click near an RC Car to pair."), true);
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
                         SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.8f, 0.8f);
             }
