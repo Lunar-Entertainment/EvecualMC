@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
@@ -53,7 +54,75 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding RC_CAMERA_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.rc_camera",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_F,
+            "category.evecualmc.evecual"
+    ));
+
     private static boolean wasCPressed = false;
+    private static net.minecraft.client.option.Perspective previousPerspective = net.minecraft.client.option.Perspective.FIRST_PERSON;
+
+    public static boolean isRcLinkActive() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.player == null || client.currentScreen != null) {
+            return false;
+        }
+        net.minecraft.item.ItemStack held = null;
+        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getMainHandStack();
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getOffHandStack();
+        }
+        if (held != null && held.hasNbt()) {
+            net.minecraft.nbt.NbtCompound nbt = held.getNbt();
+            return nbt != null && nbt.containsUuid("PairedCar") && nbt.getBoolean("ActiveLink");
+        }
+        return false;
+    }
+
+    public static com.evecual.evecualmc.entity.RcCarEntity getTargetRcCar(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return null;
+        net.minecraft.item.ItemStack held = null;
+        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getMainHandStack();
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+            held = client.player.getOffHandStack();
+        }
+        if (held == null || !held.hasNbt()) return null;
+        net.minecraft.nbt.NbtCompound nbt = held.getNbt();
+        if (nbt == null || !nbt.containsUuid("PairedCar")) return null;
+        java.util.UUID pairedUuid = nbt.getUuid("PairedCar");
+
+        for (Entity e : client.world.getEntities()) {
+            if (e instanceof com.evecual.evecualmc.entity.RcCarEntity rc && rc.getUuid().equals(pairedUuid)) {
+                return rc;
+            }
+        }
+        return null;
+    }
+
+    public static void toggleRcCamera(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return;
+
+        com.evecual.evecualmc.entity.RcCarEntity targetRc = getTargetRcCar(client);
+        if (targetRc == null) {
+            client.player.sendMessage(Text.literal("§c📷 No linked RC Car found in range!"), true);
+            return;
+        }
+
+        if (client.getCameraEntity() == targetRc) {
+            client.setCameraEntity(client.player);
+            client.options.setPerspective(previousPerspective);
+            client.player.sendMessage(Text.literal("§7📷 RC Camera: §cDISABLED §7[Player View]"), true);
+        } else {
+            previousPerspective = client.options.getPerspective();
+            client.setCameraEntity(targetRc);
+            client.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
+            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aENABLED §7[Press F to return]"), true);
+        }
+    }
 
     @Override
     public void onInitializeClient() {
@@ -115,6 +184,22 @@ public class EvecualMCClient implements ClientModInitializer {
                     car.cancelAutoPark(null);
                 }
             });
+        });
+
+        // Client Start Tick: intercept F key before vanilla swapHandsKey processes it
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            if (client.player != null && isRcLinkActive()) {
+                boolean fToggled = false;
+                while (RC_CAMERA_KEY.wasPressed()) {
+                    fToggled = true;
+                }
+                while (client.options.swapHandsKey.wasPressed()) {
+                    fToggled = true;
+                }
+                if (fToggled) {
+                    toggleRcCamera(client);
+                }
+            }
         });
 
         // Client Tick: handle car driving inputs and 'Z' key for opening trunk
@@ -185,25 +270,22 @@ public class EvecualMCClient implements ClientModInitializer {
                 boolean cDown = (client.currentScreen == null && InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_C)) || AUTO_PARK_KEY.isPressed();
 
                 // 5. RC Controller Remote Driving Control
-                net.minecraft.item.ItemStack heldController = null;
-                if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
-                    heldController = client.player.getMainHandStack();
-                } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
-                    heldController = client.player.getOffHandStack();
-                }
+                boolean isRcActive = isRcLinkActive();
+                if (isRcActive) {
+                    // Immobilize player while RC Link is active
+                    client.player.input.movementForward = 0.0F;
+                    client.player.input.movementSideways = 0.0F;
+                    client.player.input.jumping = false;
+                    client.player.input.sneaking = false;
+                    client.player.setVelocity(0.0, Math.min(client.player.getVelocity().y, 0.0), 0.0);
+                    client.player.setSprinting(false);
 
-                boolean isRcActive = false;
-                if (heldController != null && heldController.hasNbt() && client.currentScreen == null) {
-                    net.minecraft.nbt.NbtCompound nbt = heldController.getNbt();
-                    if (nbt != null && nbt.containsUuid("PairedCar") && nbt.getBoolean("ActiveLink")) {
-                        isRcActive = true;
-                        java.util.UUID pairedUuid = nbt.getUuid("PairedCar");
+                    // Consume vanilla swap hands key (F)
+                    while (client.options.swapHandsKey.wasPressed()) {}
 
-                        // Immobilize player while RC Link is active
-                        client.player.input.movementForward = 0.0F;
-                        client.player.input.movementSideways = 0.0F;
-                        client.player.input.jumping = false;
-                        client.player.setVelocity(0.0, client.player.getVelocity().y, 0.0);
+                    com.evecual.evecualmc.entity.RcCarEntity targetRc = getTargetRcCar(client);
+                    if (targetRc != null) {
+                        java.util.UUID pairedUuid = targetRc.getUuid();
 
                         // 'C' Key while RC link is active: Auto Return to RC Charger!
                         if (cDown) {
@@ -215,40 +297,41 @@ public class EvecualMCClient implements ClientModInitializer {
                             }
                         }
 
-                        if (client.world != null) {
-                            com.evecual.evecualmc.entity.RcCarEntity targetRc = null;
-                            for (Entity e : client.world.getEntities()) {
-                                if (e instanceof com.evecual.evecualmc.entity.RcCarEntity rc && rc.getUuid().equals(pairedUuid)) {
-                                    targetRc = rc;
-                                    break;
-                                }
-                            }
+                        if (client.player.squaredDistanceTo(targetRc) <= 4096.0) {
+                            boolean rcFwd = client.options.forwardKey.isPressed();
+                            boolean rcBack = client.options.backKey.isPressed();
+                            boolean rcLeft = client.options.leftKey.isPressed();
+                            boolean rcRight = client.options.rightKey.isPressed();
+                            boolean rcSprint = client.options.sprintKey.isPressed();
+                            boolean rcJump = client.options.jumpKey.isPressed();
 
-                            if (targetRc != null && client.player.squaredDistanceTo(targetRc) <= 4096.0) {
-                                boolean rcFwd = client.options.forwardKey.isPressed();
-                                boolean rcBack = client.options.backKey.isPressed();
-                                boolean rcLeft = client.options.leftKey.isPressed();
-                                boolean rcRight = client.options.rightKey.isPressed();
-                                boolean rcSprint = client.options.sprintKey.isPressed();
-                                boolean rcJump = client.options.jumpKey.isPressed();
+                            targetRc.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
 
-                                targetRc.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+                            PacketByteBuf rcBuf = PacketByteBufs.create();
+                            rcBuf.writeUuid(pairedUuid);
+                            rcBuf.writeBoolean(rcFwd);
+                            rcBuf.writeBoolean(rcBack);
+                            rcBuf.writeBoolean(rcLeft);
+                            rcBuf.writeBoolean(rcRight);
+                            rcBuf.writeBoolean(rcSprint);
+                            rcBuf.writeBoolean(rcJump);
+                            ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
 
-                                PacketByteBuf rcBuf = PacketByteBufs.create();
-                                rcBuf.writeUuid(pairedUuid);
-                                rcBuf.writeBoolean(rcFwd);
-                                rcBuf.writeBoolean(rcBack);
-                                rcBuf.writeBoolean(rcLeft);
-                                rcBuf.writeBoolean(rcRight);
-                                rcBuf.writeBoolean(rcSprint);
-                                rcBuf.writeBoolean(rcJump);
-                                ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
-
-                                if (client.player.age % 10 == 0) {
-                                    client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[W/A/S/D to Drive, Space Hop, C Return Charger]"), true);
-                                }
+                            if (client.player.age % 10 == 0) {
+                                boolean isCamView = client.getCameraEntity() == targetRc;
+                                String camPrompt = isCamView ? "F: Player View" : "F: RC Camera";
+                                client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
+                    }
+                }
+
+                // Reset camera if RC link is disabled or target car is invalid
+                if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcCarEntity rc) {
+                    boolean valid = isRcActive && rc.isAlive() && !rc.isRemoved() && client.player.squaredDistanceTo(rc) <= 4096.0;
+                    if (!valid) {
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective);
                     }
                 }
 

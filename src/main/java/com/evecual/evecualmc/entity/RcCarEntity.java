@@ -47,6 +47,8 @@ public class RcCarEntity extends Entity {
     private boolean autoReturning = false;
     private net.minecraft.util.math.BlockPos targetChargerPos = null;
     private int autoReturnTicks = 0;
+    private int stuckTicks = 0;
+    private int reverseTicks = 0;
 
     public RcCarEntity(EntityType<?> type, World world) {
         super(type, world);
@@ -109,12 +111,18 @@ public class RcCarEntity extends Entity {
         this.autoReturning = false;
         this.targetChargerPos = null;
         this.currentSpeed = 0.0;
+        this.setVelocity(Vec3d.ZERO);
+        this.setSteeringAngle(0.0F);
+        this.stuckTicks = 0;
+        this.reverseTicks = 0;
     }
 
     public void cancelAutoReturn() {
         if (this.autoReturning) {
             this.autoReturning = false;
             this.targetChargerPos = null;
+            this.stuckTicks = 0;
+            this.reverseTicks = 0;
         }
     }
 
@@ -196,23 +204,72 @@ public class RcCarEntity extends Entity {
             if (this.autoReturnTicks > 1200) { // 60s timeout
                 cancelAutoReturn();
             } else {
-                Vec3d target = new Vec3d(this.targetChargerPos.getX() + 0.5, this.targetChargerPos.getY() + 0.25, this.targetChargerPos.getZ() + 0.5);
-                Vec3d diff = target.subtract(this.getPos());
-                double distSq = diff.x * diff.x + diff.z * diff.z;
+                double targetX = this.targetChargerPos.getX() + 0.5;
+                double targetY = this.targetChargerPos.getY() + 0.25;
+                double targetZ = this.targetChargerPos.getZ() + 0.5;
+                double dx = targetX - this.getX();
+                double dz = targetZ - this.getZ();
+                double distSq = dx * dx + dz * dz;
 
-                if (distSq < 0.64) {
+                // Stop only when squarely docked on top of the charging pad (within 0.25m of center)
+                if (distSq <= 0.0625) {
+                    this.setPosition(targetX, targetY, targetZ);
                     onReachedCharger();
+                    this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);
                 } else {
-                    float desiredYaw = (float) Math.toDegrees(Math.atan2(-diff.x, diff.z));
-                    float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                    float steer = MathHelper.clamp(yawDiff * 0.9f, -32.0f, 32.0f);
-                    setSteeringAngle(steer);
+                    double dist = Math.sqrt(distSq);
 
-                    this.currentSpeed = Math.min(this.currentSpeed + 0.03, 0.24);
+                    // Obstacle unstick routine if blocked
+                    if (this.horizontalCollision && Math.abs(this.getVelocity().x) < 0.02 && Math.abs(this.getVelocity().z) < 0.02) {
+                        this.stuckTicks++;
+                        if (this.stuckTicks > 12) {
+                            this.reverseTicks = 16;
+                            this.stuckTicks = 0;
+                        }
+                    } else {
+                        this.stuckTicks = 0;
+                    }
 
-                    // Hop if blocked by a step or obstacle
-                    if (this.horizontalCollision && this.isOnGround()) {
-                        this.setVelocity(this.getVelocity().x, 0.40, this.getVelocity().z);
+                    if (this.reverseTicks > 0) {
+                        this.reverseTicks--;
+                        this.currentSpeed = -0.14;
+                        setSteeringAngle(28.0f);
+                        this.setYaw(MathHelper.wrapDegrees(this.getYaw() - 6.0f));
+                    } else {
+                        // Smooth throttle based on proximity to charger
+                        double targetSpeed;
+                        if (dist > 3.5) {
+                            targetSpeed = 0.24;
+                        } else if (dist > 1.2) {
+                            targetSpeed = 0.16;
+                        } else {
+                            targetSpeed = 0.10; // Precision approach speed onto pad
+                        }
+
+                        float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                        float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                        float steer = MathHelper.clamp(yawDiff, -32.0f, 32.0f);
+                        setSteeringAngle(steer);
+
+                        // Direct yaw heading alignment during auto-nav
+                        float yawStep = MathHelper.clamp(yawDiff * 0.35f, -8.0f, 8.0f);
+                        this.setYaw(MathHelper.wrapDegrees(this.getYaw() + yawStep));
+
+                        // Reduce speed on sharp turns
+                        if (Math.abs(yawDiff) > 50.0f) {
+                            targetSpeed = 0.08;
+                        }
+
+                        if (this.currentSpeed < targetSpeed) {
+                            this.currentSpeed = Math.min(this.currentSpeed + 0.03, targetSpeed);
+                        } else {
+                            this.currentSpeed = Math.max(this.currentSpeed - 0.04, targetSpeed);
+                        }
+
+                        // Hop if blocked by a step or half-slab obstacle
+                        if (this.horizontalCollision && this.isOnGround()) {
+                            this.setVelocity(this.getVelocity().x, 0.42, this.getVelocity().z);
+                        }
                     }
                 }
             }
@@ -243,18 +300,22 @@ public class RcCarEntity extends Entity {
             }
         }
 
-        // Steering
-        float targetAngle = 0.0F;
-        if (this.inputLeft) targetAngle -= 32.0F;
-        if (this.inputRight) targetAngle += 32.0F;
+        // Steering for manual driving
+        if (!this.autoReturning) {
+            float targetAngle = 0.0F;
+            if (this.inputLeft) targetAngle -= 32.0F;
+            if (this.inputRight) targetAngle += 32.0F;
 
-        float currentAngle = getSteeringAngle();
-        currentAngle += (targetAngle - currentAngle) * 0.4F;
-        setSteeringAngle(currentAngle);
+            float currentAngle = getSteeringAngle();
+            currentAngle += (targetAngle - currentAngle) * 0.4F;
+            setSteeringAngle(currentAngle);
 
-        if (Math.abs(this.currentSpeed) > 0.01) {
-            float yawDelta = (currentAngle / 32.0F) * (float) this.currentSpeed * 14.0F;
-            this.setYaw(this.getYaw() + yawDelta);
+            if (Math.abs(this.currentSpeed) > 0.01) {
+                float yawDelta = (currentAngle / 32.0F) * (float) this.currentSpeed * 14.0F;
+                this.setYaw(MathHelper.wrapDegrees(this.getYaw() + yawDelta));
+                this.wheelRoll += (float) (this.currentSpeed * 18.0);
+            }
+        } else {
             this.wheelRoll += (float) (this.currentSpeed * 18.0);
         }
 
@@ -385,5 +446,10 @@ public class RcCarEntity extends Entity {
     @Override
     public boolean isPushable() {
         return true;
+    }
+
+    @Override
+    protected float getEyeHeight(net.minecraft.entity.EntityPose pose, net.minecraft.entity.EntityDimensions dimensions) {
+        return 0.35F;
     }
 }

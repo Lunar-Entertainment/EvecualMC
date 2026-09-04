@@ -36,5 +36,6 @@
   "key.evecualmc.open_trunk": "Open Car Trunk",
   "key.evecualmc.attach_cable": "Attach / Detach Charger Cable",
   "key.evecualmc.auto_park": "Auto Park Vehicle",
+  "key.evecualmc.rc_camera": "Toggle RC Car Camera",
   "category.evecualmc.evecual": "Evecual"
 }

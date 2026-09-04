@@ -283,7 +283,7 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "car"),
             FabricEntityTypeBuilder.<CarEntity>create(SpawnGroup.MISC, CarEntity::new)
                     .dimensions(EntityDimensions.fixed(2.6f, 1.88f))
-                    .trackRangeBlocks(10)
+                    .trackRangeChunks(10)
                     .build()
     );
 
@@ -292,7 +292,7 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "rc_car"),
             FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.RcCarEntity>create(SpawnGroup.MISC, com.evecual.evecualmc.entity.RcCarEntity::new)
                     .dimensions(EntityDimensions.fixed(0.7f, 0.45f))
-                    .trackRangeBlocks(10)
+                    .trackRangeChunks(10)
                     .build()
     );
 

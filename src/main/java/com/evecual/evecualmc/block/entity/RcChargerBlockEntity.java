@@ -34,14 +34,14 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
             be.markDirty();
         }
 
-        // Check for RC Cars parked on or next to the charger
-        Box area = new Box(pos).expand(0.8, 0.6, 0.8);
+        // Check for RC Cars parked squarely on the charger pad
+        Box area = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 0.6, pos.getZ() + 0.95);
         List<RcCarEntity> cars = world.getEntitiesByClass(RcCarEntity.class, area, RcCarEntity::isAlive);
 
         for (RcCarEntity car : cars) {
             if (car.getEnergy() < RcCarEntity.MAX_ENERGY) {
                 int needed = RcCarEntity.MAX_ENERGY - car.getEnergy();
-                int transfer = Math.min(needed, 5);
+                int transfer = Math.min(needed, 10);
                 car.setEnergy(car.getEnergy() + transfer);
 
                 // Stop auto-returning once docked
@@ -50,17 +50,17 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
                 }
 
                 // Visual spark particles
-                if (world.isClient && world.random.nextFloat() < 0.35f) {
+                if (world.isClient && world.random.nextFloat() < 0.45f) {
                     world.addParticle(ParticleTypes.ELECTRIC_SPARK,
-                            car.getX() + (world.random.nextDouble() - 0.5) * 0.4,
+                            car.getX() + (world.random.nextDouble() - 0.5) * 0.35,
                             car.getY() + 0.15,
-                            car.getZ() + (world.random.nextDouble() - 0.5) * 0.4,
-                            0, 0.05, 0);
+                            car.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
+                            0, 0.08, 0);
                 }
 
                 // Sound feedback occasionally
                 if (car.age % 25 == 0) {
-                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.25f, 2.0f);
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 2.0f);
                 }
             }
         }
