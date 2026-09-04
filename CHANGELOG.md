@@ -1,5 +1,17 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.8] - 2026-09-04
+### Added & Improved
+- **RC Drone Left/Right Strafing in First-Person (FPV) Mode (`A` / `D`)**:
+  - In First-Person view, pressing `A` and `D` now performs lateral strafing left and right without altering yaw, creating authentic FPV drone flight mechanics.
+  - Added aerodynamic lateral banking roll (-18° left, +18° right) when strafing sideways.
+  - In Third-Person orbit view, `A` and `D` remain as in-place yaw rotations, giving the best of both perspectives.
+- **Universal Mouse Steering & Aiming in First-Person Mode across All RC Vehicles**:
+  - **RC Robot**: Moving mouse in FP mode rotates the robot body directly on the spot (tank tread differential drive) and tilts the ocular sensor dome and right tool arm up/down for precise tool aiming.
+  - **RC Car**: Moving mouse in FP mode steers and rotates the vehicle heading through the windshield cockpit.
+  - Synchronized real-time yaw over the network for all vehicles (`RC_ROBOT_INPUT_PACKET_ID`, `RC_CAR_INPUT_PACKET_ID`, `RC_DRONE_INPUT_PACKET_ID`) with anti-rubberbanding client packet guards.
+  - Unified arrow keys, mouse wheel zoom, RMB perspective toggle, and dynamic action HUD across all RC vehicles.
+
 ## [1.2.7] - 2026-09-04
 ### Added & Improved
 - **Direct Mouse Steering for RC Drone in First-Person (FPV) Mode**:

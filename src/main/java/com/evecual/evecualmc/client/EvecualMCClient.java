@@ -176,17 +176,42 @@ public class EvecualMCClient implements ClientModInitializer {
 
     public static void onRcMouseTurn(double cursorDeltaX, double cursorDeltaY) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client != null && client.getCameraEntity() instanceof RcDroneEntity drone && client.options.getPerspective().isFirstPerson()) {
+        if (client != null && isRcCameraActive() && client.options.getPerspective().isFirstPerson()) {
+            Entity cam = client.getCameraEntity();
             float yawDelta = (float) (cursorDeltaX * 0.15);
-            float newYaw = MathHelper.wrapDegrees(drone.getYaw() + yawDelta);
-            drone.setYaw(newYaw);
-            drone.prevYaw += yawDelta;
-            drone.setBodyYaw(newYaw);
-            drone.setHeadYaw(newYaw);
-            targetRcCameraYaw = 0.0F;
-            smoothRcCameraYaw = 0.0F;
-            targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
-            return;
+
+            if (cam instanceof RcDroneEntity drone) {
+                float newYaw = MathHelper.wrapDegrees(drone.getYaw() + yawDelta);
+                drone.setYaw(newYaw);
+                drone.prevYaw += yawDelta;
+                drone.setBodyYaw(newYaw);
+                drone.setHeadYaw(newYaw);
+                targetRcCameraYaw = 0.0F;
+                smoothRcCameraYaw = 0.0F;
+                targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                return;
+            } else if (cam instanceof RcRobotEntity robot) {
+                float newYaw = MathHelper.wrapDegrees(robot.getYaw() + yawDelta);
+                robot.setYaw(newYaw);
+                robot.prevYaw += yawDelta;
+                robot.setBodyYaw(newYaw);
+                robot.setHeadYaw(newYaw);
+                targetRcCameraYaw = 0.0F;
+                smoothRcCameraYaw = 0.0F;
+                targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                robot.setHeadPitch(targetRcCameraPitch);
+                return;
+            } else if (cam instanceof RcCarEntity car) {
+                float newYaw = MathHelper.wrapDegrees(car.getYaw() + yawDelta);
+                car.setYaw(newYaw);
+                car.prevYaw += yawDelta;
+                car.setBodyYaw(newYaw);
+                car.setHeadYaw(newYaw);
+                targetRcCameraYaw = 0.0F;
+                smoothRcCameraYaw = 0.0F;
+                targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                return;
+            }
         }
         targetRcCameraYaw += (float) (cursorDeltaX * 0.15);
         targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
@@ -569,6 +594,7 @@ public class EvecualMCClient implements ClientModInitializer {
                             robotBuf.writeBoolean(rcRight);
                             robotBuf.writeBoolean(rcSprint);
                             robotBuf.writeBoolean(rcJump);
+                            robotBuf.writeFloat(targetRobot.getYaw());
                             ClientPlayNetworking.send(EvecualMC.RC_ROBOT_INPUT_PACKET_ID, robotBuf);
 
                             // LMB: Tool Action (holding LMB repeatedly swings & strikes every 4 ticks)
@@ -592,7 +618,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRobot;
-                                String camPrompt = isCamView ? "Mouse: Aim | RMB: FP/TP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit" : "F: Robot Cam | L: Light | Z: Cargo";
+                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer & Aim | RMB: TP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit") : "F: Robot Cam | L: Light | Z: Cargo";
                                 String toolName = targetRobot.getEquippedTool().isEmpty() ? "Bare Hand" : targetRobot.getEquippedTool().getName().getString();
                                 client.player.sendMessage(Text.literal("§6🤖 RC ROBOT: §a" + targetRobot.getEnergy() + " E §7| §bTool: " + toolName + " §7| §eRange: " + (int)client.player.distanceTo(targetRobot) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
@@ -630,11 +656,12 @@ public class EvecualMCClient implements ClientModInitializer {
                             rcBuf.writeBoolean(rcRight);
                             rcBuf.writeBoolean(rcSprint);
                             rcBuf.writeBoolean(rcJump);
+                            rcBuf.writeFloat(targetRc.getYaw());
                             ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRc;
-                                String camPrompt = isCamView ? "Mouse: Orbit | RMB: FP/TP | Scroll: Zoom | L: Light | F: Exit" : "F: RC Camera | L: Light";
+                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: RC Camera | L: Light";
                                 client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
@@ -661,8 +688,9 @@ public class EvecualMCClient implements ClientModInitializer {
                             boolean rcUp = client.options.jumpKey.isPressed();
                             boolean rcDown = client.options.sneakKey.isPressed();
                             boolean rcSprint = client.options.sprintKey.isPressed();
+                            boolean isDroneInFp = client.getCameraEntity() == targetDrone && client.options.getPerspective().isFirstPerson();
 
-                            targetDrone.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint);
+                            targetDrone.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint, isDroneInFp);
 
                             PacketByteBuf droneBuf = PacketByteBufs.create();
                             droneBuf.writeUuid(pairedUuid);
@@ -674,11 +702,12 @@ public class EvecualMCClient implements ClientModInitializer {
                             droneBuf.writeBoolean(rcDown);
                             droneBuf.writeBoolean(rcSprint);
                             droneBuf.writeFloat(targetDrone.getYaw());
+                            droneBuf.writeBoolean(isDroneInFp);
                             ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetDrone;
-                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer Drone | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: Drone Camera | L: Light";
+                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer | A/D: Strafe | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | A/D: Turn | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: Drone Camera | L: Light";
                                 client.player.sendMessage(Text.literal("§b📡 RC DRONE: §a" + targetDrone.getEnergy() + " E §7| §eAlt: " + String.format("%.1f", targetDrone.getY()) + "m §7| §eRange: " + (int)client.player.distanceTo(targetDrone) + "m/512m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
@@ -692,14 +721,17 @@ public class EvecualMCClient implements ClientModInitializer {
                     boolean up = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_UP);
                     boolean down = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_DOWN);
 
-                    if (client.getCameraEntity() instanceof RcDroneEntity drone && client.options.getPerspective().isFirstPerson()) {
-                        if (left) {
-                            drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() - 3.0F));
-                            drone.prevYaw -= 3.0F;
-                        }
-                        if (right) {
-                            drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() + 3.0F));
-                            drone.prevYaw += 3.0F;
+                    if (client.options.getPerspective().isFirstPerson()) {
+                        Entity cam = client.getCameraEntity();
+                        if (cam instanceof RcDroneEntity drone) {
+                            if (left) { drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() - 3.0F)); drone.prevYaw -= 3.0F; }
+                            if (right) { drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() + 3.0F)); drone.prevYaw += 3.0F; }
+                        } else if (cam instanceof RcRobotEntity robot) {
+                            if (left) { robot.setYaw(MathHelper.wrapDegrees(robot.getYaw() - 3.0F)); robot.prevYaw -= 3.0F; }
+                            if (right) { robot.setYaw(MathHelper.wrapDegrees(robot.getYaw() + 3.0F)); robot.prevYaw += 3.0F; }
+                        } else if (cam instanceof RcCarEntity car) {
+                            if (left) { car.setYaw(MathHelper.wrapDegrees(car.getYaw() - 3.0F)); car.prevYaw -= 3.0F; }
+                            if (right) { car.setYaw(MathHelper.wrapDegrees(car.getYaw() + 3.0F)); car.prevYaw += 3.0F; }
                         }
                         targetRcCameraYaw = 0.0F;
                         smoothRcCameraYaw = 0.0F;

@@ -278,12 +278,17 @@ public class RcDroneEntity extends Entity {
     }
 
     private float remoteYaw = Float.NaN;
+    private boolean strafeMode = false;
 
     public void setRemoteYaw(float yaw) {
         this.remoteYaw = yaw;
     }
 
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint) {
+        setRemoteInputs(forward, back, left, right, up, down, sprint, false);
+    }
+
+    public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean strafe) {
         if (this.autoReturning && (forward || back || left || right || up || down)) {
             cancelAutoReturn();
         }
@@ -294,6 +299,7 @@ public class RcDroneEntity extends Entity {
         this.inputUp = up;
         this.inputDown = down;
         this.inputSprint = sprint;
+        this.strafeMode = strafe;
         this.inputTimeoutTicks = 0;
     }
 
@@ -458,10 +464,17 @@ public class RcDroneEntity extends Entity {
             double accel = this.inputSprint ? 0.08 : 0.045;
 
             Vec3d forwardVec = Vec3d.fromPolar(0, this.getYaw());
+            Vec3d rightVec = new Vec3d(-forwardVec.z, 0, forwardVec.x);
 
             Vec3d moveDir = Vec3d.ZERO;
             if (this.inputForward) moveDir = moveDir.add(forwardVec);
             if (this.inputBack) moveDir = moveDir.subtract(forwardVec);
+
+            if (this.strafeMode) {
+                // In FP mode: A and D strafe left / right!
+                if (this.inputLeft) moveDir = moveDir.subtract(rightVec);
+                if (this.inputRight) moveDir = moveDir.add(rightVec);
+            }
 
             if (moveDir.lengthSquared() > 0.001) {
                 moveDir = moveDir.normalize().multiply(topSpeed);
@@ -498,16 +511,19 @@ public class RcDroneEntity extends Entity {
                 vel = new Vec3d(vel.x, vel.y * hoverDamping + subtleHoverWave, vel.z);
             }
 
-            // Rotate on the spot (A/D turns heading cleanly in-place without strafing)
-            float turnSpeed = this.inputSprint ? 5.5F : 4.0F;
-            if (this.inputLeft) {
-                this.setYaw(MathHelper.wrapDegrees(this.getYaw() - turnSpeed));
+            // In TP mode: A/D rotates on the spot. In FP mode: mouse rotates, A/D strafes.
+            if (!this.strafeMode) {
+                float turnSpeed = this.inputSprint ? 5.5F : 4.0F;
+                if (this.inputLeft) {
+                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() - turnSpeed));
+                }
+                if (this.inputRight) {
+                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() + turnSpeed));
+                }
             }
-            if (this.inputRight) {
-                this.setYaw(MathHelper.wrapDegrees(this.getYaw() + turnSpeed));
-            }
+
             if (!Float.isNaN(this.remoteYaw)) {
-                if (!this.inputLeft && !this.inputRight) {
+                if (!this.inputLeft && !this.inputRight || this.strafeMode) {
                     this.setYaw(this.remoteYaw);
                     this.setBodyYaw(this.remoteYaw);
                     this.setHeadYaw(this.remoteYaw);
@@ -515,15 +531,17 @@ public class RcDroneEntity extends Entity {
                 this.remoteYaw = Float.NaN;
             }
 
-            // Aerodynamic tilt (pitch forward/back, roll only during forward motion)
+            // Aerodynamic tilt (pitch forward/back, roll on strafe or bank)
             float targetPitch = 0.0F;
             if (this.inputForward) targetPitch = this.inputSprint ? -25.0F : -16.0F;
             if (this.inputBack) targetPitch = 14.0F;
             setPitchTilt(getPitchTilt() + (targetPitch - getPitchTilt()) * 0.25F);
 
-            // Level roll when rotating on the spot, slight banking only during forward turns
             float targetRoll = 0.0F;
-            if (this.inputForward || this.inputBack) {
+            if (this.strafeMode) {
+                if (this.inputLeft) targetRoll = -18.0F;
+                if (this.inputRight) targetRoll = 18.0F;
+            } else if (this.inputForward || this.inputBack) {
                 if (this.inputLeft) targetRoll = -10.0F;
                 if (this.inputRight) targetRoll = 10.0F;
             }
