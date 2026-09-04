@@ -1,5 +1,22 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.7] - 2026-09-04
+### Fixed & Improved
+- **RC Parking Spot Forward Alignment & Centering**:
+  - RC vehicles (`RcCarEntity`, `RcDroneEntity`, `RcRobotEntity`) now automatically orient facing directly forward with their parking spot block's horizontal facing direction when docking or parking.
+  - Vehicles squarely center their position on the pad and lock velocity to prevent sliding or misaligned docking.
+- **Passive Headlight Energy Consumption**:
+  - Headlights on RC Cars, RC Drones, and RC Robots now consume passive energy (1 EU per second) while active.
+  - If the battery drains completely, the lights automatically extinguish.
+- **Stationary RC Controller Sneak Fix**:
+  - Removed sneak/shift key disconnection from the Stationary RC Controller so pressing Shift (e.g. descending drone or crouching) does not exit the terminal.
+  - Disconnection is now cleanly mapped to pressing `F` (camera key) or moving away from the console.
+- **Eliminated RC Vehicle Third-Person Vibration**:
+  - Fixed client-server position tracking conflict where network packets were overriding rotation and snapping position back and forth while the player piloted in third-person view.
+  - Camera rotation lerp now resolves floating-point epsilon jitter cleanly without micro-stutter.
+- **Ridable Electric Car Hitbox Adjustment**:
+  - Adjusted the standard ridable Electric Car hitbox to exactly 2.0 blocks wide (2.0m width × 1.88m height).
+
 ## [1.3.6] - 2026-09-04
 ### Added & Improved
 - **Stationary RC Controller (Ground Command Terminal)**:

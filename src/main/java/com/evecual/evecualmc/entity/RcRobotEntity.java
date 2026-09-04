@@ -133,6 +133,16 @@ public class RcRobotEntity extends Entity {
         boolean active = isLightOn() && getEnergy() > 0 && isAlive() && !isRemoved();
 
         if (active) {
+            if (this.age % 20 == 0 && !this.getWorld().isClient) {
+                int e = getEnergy();
+                if (e > 0) {
+                    setEnergy(e - 1);
+                    if (e - 1 <= 0) {
+                        setLightOn(false);
+                        removeRealLight();
+                    }
+                }
+            }
             BlockPos targetPos = this.getBlockPos();
             BlockState state = this.getWorld().getBlockState(targetPos);
 
@@ -290,25 +300,40 @@ public class RcRobotEntity extends Entity {
         // Check if parked in a Robot Parking Spot block
         boolean inSpot = !this.autoReturning && isInParkingSpot();
 
-        if (inSpot && !this.getWorld().isClient()) {
-            if (!this.explicitlyPairedInSpot && !getPairedPlayerUuid().isEmpty()) {
-                String pUuid = getPairedPlayerUuid();
-                com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(
-                        this.getWorld(), this.getUuid(), pUuid);
-                try {
-                    PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
-                    if (player != null) {
-                        player.sendMessage(Text.literal("§e🅿️ RC Robot docked! Vehicle turned off and unpaired."), true);
-                    }
-                } catch (Exception ignored) {}
-                setPairedPlayerUuid("");
-                this.inputForward = false;
-                this.inputBack = false;
-                this.inputLeft = false;
-                this.inputRight = false;
-                this.autoReturning = false;
-                this.currentSpeed = 0.0;
+        if (inSpot) {
+            BlockPos spotPos = getParkingSpotPos();
+            if (spotPos != null) {
+                BlockState bs = this.getWorld().getBlockState(spotPos);
+                if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
+                    float targetYaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
+                    this.setYaw(targetYaw);
+                    this.setBodyYaw(targetYaw);
+                    this.setHeadYaw(targetYaw);
+                    this.prevYaw = targetYaw;
+                }
+                this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + 0.0625, spotPos.getZ() + 0.5);
                 this.setVelocity(Vec3d.ZERO);
+            }
+            if (!this.getWorld().isClient()) {
+                if (!this.explicitlyPairedInSpot && !getPairedPlayerUuid().isEmpty()) {
+                    String pUuid = getPairedPlayerUuid();
+                    com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(
+                            this.getWorld(), this.getUuid(), pUuid);
+                    try {
+                        PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                        if (player != null) {
+                            player.sendMessage(Text.literal("§e🅿️ RC Robot docked! Vehicle turned off and unpaired."), true);
+                        }
+                    } catch (Exception ignored) {}
+                    setPairedPlayerUuid("");
+                    this.inputForward = false;
+                    this.inputBack = false;
+                    this.inputLeft = false;
+                    this.inputRight = false;
+                    this.autoReturning = false;
+                    this.currentSpeed = 0.0;
+                    this.setVelocity(Vec3d.ZERO);
+                }
             }
         } else if (!inSpot) {
             this.explicitlyPairedInSpot = false;
@@ -753,6 +778,20 @@ public class RcRobotEntity extends Entity {
         this.setVelocity(Vec3d.ZERO);
         this.stuckTicks = 0;
         this.explicitlyPairedInSpot = false;
+
+        BlockPos spotPos = getParkingSpotPos();
+        if (spotPos != null) {
+            BlockState bs = this.getWorld().getBlockState(spotPos);
+            if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
+                float targetYaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
+                this.setYaw(targetYaw);
+                this.setBodyYaw(targetYaw);
+                this.setHeadYaw(targetYaw);
+                this.prevYaw = targetYaw;
+            }
+            this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + 0.0625, spotPos.getZ() + 0.5);
+        }
+
         String pUuid = getPairedPlayerUuid();
         if (pUuid != null && !pUuid.isEmpty()) {
             if (!this.getWorld().isClient) {
@@ -1006,13 +1045,22 @@ public class RcRobotEntity extends Entity {
 
     @Override
     public void updateTrackedPositionAndAngles(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate) {
-        this.setPosition(x, y, z);
         if (this.getWorld().isClient()) {
             net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
-            if (mc != null && mc.getCameraEntity() == this && mc.options.getPerspective().isFirstPerson()) {
+            if (mc != null && mc.getCameraEntity() == this) {
+                // If local client is actively camera-linked to this vehicle, prevent server packet jitter
+                if (this.squaredDistanceTo(x, y, z) > 4.0) {
+                    this.setPosition(x, y, z);
+                }
                 return;
             }
+            // Smoothly lerp for remote observers without snapping
+            this.setPosition(MathHelper.lerp(0.5, this.getX(), x), MathHelper.lerp(0.5, this.getY(), y), MathHelper.lerp(0.5, this.getZ(), z));
+            this.setRotation(MathHelper.lerpAngleDegrees(0.5F, this.getYaw(), yaw), pitch);
+            this.prevYaw = this.getYaw();
+            return;
         }
+        this.setPosition(x, y, z);
         this.setRotation(yaw, pitch);
     }
 }

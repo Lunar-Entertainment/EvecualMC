@@ -184,12 +184,20 @@ public class EvecualMCClient implements ClientModInitializer {
     }
 
     public static float getRcCameraYaw() {
-        smoothRcCameraYaw = MathHelper.lerp(0.25F, smoothRcCameraYaw, targetRcCameraYaw);
+        if (Math.abs(smoothRcCameraYaw - targetRcCameraYaw) < 0.01F) {
+            smoothRcCameraYaw = targetRcCameraYaw;
+        } else {
+            smoothRcCameraYaw = MathHelper.lerp(0.25F, smoothRcCameraYaw, targetRcCameraYaw);
+        }
         return smoothRcCameraYaw;
     }
 
     public static float getRcCameraPitch() {
-        smoothRcCameraPitch = MathHelper.lerp(0.25F, smoothRcCameraPitch, targetRcCameraPitch);
+        if (Math.abs(smoothRcCameraPitch - targetRcCameraPitch) < 0.01F) {
+            smoothRcCameraPitch = targetRcCameraPitch;
+        } else {
+            smoothRcCameraPitch = MathHelper.lerp(0.25F, smoothRcCameraPitch, targetRcCameraPitch);
+        }
         return smoothRcCameraPitch;
     }
 
@@ -714,17 +722,6 @@ public class EvecualMCClient implements ClientModInitializer {
                             if (client.options.getPerspective() == Perspective.FIRST_PERSON && client.getCameraEntity() == client.player) {
                                 client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
                             }
-                        }
-
-                        // 3. Shift / Sneak key exits the station
-                        if (client.options.sneakKey.isPressed()) {
-                            ClientPlayNetworking.send(EvecualMC.EXIT_RC_STATION_PACKET_ID, PacketByteBufs.empty());
-                            activeStationPos = null;
-                            activeStationVehicleUuid = null;
-                            activeStationType = null;
-                            client.setCameraEntity(client.player);
-                            client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
-                            sendSafeActionBar(client, "§7📡 Disconnected from RC Control Station.");
                         }
                     }
                 }
