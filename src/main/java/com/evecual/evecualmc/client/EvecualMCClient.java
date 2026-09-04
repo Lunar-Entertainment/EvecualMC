@@ -120,6 +120,8 @@ public class EvecualMCClient implements ClientModInitializer {
             client.player.sendMessage(Text.literal("§b📷 RC Camera: §eTHIRD PERSON §7[Scroll: Distance Zoom, RMB: FP]"), true);
         } else {
             client.options.setPerspective(Perspective.FIRST_PERSON);
+            targetRcCameraYaw = 0.0F;
+            smoothRcCameraYaw = 0.0F;
             client.player.sendMessage(Text.literal("§b📷 RC Camera: §aFIRST PERSON (FPV) §7[Scroll: Optic Zoom, RMB: TP]"), true);
         }
     }
@@ -173,6 +175,19 @@ public class EvecualMCClient implements ClientModInitializer {
     }
 
     public static void onRcMouseTurn(double cursorDeltaX, double cursorDeltaY) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client != null && client.getCameraEntity() instanceof RcDroneEntity drone && client.options.getPerspective().isFirstPerson()) {
+            float yawDelta = (float) (cursorDeltaX * 0.15);
+            float newYaw = MathHelper.wrapDegrees(drone.getYaw() + yawDelta);
+            drone.setYaw(newYaw);
+            drone.prevYaw += yawDelta;
+            drone.setBodyYaw(newYaw);
+            drone.setHeadYaw(newYaw);
+            targetRcCameraYaw = 0.0F;
+            smoothRcCameraYaw = 0.0F;
+            targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+            return;
+        }
         targetRcCameraYaw += (float) (cursorDeltaX * 0.15);
         targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
     }
@@ -658,11 +673,12 @@ public class EvecualMCClient implements ClientModInitializer {
                             droneBuf.writeBoolean(rcUp);
                             droneBuf.writeBoolean(rcDown);
                             droneBuf.writeBoolean(rcSprint);
+                            droneBuf.writeFloat(targetDrone.getYaw());
                             ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetDrone;
-                                String camPrompt = isCamView ? "Mouse: Orbit | RMB: FP/TP | Scroll: Zoom | L: Light | F: Exit" : "F: Drone Camera | L: Light";
+                                String camPrompt = isCamView ? (client.options.getPerspective().isFirstPerson() ? "Mouse: Steer Drone | RMB: TP | Scroll: Zoom | L: Light | F: Exit" : "Mouse: Orbit | RMB: FP | Scroll: Zoom | L: Light | F: Exit") : "F: Drone Camera | L: Light";
                                 client.player.sendMessage(Text.literal("§b📡 RC DRONE: §a" + targetDrone.getEnergy() + " E §7| §eAlt: " + String.format("%.1f", targetDrone.getY()) + "m §7| §eRange: " + (int)client.player.distanceTo(targetDrone) + "m/512m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
@@ -676,8 +692,21 @@ public class EvecualMCClient implements ClientModInitializer {
                     boolean up = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_UP);
                     boolean down = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_DOWN);
 
-                    if (left) targetRcCameraYaw -= 3.0f;
-                    if (right) targetRcCameraYaw += 3.0f;
+                    if (client.getCameraEntity() instanceof RcDroneEntity drone && client.options.getPerspective().isFirstPerson()) {
+                        if (left) {
+                            drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() - 3.0F));
+                            drone.prevYaw -= 3.0F;
+                        }
+                        if (right) {
+                            drone.setYaw(MathHelper.wrapDegrees(drone.getYaw() + 3.0F));
+                            drone.prevYaw += 3.0F;
+                        }
+                        targetRcCameraYaw = 0.0F;
+                        smoothRcCameraYaw = 0.0F;
+                    } else {
+                        if (left) targetRcCameraYaw -= 3.0f;
+                        if (right) targetRcCameraYaw += 3.0f;
+                    }
                     if (up) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch - 2.0f, -80.0f, 80.0f);
                     if (down) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + 2.0f, -80.0f, 80.0f);
                 }

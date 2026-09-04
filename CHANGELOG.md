@@ -1,5 +1,16 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.7] - 2026-09-04
+### Added & Improved
+- **Direct Mouse Steering for RC Drone in First-Person (FPV) Mode**:
+  - In First-Person camera view, horizontal mouse movement now turns the drone heading and yaw directly with zero input latency, providing authentic FPV drone flight feel.
+  - Synchronizes real-time drone heading over network (`RC_DRONE_INPUT_PACKET_ID`) to ensure accurate server physics and multiplayer alignment while preserving 144Hz+ local mouse responsiveness without packet rubber-banding.
+  - Reset camera yaw offset when switching into FP mode, locking the view along the drone's forward line of sight.
+  - Arrow keys also support direct in-place drone steering when in FP mode.
+- **Fixed RC Robot Caterpillar Track Bands Rolling During Linear Motion**:
+  - Fixed a client-side calculation bug where tank treads were only rolling during in-place turns.
+  - Cleats and road wheels now roll and cycle continuously when moving forward, reversing, accelerating, and steering differentially on both client and server.
+
 ## [1.2.6] - 2026-09-04
 ### Added & Improved
 - **Real World Block Light on All RC Vehicles (Torch-Level Illumination)**:

@@ -453,6 +453,7 @@ public class EvecualMC implements ModInitializer {
                     boolean up = buf.readBoolean();
                     boolean down = buf.readBoolean();
                     boolean sprint = buf.readBoolean();
+                    float yaw = buf.isReadable(4) ? buf.readFloat() : Float.NaN;
 
                     server.execute(() -> {
                         if (player.getServerWorld() != null) {
@@ -460,6 +461,9 @@ public class EvecualMC implements ModInitializer {
                             if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
                                 if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range (512^2)
                                     drone.setRemoteInputs(forward, back, left, right, up, down, sprint);
+                                    if (!Float.isNaN(yaw)) {
+                                        drone.setRemoteYaw(yaw);
+                                    }
                                 }
                             }
                         }

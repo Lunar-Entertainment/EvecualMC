@@ -277,6 +277,12 @@ public class RcDroneEntity extends Entity {
         return false;
     }
 
+    private float remoteYaw = Float.NaN;
+
+    public void setRemoteYaw(float yaw) {
+        this.remoteYaw = yaw;
+    }
+
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint) {
         if (this.autoReturning && (forward || back || left || right || up || down)) {
             cancelAutoReturn();
@@ -499,6 +505,14 @@ public class RcDroneEntity extends Entity {
             }
             if (this.inputRight) {
                 this.setYaw(MathHelper.wrapDegrees(this.getYaw() + turnSpeed));
+            }
+            if (!Float.isNaN(this.remoteYaw)) {
+                if (!this.inputLeft && !this.inputRight) {
+                    this.setYaw(this.remoteYaw);
+                    this.setBodyYaw(this.remoteYaw);
+                    this.setHeadYaw(this.remoteYaw);
+                }
+                this.remoteYaw = Float.NaN;
             }
 
             // Aerodynamic tilt (pitch forward/back, roll only during forward motion)
@@ -723,5 +737,18 @@ public class RcDroneEntity extends Entity {
     @Override
     public boolean isPushable() {
         return true;
+    }
+
+    @Override
+    public void updateTrackedPositionAndAngles(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate) {
+        this.setPosition(x, y, z);
+        if (this.getWorld().isClient()) {
+            net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+            if (mc != null && mc.getCameraEntity() == this && mc.options.getPerspective().isFirstPerson()) {
+                // While piloting in first-person with mouse, maintain responsive client mouse yaw
+                return;
+            }
+        }
+        this.setRotation(yaw, pitch);
     }
 }

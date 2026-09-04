@@ -349,12 +349,21 @@ public class RcRobotEntity extends Entity {
         if (inputRight) turnComponent += 2.2F;
 
         float forwardMotion = (float) currentSpeed;
-        if (this.getWorld().isClient()) {
-            double dx = this.getX() - this.prevX;
-            double dz = this.getZ() - this.prevZ;
-            forwardMotion = (float) (-Math.sin(Math.toRadians(this.getYaw())) * dx + Math.cos(Math.toRadians(this.getYaw())) * dz);
+        if (Math.abs(forwardMotion) < 0.001F) {
+            // For remote clients observing the robot move without direct input state
+            Vec3d v = this.getVelocity();
+            double hSpeed = Math.sqrt(v.x * v.x + v.z * v.z);
+            if (hSpeed > 0.005) {
+                double radHeading = Math.toRadians(this.getYaw());
+                double fwdX = -Math.sin(radHeading);
+                double fwdZ = Math.cos(radHeading);
+                double dot = (v.x * fwdX + v.z * fwdZ);
+                forwardMotion = (float) dot;
+            }
             float yawDiff = MathHelper.wrapDegrees(this.getYaw() - this.prevYaw);
-            turnComponent = yawDiff * 0.4F;
+            if (Math.abs(yawDiff) > 0.1F) {
+                turnComponent = yawDiff * 0.4F;
+            }
         }
 
         this.leftTreadRoll += forwardMotion * 18.0F - turnComponent;
