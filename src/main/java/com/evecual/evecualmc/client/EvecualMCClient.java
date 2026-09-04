@@ -63,6 +63,21 @@ public class EvecualMCClient implements ClientModInitializer {
 
     private static boolean wasCPressed = false;
     private static net.minecraft.client.option.Perspective previousPerspective = net.minecraft.client.option.Perspective.FIRST_PERSON;
+    private static float rcCameraYaw = 0.0F;
+    private static float rcCameraPitch = 12.0F;
+
+    public static float getRcCameraYaw() {
+        return rcCameraYaw;
+    }
+
+    public static float getRcCameraPitch() {
+        return rcCameraPitch;
+    }
+
+    public static void resetRcCameraAngle() {
+        rcCameraYaw = 0.0F;
+        rcCameraPitch = 12.0F;
+    }
 
     public static boolean isRcLinkActive() {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -117,10 +132,11 @@ public class EvecualMCClient implements ClientModInitializer {
             client.options.setPerspective(previousPerspective);
             client.player.sendMessage(Text.literal("§7📷 RC Camera: §cDISABLED §7[Player View]"), true);
         } else {
+            resetRcCameraAngle();
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK);
-            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aENABLED §7[Press F to return]"), true);
+            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aENABLED §7[Arrow Keys to Rotate, F to return]"), true);
         }
     }
 
@@ -240,15 +256,15 @@ public class EvecualMCClient implements ClientModInitializer {
 
                 // 2. 'Z' Key to Open Car Trunk
                 while (OPEN_TRUNK_KEY.wasPressed()) {
-                    CarEntity targetCar = null;
+                    Entity targetCar = null;
                     if (client.player.getVehicle() instanceof CarEntity car) {
                         targetCar = car;
-                    } else if (client.targetedEntity instanceof CarEntity car) {
-                        targetCar = car;
+                    } else if (client.targetedEntity instanceof CarEntity || client.targetedEntity instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                        targetCar = client.targetedEntity;
                     } else if (client.world != null) {
                         for (Entity entity : client.world.getOtherEntities(client.player, client.player.getBoundingBox().expand(5.0))) {
-                            if (entity instanceof CarEntity car) {
-                                targetCar = car;
+                            if (entity instanceof CarEntity || entity instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                                targetCar = entity;
                                 break;
                             }
                         }
@@ -319,10 +335,26 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRc;
-                                String camPrompt = isCamView ? "F: Player View" : "F: RC Camera";
+                                String camPrompt = isCamView ? "Arrows: Orbit Cam | F: Player View" : "F: RC Camera";
                                 client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
+                    }
+                }
+
+                // Camera orientation control via Arrow Keys while looking through RC Car camera
+                if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.RcCarEntity) {
+                    if (client.currentScreen == null) {
+                        long windowHandle = client.getWindow().getHandle();
+                        boolean left = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_LEFT);
+                        boolean right = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_RIGHT);
+                        boolean up = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_UP);
+                        boolean down = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_DOWN);
+
+                        if (left) rcCameraYaw -= 3.5f;
+                        if (right) rcCameraYaw += 3.5f;
+                        if (up) rcCameraPitch = net.minecraft.util.math.MathHelper.clamp(rcCameraPitch - 2.5f, -75.0f, 75.0f);
+                        if (down) rcCameraPitch = net.minecraft.util.math.MathHelper.clamp(rcCameraPitch + 2.5f, -75.0f, 75.0f);
                     }
                 }
 

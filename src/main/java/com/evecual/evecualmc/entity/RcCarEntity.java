@@ -21,12 +21,20 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 import java.util.UUID;
 
 public class RcCarEntity extends Entity {
     public static final int MAX_ENERGY = 500;
+
+    private final SimpleInventory trunk = new SimpleInventory(9); // 9-slot compact RC car trunk
 
     private static final TrackedData<Integer> ENERGY = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -345,6 +353,20 @@ public class RcCarEntity extends Entity {
         }
     }
 
+    public SimpleInventory getTrunk() {
+        return this.trunk;
+    }
+
+    public void openTrunk(PlayerEntity player) {
+        if (!this.getWorld().isClient) {
+            player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, this.trunk, 1),
+                    Text.literal("RC Car Trunk (9 Slots)")
+            ));
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.PLAYERS, 0.7f, 1.8f);
+        }
+    }
+
     public ItemStack asItemStack() {
         ItemStack stack = new ItemStack(EvecualMC.RC_CAR_ITEM);
         NbtCompound nbt = new NbtCompound();
@@ -353,6 +375,21 @@ public class RcCarEntity extends Entity {
         if (!getPairedPlayerUuid().isEmpty()) {
             nbt.putString("PairedPlayer", getPairedPlayerUuid());
         }
+
+        // Save trunk items in the item stack
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+        boolean hasItems = false;
+        for (int i = 0; i < this.trunk.size(); ++i) {
+            ItemStack s = this.trunk.getStack(i);
+            list.set(i, s);
+            if (!s.isEmpty()) hasItems = true;
+        }
+        if (hasItems) {
+            NbtCompound trunkNbt = new NbtCompound();
+            Inventories.writeNbt(trunkNbt, list);
+            nbt.put("TrunkItems", trunkNbt);
+        }
+
         stack.setNbt(nbt);
         return stack;
     }
@@ -369,8 +406,8 @@ public class RcCarEntity extends Entity {
             return ActionResult.success(this.getWorld().isClient);
         }
 
+        // Shift + Empty hand: Pick up the RC car
         if (player.isSneaking() && held.isEmpty()) {
-            // Pick up the RC car
             if (!this.getWorld().isClient) {
                 ItemStack drop = asItemStack();
                 if (!player.getInventory().insertStack(drop)) {
@@ -379,6 +416,12 @@ public class RcCarEntity extends Entity {
                 this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.8f, 1.4f);
                 this.discard();
             }
+            return ActionResult.success(this.getWorld().isClient);
+        }
+
+        // Right-click with empty hand (not sneaking): Open RC Car Trunk!
+        if (held.isEmpty() && !player.isSneaking()) {
+            openTrunk(player);
             return ActionResult.success(this.getWorld().isClient);
         }
 
@@ -419,6 +462,13 @@ public class RcCarEntity extends Entity {
         if (nbt.contains("Energy")) setEnergy(nbt.getInt("Energy"));
         if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
         if (nbt.contains("PairedPlayer")) setPairedPlayerUuid(nbt.getString("PairedPlayer"));
+        if (nbt.contains("TrunkItems")) {
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+            Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
+            for (int i = 0; i < list.size(); ++i) {
+                this.trunk.setStack(i, list.get(i));
+            }
+        }
     }
 
     @Override
@@ -426,6 +476,14 @@ public class RcCarEntity extends Entity {
         nbt.putInt("Energy", getEnergy());
         nbt.putInt("ColorVariant", getColorVariant());
         nbt.putString("PairedPlayer", getPairedPlayerUuid());
+
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
+        for (int i = 0; i < this.trunk.size(); ++i) {
+            list.set(i, this.trunk.getStack(i));
+        }
+        NbtCompound trunkNbt = new NbtCompound();
+        Inventories.writeNbt(trunkNbt, list);
+        nbt.put("TrunkItems", trunkNbt);
     }
 
     @Override

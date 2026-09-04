@@ -404,6 +404,8 @@ public class EvecualMC implements ModInitializer {
                 Entity target = player.getWorld().getEntityById(entityId);
                 if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
                     car.openTrunk(player);
+                } else if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rc && player.squaredDistanceTo(rc) < 64.0) {
+                    rc.openTrunk(player);
                 }
             });
         });
