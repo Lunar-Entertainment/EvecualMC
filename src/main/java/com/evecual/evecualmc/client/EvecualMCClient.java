@@ -66,6 +66,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding TOGGLE_LIGHT_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.toggle_light",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_L,
+            "category.evecualmc.evecual"
+    ));
+
     private static boolean wasCPressed = false;
     private static boolean wasAttackPressed = false;
     private static int robotAttackCooldown = 0;
@@ -76,6 +83,84 @@ public class EvecualMCClient implements ClientModInitializer {
     private static float targetRcCameraPitch = 12.0F;
     private static float smoothRcCameraYaw = 0.0F;
     private static float smoothRcCameraPitch = 12.0F;
+
+    // Camera distance & optical FOV zoom
+    private static float rcCameraDistance = 3.5F;
+    private static float targetRcCameraDistance = 3.5F;
+    private static float rcFpZoom = 1.0F;
+    private static float targetRcFpZoom = 1.0F;
+
+    public static float getRcCameraDistance() {
+        rcCameraDistance = MathHelper.lerp(0.3F, rcCameraDistance, targetRcCameraDistance);
+        return rcCameraDistance;
+    }
+
+    public static float getRcFpZoom() {
+        rcFpZoom = MathHelper.lerp(0.3F, rcFpZoom, targetRcFpZoom);
+        return rcFpZoom;
+    }
+
+    public static void onRcCameraScroll(double vertical) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null) return;
+        boolean isFirstPerson = client.options.getPerspective().isFirstPerson();
+        if (isFirstPerson) {
+            // Optical FOV zoom in First-Person mode (1.0x to 5.0x)
+            targetRcFpZoom = MathHelper.clamp(targetRcFpZoom + (float) (vertical * 0.35F), 1.0F, 5.0F);
+        } else {
+            // Third-Person orbit camera distance (1.0m to 12.0m)
+            targetRcCameraDistance = MathHelper.clamp(targetRcCameraDistance - (float) (vertical * 0.6F), 1.0F, 12.0F);
+        }
+    }
+
+    public static void toggleRcPerspective(MinecraftClient client) {
+        if (client == null || !isRcCameraActive() || client.player == null) return;
+        if (client.options.getPerspective().isFirstPerson()) {
+            client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
+            client.player.sendMessage(Text.literal("§b📷 RC Camera: §eTHIRD PERSON §7[Scroll: Distance Zoom, RMB: FP]"), true);
+        } else {
+            client.options.setPerspective(Perspective.FIRST_PERSON);
+            client.player.sendMessage(Text.literal("§b📷 RC Camera: §aFIRST PERSON (FPV) §7[Scroll: Optic Zoom, RMB: TP]"), true);
+        }
+    }
+
+    public static boolean isRcVehicleLightOn() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null) return false;
+        Entity cam = client.getCameraEntity();
+        if (cam instanceof RcCarEntity car) return car.isLightOn();
+        if (cam instanceof RcDroneEntity drone) return drone.isLightOn();
+        if (cam instanceof RcRobotEntity robot) return robot.isLightOn();
+        return false;
+    }
+
+    public static void toggleRcLight(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return;
+        Entity target = null;
+        if (isRcCameraActive()) {
+            target = client.getCameraEntity();
+        }
+        if (target == null) {
+            target = getTargetRcCar(client);
+        }
+        if (target == null) {
+            target = getTargetRcDrone(client);
+        }
+        if (target == null) {
+            target = getTargetRcRobot(client);
+        }
+        if (target == null && client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit) {
+            Entity e = hit.getEntity();
+            if (e instanceof RcCarEntity || e instanceof RcDroneEntity || e instanceof RcRobotEntity) {
+                target = e;
+            }
+        }
+        if (target != null) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeUuid(target.getUuid());
+            ClientPlayNetworking.send(EvecualMC.TOGGLE_RC_LIGHT_PACKET_ID, buf);
+        }
+    }
 
     public static float getRcCameraYaw() {
         smoothRcCameraYaw = MathHelper.lerp(0.25F, smoothRcCameraYaw, targetRcCameraYaw);
@@ -206,14 +291,20 @@ public class EvecualMCClient implements ClientModInitializer {
         if (client.getCameraEntity() == targetRc) {
             client.setCameraEntity(client.player);
             client.options.setPerspective(previousPerspective);
+            targetRcFpZoom = 1.0F;
+            rcFpZoom = 1.0F;
             client.player.sendMessage(Text.literal("§7📷 RC Camera: §cDISABLED §7[Player View]"), true);
         } else {
             resetRcCameraAngle();
+            targetRcCameraDistance = 3.5F;
+            rcCameraDistance = 3.5F;
+            targetRcFpZoom = 1.0F;
+            rcFpZoom = 1.0F;
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
             String name = (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
-            client.player.sendMessage(Text.literal("§b📷 RC " + name + " Camera: §aENABLED §7[Mouse to Aim/Rotate, F to return]"), true);
+            client.player.sendMessage(Text.literal("§b📷 RC " + name + " Camera: §aENABLED §7[RMB: FP/TP, Scroll: Zoom, L: Light, F: Exit]"), true);
         }
     }
 
@@ -398,6 +489,11 @@ public class EvecualMCClient implements ClientModInitializer {
                     toggleRcCamera(client);
                 }
 
+                // RC Vehicle Light Toggle Key ('L')
+                while (TOGGLE_LIGHT_KEY.wasPressed()) {
+                    toggleRcLight(client);
+                }
+
                 // Full-size Car driving inputs
                 if (client.player.getVehicle() instanceof CarEntity car) {
                     boolean forward = client.options.forwardKey.isPressed();
@@ -481,7 +577,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRobot;
-                                String camPrompt = isCamView ? "Mouse: Aim | LMB: Tool | Z: Cargo | F: Player View" : "F: Robot Cam | Z: Cargo";
+                                String camPrompt = isCamView ? "Mouse: Aim | RMB: FP/TP | Scroll: Zoom | L: Light | LMB: Tool | Z: Cargo | F: Exit" : "F: Robot Cam | L: Light | Z: Cargo";
                                 String toolName = targetRobot.getEquippedTool().isEmpty() ? "Bare Hand" : targetRobot.getEquippedTool().getName().getString();
                                 client.player.sendMessage(Text.literal("§6🤖 RC ROBOT: §a" + targetRobot.getEnergy() + " E §7| §bTool: " + toolName + " §7| §eRange: " + (int)client.player.distanceTo(targetRobot) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
@@ -523,7 +619,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetRc;
-                                String camPrompt = isCamView ? "Mouse: Orbit Cam | F: Player View" : "F: RC Camera";
+                                String camPrompt = isCamView ? "Mouse: Orbit | RMB: FP/TP | Scroll: Zoom | L: Light | F: Exit" : "F: RC Camera | L: Light";
                                 client.player.sendMessage(Text.literal("§b📡 RC CAR: §a" + targetRc.getEnergy() + " E §7| §eRange: " + (int)client.player.distanceTo(targetRc) + "m/256m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }
@@ -566,7 +662,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
                             if (client.player.age % 10 == 0) {
                                 boolean isCamView = client.getCameraEntity() == targetDrone;
-                                String camPrompt = isCamView ? "Mouse: Orbit Cam | F: Player View" : "F: Drone Camera";
+                                String camPrompt = isCamView ? "Mouse: Orbit | RMB: FP/TP | Scroll: Zoom | L: Light | F: Exit" : "F: Drone Camera | L: Light";
                                 client.player.sendMessage(Text.literal("§b📡 RC DRONE: §a" + targetDrone.getEnergy() + " E §7| §eAlt: " + String.format("%.1f", targetDrone.getY()) + "m §7| §eRange: " + (int)client.player.distanceTo(targetDrone) + "m/512m §8| §f[" + camPrompt + ", C: Charger]"), true);
                             }
                         }

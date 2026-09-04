@@ -54,24 +54,16 @@ public class RcRobotEntityRenderer extends EntityRenderer<RcRobotEntity> {
         if (!tool.isEmpty()) {
             matrices.push();
 
-            // Transform to align with robot body and arm
-            matrices.translate(0.0, 18.0 / 16.0, 0.0); // body pivot
-            matrices.translate(-4.0 / 16.0, -4.0 / 16.0, 0.0); // arm pivot
+            this.model.getBody().rotate(matrices);
+            this.model.getRightArm().rotate(matrices);
 
-            float swing = robot.getArmSwing();
-            if (swing > 0.0F) {
-                matrices.multiply(RotationAxis.POSITIVE_X.rotation(-0.6F - swing * 1.6F));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotation(-0.3F + swing * 0.4F));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotation(-0.1F));
-            } else {
-                matrices.multiply(RotationAxis.POSITIVE_X.rotation(-0.25F));
-            }
+            // Center directly into hand gripper clamp
+            matrices.translate(-0.5 / 16.0, 7.0 / 16.0, -4.0 / 16.0);
+            matrices.scale(0.68F, 0.68F, 0.68F);
 
-            // Offset into hand gripper clamp
-            matrices.translate(-1.0 / 16.0, 7.0 / 16.0, -4.5 / 16.0);
-            matrices.scale(0.65F, 0.65F, 0.65F);
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90.0F));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-45.0F));
+            // Natural tool holding orientation pointing forward and upright
+            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-90.0F));
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F));
 
             MinecraftClient.getInstance().getItemRenderer().renderItem(
                     tool,
@@ -87,7 +79,55 @@ public class RcRobotEntityRenderer extends EntityRenderer<RcRobotEntity> {
             matrices.pop();
         }
 
+        // 5. Render Work Light Beam when Light is ON
+        if (robot.isLightOn()) {
+            matrices.push();
+            this.model.getBody().rotate(matrices);
+            this.model.getHead().rotate(matrices);
+
+            renderLightCone(matrices, vertexConsumers, 0.0F, -3.2F / 16.0F, -3.5F / 16.0F, 5.0F, 0.9F, 1.0F, 0.95F, 0.7F, 0.35F);
+            matrices.pop();
+        }
+
         matrices.pop();
         super.render(robot, yaw, tickDelta, matrices, vertexConsumers, light);
+    }
+
+    public static void renderLightCone(MatrixStack matrices, VertexConsumerProvider vertexConsumers,
+                                       float startX, float startY, float startZ,
+                                       float length, float endRadius,
+                                       float r, float g, float b, float maxAlpha) {
+        VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getLightning());
+        var matrix = matrices.peek().getPositionMatrix();
+
+        float endZ = startZ - length;
+
+        // Glowing core lens quad
+        float core = 0.08F;
+        consumer.vertex(matrix, startX - core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY + core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX - core, startY + core, startZ).color(r, g, b, 0.9F).next();
+
+        // 4 cone frustum side quads
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
     }
 }

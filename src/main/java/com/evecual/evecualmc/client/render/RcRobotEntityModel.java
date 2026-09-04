@@ -128,6 +128,10 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
         return body;
     }
 
+    public ModelPart getHead() {
+        return head;
+    }
+
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
         this.root.render(matrices, vertices, light, overlay, red, green, blue, alpha);

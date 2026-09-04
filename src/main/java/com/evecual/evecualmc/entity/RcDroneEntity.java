@@ -40,6 +40,7 @@ public class RcDroneEntity extends Entity {
     private static final TrackedData<Float> PITCH_TILT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Float> ROLL_TILT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> FLYING = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> LIGHT_ON = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private final SimpleInventory trunk = new SimpleInventory(9); // 9-slot compact drone cargo bay
 
@@ -78,6 +79,15 @@ public class RcDroneEntity extends Entity {
         this.dataTracker.startTracking(PITCH_TILT, 0.0F);
         this.dataTracker.startTracking(ROLL_TILT, 0.0F);
         this.dataTracker.startTracking(FLYING, false);
+        this.dataTracker.startTracking(LIGHT_ON, false);
+    }
+
+    public boolean isLightOn() {
+        return this.dataTracker.get(LIGHT_ON);
+    }
+
+    public void setLightOn(boolean on) {
+        this.dataTracker.set(LIGHT_ON, on);
     }
 
     public int getEnergy() {
@@ -595,6 +605,7 @@ public class RcDroneEntity extends Entity {
         if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
         if (nbt.contains("PairedPlayer")) setPairedPlayerUuid(nbt.getString("PairedPlayer"));
         if (nbt.contains("Flying")) setFlying(nbt.getBoolean("Flying"));
+        if (nbt.contains("LightOn")) setLightOn(nbt.getBoolean("LightOn"));
         if (nbt.contains("TrunkItems")) {
             DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
             Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
@@ -610,6 +621,7 @@ public class RcDroneEntity extends Entity {
         nbt.putInt("ColorVariant", getColorVariant());
         nbt.putString("PairedPlayer", getPairedPlayerUuid());
         nbt.putBoolean("Flying", isFlying());
+        nbt.putBoolean("LightOn", isLightOn());
 
         DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
         for (int i = 0; i < this.trunk.size(); ++i) {

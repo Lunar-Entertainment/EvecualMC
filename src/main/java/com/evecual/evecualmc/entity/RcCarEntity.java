@@ -40,6 +40,7 @@ public class RcCarEntity extends Entity {
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Float> STEERING_ANGLE = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<String> PAIRED_PLAYER_UUID = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Boolean> LIGHT_ON = DataTracker.registerData(RcCarEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private boolean inputForward;
     private boolean inputBack;
@@ -72,6 +73,15 @@ public class RcCarEntity extends Entity {
         this.dataTracker.startTracking(COLOR_VARIANT, 0); // 0: Crimson Red
         this.dataTracker.startTracking(STEERING_ANGLE, 0.0F);
         this.dataTracker.startTracking(PAIRED_PLAYER_UUID, "");
+        this.dataTracker.startTracking(LIGHT_ON, false);
+    }
+
+    public boolean isLightOn() {
+        return this.dataTracker.get(LIGHT_ON);
+    }
+
+    public void setLightOn(boolean on) {
+        this.dataTracker.set(LIGHT_ON, on);
     }
 
     public int getEnergy() {
@@ -516,6 +526,7 @@ public class RcCarEntity extends Entity {
         if (nbt.contains("Energy")) setEnergy(nbt.getInt("Energy"));
         if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
         if (nbt.contains("PairedPlayer")) setPairedPlayerUuid(nbt.getString("PairedPlayer"));
+        if (nbt.contains("LightOn")) setLightOn(nbt.getBoolean("LightOn"));
         if (nbt.contains("TrunkItems")) {
             DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
             Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
@@ -530,6 +541,7 @@ public class RcCarEntity extends Entity {
         nbt.putInt("Energy", getEnergy());
         nbt.putInt("ColorVariant", getColorVariant());
         nbt.putString("PairedPlayer", getPairedPlayerUuid());
+        nbt.putBoolean("LightOn", isLightOn());
 
         DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
         for (int i = 0; i < this.trunk.size(); ++i) {

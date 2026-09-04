@@ -1,5 +1,31 @@
 # EvecualMC Updates & Changelog
 
+## [1.2.5] - 2026-09-04
+### Added & Improved
+- **RC Camera Mouse Scroll Wheel Zoom**:
+  - Implemented intuitive scroll wheel zooming while in RC camera mode (`F`):
+    - **Third-Person Orbit Mode**: Scroll wheel smoothly adjusts camera distance between 1.0m (tight close-up) and 12.0m (wide panoramic field).
+    - **First-Person (FPV) Mode**: Scroll wheel adjusts optical zoom factor from 1.0x to 5.0x magnification, seamlessly adjusting camera FOV.
+  - Automatically suppresses hotbar slot switching while zooming through the camera.
+- **RMB Perspective Toggle (First Person / Third Person)**:
+  - Pressing Right Mouse Button (RMB) in RC camera mode instantly toggles between:
+    - **First Person (FPV) Mode**: Authentic cockpit/sensor perspective from the vehicle's eye height (`0.35m` on RC Car, `0.25m` on RC Drone, `0.65m` on RC Robot).
+    - **Third Person Orbit Mode**: Exterior chase camera orbiting the vehicle at customizable distance with full mouse aim.
+  - Intercepted before Minecraft item use events, eliminating accidental block placement or item consumption while controlling vehicles.
+- **Togglable Vehicle Lights ('L')**:
+  - Added dedicated toggleable light system for all RC vehicles (`RcCarEntity`, `RcDroneEntity`, `RcRobotEntity`).
+  - Pressing `L` (or rebindable key in Controls) toggles headlights/spotlights on the active or aimed RC vehicle with click audio feedback.
+  - **Dynamic Night Vision / Illumination**: When vehicle lights are active in camera mode, camera vision is fully brightened, providing crystal-clear visibility in deep caves and nighttime.
+  - **3D Light Cone & Beam Rendering**:
+    - **RC Car**: Dual forward-projecting headlight beams and glowing lamp lenses.
+    - **RC Drone**: High-intensity forward/downward aerial spotlight cone for nighttime reconnaissance.
+    - **RC Robot**: Aimable robotic cybernetic visor lamp and work light cone that tracks with head aim.
+  - Light state is synchronized across the network and persisted in NBT (`LightOn`).
+- **Fixed RC Robot Tool Holding**:
+  - Re-engineered 3D tool positioning and matrix hierarchy in `RcRobotEntityRenderer`.
+  - Tools (pickaxes, axes, shovels, swords) now grip naturally inside the hydraulic clamp jaws, pointing upright and forward into action orientation.
+  - Tool movement dynamically syncs with the articulated arm swing animations during mining.
+
 ## [1.2.4] - 2026-09-04
 ### Added & Improved
 - **RC Robot Double Chest Inventory (54 Slots)**:

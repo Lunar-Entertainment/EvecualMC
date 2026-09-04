@@ -379,6 +379,7 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier AUTO_PARK_PACKET_ID = new Identifier(MOD_ID, "auto_park");
     public static final Identifier START_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "start_auto_park_s2c");
     public static final Identifier CANCEL_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_auto_park_s2c");
+    public static final Identifier TOGGLE_RC_LIGHT_PACKET_ID = new Identifier(MOD_ID, "toggle_rc_light");
 
     @Override
     public void onInitialize() {
@@ -562,6 +563,41 @@ public class EvecualMC implements ModInitializer {
                         } else if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot
                                 && (player.squaredDistanceTo(robot) < 64.0 || (robot.getPairedPlayerUuid().equals(player.getUuidAsString()) && player.squaredDistanceTo(robot) <= 65536.0))) {
                             robot.openInventory(player);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TOGGLE_RC_LIGHT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID vehicleUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(vehicleUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rcCar) {
+                                if (player.squaredDistanceTo(rcCar) <= 65536.0) {
+                                    boolean newState = !rcCar.isLightOn();
+                                    rcCar.setLightOn(newState);
+                                    player.sendMessage(Text.literal("§e💡 RC Car Headlights: " + (newState ? "§aON" : "§cOFF")), true);
+                                    player.getWorld().playSound(null, rcCar.getX(), rcCar.getY(), rcCar.getZ(),
+                                            net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK, net.minecraft.sound.SoundCategory.PLAYERS, 0.6F, newState ? 1.2F : 0.8F);
+                                }
+                            } else if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 262144.0) {
+                                    boolean newState = !drone.isLightOn();
+                                    drone.setLightOn(newState);
+                                    player.sendMessage(Text.literal("§e💡 RC Drone Spotlight: " + (newState ? "§aON" : "§cOFF")), true);
+                                    player.getWorld().playSound(null, drone.getX(), drone.getY(), drone.getZ(),
+                                            net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK, net.minecraft.sound.SoundCategory.PLAYERS, 0.6F, newState ? 1.2F : 0.8F);
+                                }
+                            } else if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
+                                if (player.squaredDistanceTo(robot) <= 65536.0) {
+                                    boolean newState = !robot.isLightOn();
+                                    robot.setLightOn(newState);
+                                    player.sendMessage(Text.literal("§e💡 RC Robot Work Light: " + (newState ? "§aON" : "§cOFF")), true);
+                                    player.getWorld().playSound(null, robot.getX(), robot.getY(), robot.getZ(),
+                                            net.minecraft.sound.SoundEvents.BLOCK_LEVER_CLICK, net.minecraft.sound.SoundCategory.PLAYERS, 0.6F, newState ? 1.2F : 0.8F);
+                                }
+                            }
                         }
                     });
                 });

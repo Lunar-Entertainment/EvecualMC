@@ -30,4 +30,17 @@ public abstract class CameraMixin {
             args.set(1, MathHelper.clamp(pitch + EvecualMCClient.getRcCameraPitch(), -85.0F, 85.0F));
         }
     }
+
+    @org.spongepowered.asm.mixin.injection.ModifyArg(
+        method = "update",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;clipToSpace(D)D")
+    )
+    private double evecual$modifyRcCameraDistance(double distance) {
+        if (this.focusedEntity instanceof RcCarEntity ||
+            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcDroneEntity ||
+            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcRobotEntity) {
+            return EvecualMCClient.getRcCameraDistance();
+        }
+        return distance;
+    }
 }

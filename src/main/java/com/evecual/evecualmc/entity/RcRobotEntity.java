@@ -62,6 +62,7 @@ public class RcRobotEntity extends Entity {
     private static final TrackedData<ItemStack> EQUIPPED_TOOL = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Float> ARM_SWING = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Float> HEAD_PITCH = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final TrackedData<Boolean> LIGHT_ON = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private boolean inputForward;
     private boolean inputBack;
@@ -94,6 +95,15 @@ public class RcRobotEntity extends Entity {
         this.dataTracker.startTracking(EQUIPPED_TOOL, ItemStack.EMPTY);
         this.dataTracker.startTracking(ARM_SWING, 0.0F);
         this.dataTracker.startTracking(HEAD_PITCH, 0.0F);
+        this.dataTracker.startTracking(LIGHT_ON, false);
+    }
+
+    public boolean isLightOn() {
+        return this.dataTracker.get(LIGHT_ON);
+    }
+
+    public void setLightOn(boolean on) {
+        this.dataTracker.set(LIGHT_ON, on);
     }
 
     public int getEnergy() {
@@ -750,6 +760,9 @@ public class RcRobotEntity extends Entity {
         if (nbt.contains("EquippedTool")) {
             setEquippedTool(ItemStack.fromNbt(nbt.getCompound("EquippedTool")));
         }
+        if (nbt.contains("LightOn")) {
+            setLightOn(nbt.getBoolean("LightOn"));
+        }
         if (nbt.contains("RobotInventory")) {
             NbtCompound invNbt = nbt.getCompound("RobotInventory");
             DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);
@@ -765,6 +778,7 @@ public class RcRobotEntity extends Entity {
         nbt.putInt("Energy", getEnergy());
         nbt.putInt("ColorVariant", this.dataTracker.get(COLOR_VARIANT));
         nbt.putString("PairedPlayerUuid", getPairedPlayerUuid());
+        nbt.putBoolean("LightOn", isLightOn());
         if (!getEquippedTool().isEmpty()) {
             nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
         }
@@ -776,5 +790,10 @@ public class RcRobotEntity extends Entity {
         NbtCompound invNbt = new NbtCompound();
         Inventories.writeNbt(invNbt, list);
         nbt.put("RobotInventory", invNbt);
+    }
+
+    @Override
+    protected float getEyeHeight(net.minecraft.entity.EntityPose pose, net.minecraft.entity.EntityDimensions dimensions) {
+        return 0.65F;
     }
 }

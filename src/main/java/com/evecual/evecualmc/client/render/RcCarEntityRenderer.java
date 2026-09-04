@@ -63,7 +63,51 @@ public class RcCarEntityRenderer extends EntityRenderer<RcCarEntity> {
             this.model.renderWheelMotionBlur(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, speed);
         }
 
+        // Dual Headlights when Light is ON
+        if (car.isLightOn()) {
+            renderLightCone(matrices, vertexConsumers, -3.0F / 16.0F, 17.2F / 16.0F, -8.1F / 16.0F, 6.0F, 0.8F, 1.0F, 0.95F, 0.7F, 0.30F);
+            renderLightCone(matrices, vertexConsumers, 3.0F / 16.0F, 17.2F / 16.0F, -8.1F / 16.0F, 6.0F, 0.8F, 1.0F, 0.95F, 0.7F, 0.30F);
+        }
+
         matrices.pop();
         super.render(car, yaw, tickDelta, matrices, vertexConsumers, light);
+    }
+
+    public static void renderLightCone(MatrixStack matrices, VertexConsumerProvider vertexConsumers,
+                                       float startX, float startY, float startZ,
+                                       float length, float endRadius,
+                                       float r, float g, float b, float maxAlpha) {
+        VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getLightning());
+        var matrix = matrices.peek().getPositionMatrix();
+
+        float endZ = startZ - length;
+
+        // Glowing core lens quad
+        float core = 0.08F;
+        consumer.vertex(matrix, startX - core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY + core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX - core, startY + core, startZ).color(r, g, b, 0.9F).next();
+
+        // 4 cone frustum side quads
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
     }
 }

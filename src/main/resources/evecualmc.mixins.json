@@ -9,7 +9,8 @@
   "client": [
     "KeyboardInputMixin",
     "CameraMixin",
-    "MouseMixin"
+    "MouseMixin",
+    "GameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

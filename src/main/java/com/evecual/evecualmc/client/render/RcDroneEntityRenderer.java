@@ -76,7 +76,50 @@ public class RcDroneEntityRenderer extends EntityRenderer<RcDroneEntity> {
             this.model.renderBlurDiscs(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, discAlpha);
         }
 
+        // High-power aerial spotlight when Light is ON
+        if (drone.isLightOn()) {
+            renderLightCone(matrices, vertexConsumers, 0.0F, 20.5F / 16.0F, -6.6F / 16.0F, 8.0F, 1.2F, 0.9F, 0.95F, 1.0F, 0.35F);
+        }
+
         matrices.pop();
         super.render(drone, yaw, tickDelta, matrices, vertexConsumers, light);
+    }
+
+    public static void renderLightCone(MatrixStack matrices, VertexConsumerProvider vertexConsumers,
+                                       float startX, float startY, float startZ,
+                                       float length, float endRadius,
+                                       float r, float g, float b, float maxAlpha) {
+        VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getLightning());
+        var matrix = matrices.peek().getPositionMatrix();
+
+        float endZ = startZ - length;
+
+        // Glowing core lens quad
+        float core = 0.08F;
+        consumer.vertex(matrix, startX - core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY - core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX + core, startY + core, startZ).color(r, g, b, 0.9F).next();
+        consumer.vertex(matrix, startX - core, startY + core, startZ).color(r, g, b, 0.9F).next();
+
+        // 4 cone frustum side quads
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX - endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX - endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX, startY, startZ).color(r, g, b, maxAlpha).next();
+        consumer.vertex(matrix, startX + endRadius, startY - endRadius, endZ).color(r, g, b, 0.0F).next();
+        consumer.vertex(matrix, startX + endRadius, startY + endRadius, endZ).color(r, g, b, 0.0F).next();
     }
 }
