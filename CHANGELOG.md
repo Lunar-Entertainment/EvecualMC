@@ -1,5 +1,16 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.2] - 2026-09-04
+### Added & Improved
+- **Two-Tier Layered RC HUD (Persistent Telemetry & Prominent Temporary Info Notifications)**:
+  - Built `RcHudManager` to handle RC Controller HUD rendering and notification lifecycles.
+  - Positioned temporary info notifications (e.g. "No parking or charger within 64 blocks", "RC Car parked", "RC Drone landed", "RC Robot docked & charging", "RC Controller paired") directly **OVER** the persistent telemetry text.
+  - Gave temporary notifications a set duration of 5.0 seconds (100 ticks) with a smooth alpha fade-out during the final second.
+  - Styled temporary notifications in a golden-amber bordered translucent dark badge matching the mod's visual design.
+  - The persistent telemetry line (energy meter, controls, tool, distance, altitude) is rendered cleanly underneath without flickering or getting erased by notifications.
+  - Implemented `InGameHudMixin` to seamlessly capture and route all actionbar messages while holding the RC Controller into the temporary notification layer.
+  - Added direct and wireless charging support for the RC Robot on the RC Charger pad.
+
 ## [1.3.1] - 2026-09-04
 ### Fixed & Improved
 - **Resolved Actionbar HUD Text Overflow & Clipping**:

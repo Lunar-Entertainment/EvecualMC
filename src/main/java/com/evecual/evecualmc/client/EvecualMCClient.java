@@ -472,6 +472,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            RcHudManager.tick();
             if (client.player != null) {
                 if (robotAttackCooldown > 0) {
                     robotAttackCooldown--;
@@ -651,34 +652,6 @@ public class EvecualMCClient implements ClientModInitializer {
                                 robotAttackCooldown = 0;
                             }
 
-                            if (client.player.age % 10 == 0) {
-                                boolean isCamView = client.getCameraEntity() == targetRobot;
-                                String toolName = targetRobot.getEquippedTool().isEmpty() ? "Bare Hand" : targetRobot.getEquippedTool().getName().getString();
-                                if (toolName.length() > 14) {
-                                    toolName = toolName.substring(0, 12) + "…";
-                                }
-                                int range = (int)client.player.distanceTo(targetRobot);
-                                int energy = targetRobot.getEnergy();
-                                int screenWidth = client.getWindow().getScaledWidth();
-
-                                String msg;
-                                if (isCamView) {
-                                    boolean fp = client.options.getPerspective().isFirstPerson();
-                                    String viewMode = fp ? "FPV" : "3RD";
-                                    if (screenWidth < 380) {
-                                        msg = "§6🤖 Cam (" + viewMode + ") §a" + energy + "E §7| §b" + toolName;
-                                    } else {
-                                        msg = "§6🤖 Cam (" + viewMode + ") §a" + energy + "E §7| §b" + toolName + " §8[§fLMB§7:Mine §fZ§7:Inv §fRMB§7:View §fF§7:Exit]";
-                                    }
-                                } else {
-                                    if (screenWidth < 380) {
-                                        msg = "§6🤖 Robot: §a" + energy + "E §7| §b" + toolName + " §7| §e" + range + "m";
-                                    } else {
-                                        msg = "§6🤖 Robot: §a" + energy + "E §7| §b" + toolName + " §7| §e" + range + "m §8[§fF§7:Cam §fZ§7:Cargo §fL§7:Light §fC§7:Dock]";
-                                    }
-                                }
-                                sendSafeActionBar(client, msg);
-                            }
                         }
                     }
 
@@ -716,30 +689,6 @@ public class EvecualMCClient implements ClientModInitializer {
                             rcBuf.writeFloat(targetRc.getYaw());
                             ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
 
-                            if (client.player.age % 10 == 0) {
-                                boolean isCamView = client.getCameraEntity() == targetRc;
-                                int range = (int)client.player.distanceTo(targetRc);
-                                int energy = targetRc.getEnergy();
-                                int screenWidth = client.getWindow().getScaledWidth();
-
-                                String msg;
-                                if (isCamView) {
-                                    boolean fp = client.options.getPerspective().isFirstPerson();
-                                    String viewMode = fp ? "FPV" : "3RD";
-                                    if (screenWidth < 340) {
-                                        msg = "§b🏎️ Car Cam (" + viewMode + ") §a" + energy + "E";
-                                    } else {
-                                        msg = "§b🏎️ Car Cam (" + viewMode + ") §a" + energy + "E §8[§fRMB§7:View §fL§7:Light §fF§7:Exit]";
-                                    }
-                                } else {
-                                    if (screenWidth < 360) {
-                                        msg = "§b🏎️ RC Car: §a" + energy + "E §7| §e" + range + "m";
-                                    } else {
-                                        msg = "§b🏎️ RC Car: §a" + energy + "E §7| §e" + range + "m §8[§fF§7:Cam §fL§7:Light §fC§7:Dock]";
-                                    }
-                                }
-                                sendSafeActionBar(client, msg);
-                            }
                         }
                     }
 
@@ -781,31 +730,6 @@ public class EvecualMCClient implements ClientModInitializer {
                             droneBuf.writeBoolean(isDroneInFp);
                             ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
 
-                            if (client.player.age % 10 == 0) {
-                                boolean isCamView = client.getCameraEntity() == targetDrone;
-                                int range = (int)client.player.distanceTo(targetDrone);
-                                int energy = targetDrone.getEnergy();
-                                String alt = String.format("%.1f", targetDrone.getY());
-                                int screenWidth = client.getWindow().getScaledWidth();
-
-                                String msg;
-                                if (isCamView) {
-                                    boolean fp = client.options.getPerspective().isFirstPerson();
-                                    String viewMode = fp ? "FPV" : "3RD";
-                                    if (screenWidth < 360) {
-                                        msg = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m";
-                                    } else {
-                                        msg = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m §8[§fA/D§7:Strafe §fRMB§7:View §fF§7:Exit]";
-                                    }
-                                } else {
-                                    if (screenWidth < 380) {
-                                        msg = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m";
-                                    } else {
-                                        msg = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m §8[§fF§7:Cam §fL§7:Light §fC§7:Dock]";
-                                    }
-                                }
-                                sendSafeActionBar(client, msg);
-                            }
                         }
                     }
                 }

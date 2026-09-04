@@ -10,7 +10,8 @@
     "KeyboardInputMixin",
     "CameraMixin",
     "MouseMixin",
-    "GameRendererMixin"
+    "GameRendererMixin",
+    "InGameHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

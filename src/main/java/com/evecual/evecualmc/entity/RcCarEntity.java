@@ -211,6 +211,15 @@ public class RcCarEntity extends Entity {
         this.setSteeringAngle(0.0F);
         this.stuckTicks = 0;
         this.reverseTicks = 0;
+        String pUuid = getPairedPlayerUuid();
+        if (pUuid != null && !pUuid.isEmpty()) {
+            try {
+                PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                if (player != null) {
+                    player.sendMessage(Text.literal("§a⚡ RC Car docked & charging!"), true);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public void cancelAutoReturn() {

@@ -695,6 +695,27 @@ public class RcRobotEntity extends Entity {
         return false;
     }
 
+    public void onReachedCharger() {
+        this.autoReturning = false;
+        this.targetChargerPos = null;
+        this.currentSpeed = 0.0;
+        this.setVelocity(Vec3d.ZERO);
+        this.stuckTicks = 0;
+        String pUuid = getPairedPlayerUuid();
+        if (pUuid != null && !pUuid.isEmpty()) {
+            try {
+                PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                if (player != null) {
+                    player.sendMessage(Text.literal("§a⚡ RC Robot docked & charging!"), true);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public boolean isAutoReturning() {
+        return this.autoReturning;
+    }
+
     private void tickAutoReturn() {
         if (targetChargerPos == null) {
             autoReturning = false;
@@ -712,9 +733,7 @@ public class RcRobotEntity extends Entity {
         double distSq = this.squaredDistanceTo(tx, this.getY(), tz);
 
         if (distSq < 1.0) {
-            this.autoReturning = false;
-            this.currentSpeed = 0.0;
-            this.setVelocity(Vec3d.ZERO);
+            onReachedCharger();
             return;
         }
 

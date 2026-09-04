@@ -89,7 +89,35 @@ public class RcChargerBlockEntity extends BlockEntity implements EnergyStorage {
             }
         }
 
-        // 3. Wireless Inductive Charging to RC Parking Spots and Drone Parking Spots within 16 blocks radius
+        // 3. Direct charging for RC Robots standing squarely on the charger pad
+        Box robotArea = new Box(pos.getX() + 0.05, pos.getY(), pos.getZ() + 0.05, pos.getX() + 0.95, pos.getY() + 1.2, pos.getZ() + 0.95);
+        List<com.evecual.evecualmc.entity.RcRobotEntity> robots = world.getEntitiesByClass(com.evecual.evecualmc.entity.RcRobotEntity.class, robotArea, com.evecual.evecualmc.entity.RcRobotEntity::isAlive);
+
+        for (com.evecual.evecualmc.entity.RcRobotEntity robot : robots) {
+            if (robot.isAutoReturning()) {
+                robot.onReachedCharger();
+            }
+
+            if (be.energy > 0 && robot.getEnergy() < com.evecual.evecualmc.entity.RcRobotEntity.MAX_ENERGY) {
+                int needed = com.evecual.evecualmc.entity.RcRobotEntity.MAX_ENERGY - robot.getEnergy();
+                int transfer = (int) be.extractEnergy(Math.min(needed, 10), false);
+                robot.setEnergy(robot.getEnergy() + transfer);
+
+                if (world.isClient && world.random.nextFloat() < 0.45f) {
+                    world.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                            robot.getX() + (world.random.nextDouble() - 0.5) * 0.35,
+                            robot.getY() + 0.15,
+                            robot.getZ() + (world.random.nextDouble() - 0.5) * 0.35,
+                            0, 0.08, 0);
+                }
+
+                if (robot.age % 25 == 0) {
+                    world.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.35f, 1.8f);
+                }
+            }
+        }
+
+        // 4. Wireless Inductive Charging to RC Parking Spots and Drone Parking Spots within 16 blocks radius
         if (be.energy > 0) {
             Box searchBox = new Box(pos).expand(16.0);
 

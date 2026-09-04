@@ -37,7 +37,10 @@ public class EnergyHudOverlay implements HudRenderCallback {
         if (client == null || client.world == null || client.player == null) return;
         if (client.options.hudHidden) return;
 
-        // 1. Render active Vehicle Charger Waypoint if player is inside a car
+        // 1. Render RC Controller HUD (Persistent telemetry & Temporary notifications placed over it)
+        RcHudManager.renderRcHud(drawContext, client);
+
+        // 2. Render active Vehicle Charger Waypoint if player is inside a car
         if (client.player.getVehicle() instanceof CarEntity) {
             renderChargerWaypoints(drawContext, client);
         }

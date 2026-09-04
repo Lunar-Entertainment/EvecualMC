@@ -242,6 +242,15 @@ public class RcDroneEntity extends Entity {
         this.autoReturnStage = 0;
         this.setVelocity(Vec3d.ZERO);
         setFlying(false);
+        String pUuid = getPairedPlayerUuid();
+        if (pUuid != null && !pUuid.isEmpty()) {
+            try {
+                PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                if (player != null) {
+                    player.sendMessage(Text.literal("§a⚡ RC Drone landed & charging!"), true);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public boolean startAutoReturnToCharger() {
