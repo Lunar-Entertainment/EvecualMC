@@ -382,17 +382,16 @@ public class HeliEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Position pilot comfortably inside left cockpit captain seat with panoramic forward line-of-sight
+            // Position pilot comfortably inside front cockpit with panoramic forward view
             double rad = Math.toRadians(this.getYaw());
             double cos = Math.cos(rad);
             double sin = Math.sin(rad);
-            double forwardOffset = 0.20; // aligned with front cockpit
-            double sideOffset = -0.35;    // left captain seat
-            double heightOffset = 0.55;   // eyes level with windshield center
+            double forwardOffset = 0.90; // situated right in the forward cockpit bubble
+            double heightOffset = 0.45;  // eye level aligned with windshield center
 
-            double px = this.getX() - sin * forwardOffset + cos * sideOffset;
+            double px = this.getX() - sin * forwardOffset;
             double py = this.getY() + heightOffset;
-            double pz = this.getZ() + cos * forwardOffset + sin * sideOffset;
+            double pz = this.getZ() + cos * forwardOffset;
             positionUpdater.accept(passenger, px, py, pz);
 
             float deltaYaw = this.getYaw() - this.prevYaw;
@@ -404,7 +403,7 @@ public class HeliEntity extends Entity {
     @Override
     public Vec3d updatePassengerForDismount(LivingEntity passenger) {
         Direction dir = this.getHorizontalFacing().rotateYClockwise();
-        return new Vec3d(this.getX() + dir.getOffsetX() * 2.2, this.getY() + 0.1, this.getZ() + dir.getOffsetZ() * 2.2);
+        return new Vec3d(this.getX() + dir.getOffsetX() * 2.0, this.getY() + 0.1, this.getZ() + dir.getOffsetZ() * 2.0);
     }
 
     @Override
@@ -429,13 +428,13 @@ public class HeliEntity extends Entity {
     @Override
     public Box calculateBoundingBox() {
         double rad = Math.toRadians(this.getYaw());
-        double halfLen = 2.2; // 4.4 blocks length
-        double halfWid = 1.4; // 2.8 blocks width
+        double halfLen = 2.4; // 4.8 blocks length, centered exactly on rotor mast
+        double halfWid = 1.3; // 2.6 blocks width
         double extX = Math.abs(Math.cos(rad)) * halfWid + Math.abs(Math.sin(rad)) * halfLen;
         double extZ = Math.abs(Math.sin(rad)) * halfWid + Math.abs(Math.cos(rad)) * halfLen;
         return new Box(
                 this.getX() - extX, this.getY(), this.getZ() - extZ,
-                this.getX() + extX, this.getY() + 2.6, this.getZ() + extZ
+                this.getX() + extX, this.getY() + 2.4, this.getZ() + extZ
         );
     }
 
