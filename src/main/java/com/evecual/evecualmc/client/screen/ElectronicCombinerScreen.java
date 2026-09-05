@@ -31,7 +31,7 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         this.backgroundWidth = 240;
         this.backgroundHeight = 174;
         this.playerInventoryTitleX = 39;
-        this.playerInventoryTitleY = 75;
+        this.playerInventoryTitleY = 76;
     }
 
     @Override
@@ -53,20 +53,19 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
             CombinerRecipe r = allRecipes[i];
             final int recipeIdx = i + 1;
             boolean isSelected = recipeIdx == currentIndex;
-            String icon = getRecipeIcon(r);
             int btnX = x + 22 + i * 22;
             int btnY = y + 4;
 
-            String tooltipText = (isSelected ? "§e[Active] " : "§bSelect ") + icon + " " + r.getDisplayName();
+            String tooltipText = (isSelected ? "§e[Active Blueprint] §f" : "§bSelect Blueprint: §f") + r.getDisplayName();
 
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal(icon),
+                    Text.empty(),
                     btn -> {
                         if (recipeIdx != handler.getSelectedRecipeIndex()) {
                             sendSelectRecipe(handler.syncId, recipeIdx);
                         }
                     }
-            ).dimensions(btnX, btnY, 21, 12).tooltip(Tooltip.of(Text.literal(tooltipText))).build());
+            ).dimensions(btnX, btnY, 21, 14).tooltip(Tooltip.of(Text.literal(tooltipText))).build());
         }
 
         // Tips Button [ 💡 ]
@@ -81,21 +80,7 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                         client.setScreen(new ModTipScreen(TipTopic.ELECTRONIC_COMBINER, energy, max, status));
                     }
                 }
-        ).dimensions(x + 208, y + 4, 22, 12).tooltip(Tooltip.of(Text.literal("💡 Combiner Guide & Diagnostics"))).build());
-    }
-
-    private String getRecipeIcon(CombinerRecipe recipe) {
-        if (recipe == null) return "⚙️";
-        return switch (recipe) {
-            case ELECTRIC_CAR -> "🚗";
-            case RC_CAR -> "🏎️";
-            case RC_DRONE -> "🚁";
-            case RC_ROBOT -> "🤖";
-            case RC_CONTROLLER -> "🎮";
-            case STATIONARY_RC_CONTROLLER -> "🖥️";
-            case RC_SENDER -> "📡";
-            case RC_RECEIVER -> "📟";
-        };
+        ).dimensions(x + 208, y + 4, 22, 14).tooltip(Tooltip.of(Text.literal("💡 Combiner Guide & Diagnostics"))).build());
     }
 
     private void sendSelectRecipe(int syncId, int recipeIndex) {
@@ -129,11 +114,18 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
             rebuildScreenWidgets();
         }
 
-        // Active Tab Underline Highlight
-        int activeTabIdx = selectedRecipeIndex - 1;
-        if (activeTabIdx >= 0 && activeTabIdx < 8) {
-            int tabX = x + 22 + activeTabIdx * 22;
-            context.fill(tabX, y + 16, tabX + 21, y + 18, 0xFF0EA5E9); // Glowing Cyan Underline
+        // Render Blueprint Icons on Top Tabs and Highlight Active Selection
+        CombinerRecipe[] allRecipes = CombinerRecipe.values();
+        for (int i = 0; i < allRecipes.length; i++) {
+            CombinerRecipe r = allRecipes[i];
+            int btnX = x + 22 + i * 22;
+            int btnY = y + 4;
+            context.drawItem(r.getOutputTemplate(), btnX + 3, btnY - 1);
+            if (i + 1 == selectedRecipeIndex) {
+                // Active cyan highlight underline and outline
+                context.fill(btnX, btnY + 13, btnX + 21, btnY + 15, 0xFF0EA5E9);
+                context.drawBorder(btnX, btnY, 21, 14, 0xFF38BDF8);
+            }
         }
 
         CombinerRecipe recipe = handler.getSelectedRecipe();
@@ -175,8 +167,12 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         context.fill(bx + bw - 5, by + bh - 1, bx + bw, by + bh, 0xFF0EA5E9);
         context.fill(bx + bw - 1, by + bh - 5, bx + bw, by + bh, 0xFF0EA5E9);
 
-        // Header watermark inside canvas
-        context.drawText(textRenderer, "§3CAD: §f" + recipe.getDisplayName(), bx + 4, by + 3, 0xFF38BDF8, false);
+        // Header watermark inside canvas (compact pill badge with icon)
+        String titleStr = "§b▪ §f" + recipe.getDisplayName();
+        int titleWidth = textRenderer.getWidth(titleStr);
+        context.fill(bx + 3, by + 3, bx + 7 + titleWidth, by + 12, 0xAA0A152E);
+        context.drawBorder(bx + 3, by + 3, 5 + titleWidth, 10, 0x6638BDF8);
+        context.drawText(textRenderer, titleStr, bx + 6, by + 4, 0xFFFFFFFF, false);
 
         // Render CAD Side-View Illustration
         drawMachineSideView(context, recipe, bx, by, bw, bh);
@@ -241,7 +237,7 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
             }
         }
 
-        // Live HUD Status Line at the bottom inside the CAD canvas (by + 42)
+        // Live HUD Status Line at the bottom inside the CAD canvas
         Slot hoveredSlot = this.focusedSlot;
         if (hoveredSlot == null) {
             for (int i = 0; i < 6; i++) {
@@ -256,29 +252,31 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         boolean hasEnergy = handler.getEnergy() >= 1;
         boolean isCrafting = handler.isCrafting();
 
-        // Background strip for status bar
-        context.fill(bx + 1, by + bh - 10, bx + bw - 1, by + bh - 1, 0x990A0F1D);
+        // Background strip for status bar (height 11px cleanly inside bottom of canvas)
+        int statusY = by + bh - 11;
+        context.fill(bx + 1, statusY - 1, bx + bw - 1, by + bh - 1, 0xDD09101F);
+        context.fill(bx + 1, statusY - 1, bx + bw - 1, statusY, 0xFF1E293B);
 
         if (hoveredSlot != null && hoveredSlot.id >= 0 && hoveredSlot.id < 6) {
             CombinerRecipe.SlotRequirement req = recipe.getSlotRequirement(hoveredSlot.id);
             if (req != null) {
                 String slotInfoText = "§e[" + req.getName() + "]: §b" + req.getAcceptedItemName() + " §7(" + req.getRequiredCount() + "x)";
-                context.drawTextWithShadow(textRenderer, slotInfoText, bx + 4, by + bh - 9, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, slotInfoText, bx + 4, statusY + 1, 0xFFFFFF);
             }
         } else if (isCrafting) {
             int pct = (int) (((double) handler.getProgress() / Math.max(1, handler.getMaxProgress())) * 100);
-            context.drawTextWithShadow(textRenderer, "§b⚡ Assembling " + recipe.getDisplayName() + "... (" + pct + "%)", bx + 4, by + bh - 9, 0xFFFFFF);
+            context.drawTextWithShadow(textRenderer, "§b⚡ Assembling " + recipe.getDisplayName() + "... (" + pct + "%)", bx + 4, statusY + 1, 0xFFFFFF);
         } else if (!hasEnergy) {
-            context.drawTextWithShadow(textRenderer, "§c⚡ Power Required (Connect Power Source)", bx + 4, by + bh - 9, 0xFFFFFF);
+            context.drawTextWithShadow(textRenderer, "§c⚡ Power Required (Connect Power Source)", bx + 4, statusY + 1, 0xFFFFFF);
         } else {
             List<ItemStack> currentInputs = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 currentInputs.add(handler.slots.get(i).getStack());
             }
             if (recipe.canCraft(currentInputs)) {
-                context.drawTextWithShadow(textRenderer, "§a✔ Components Verified — Ready to Fabricate!", bx + 4, by + bh - 9, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, "§a✔ Components Verified — Ready to Fabricate!", bx + 4, statusY + 1, 0xFFFFFF);
             } else {
-                context.drawTextWithShadow(textRenderer, "§7Mount required items into machine sockets above", bx + 4, by + bh - 9, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, "§7Mount required items into machine sockets above", bx + 4, statusY + 1, 0xFFFFFF);
             }
         }
     }

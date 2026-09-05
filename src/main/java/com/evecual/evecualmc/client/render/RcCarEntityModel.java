@@ -38,32 +38,41 @@ public class RcCarEntityModel extends EntityModel<RcCarEntity> {
 
         // Body & Chassis (uv 0, 0 in 64x64)
         ModelPartBuilder body = ModelPartBuilder.create()
-                // Main chassis plate
+                // Main chassis plate (solid lower foundation)
                 .uv(0, 0).cuboid(-5.0F, 18.0F, -8.0F, 10.0F, 2.0F, 16.0F)
-                // Front hood / nose cone
-                .uv(0, 18).cuboid(-4.0F, 15.0F, -7.0F, 8.0F, 3.0F, 6.0F)
-                // Cockpit cabin & glass
-                .uv(32, 0).cuboid(-3.0F, 12.0F, -2.0F, 6.0F, 3.0F, 6.0F)
-                // Rear wing spoiler
-                .uv(32, 32).cuboid(-5.0F, 11.0F, 5.0F, 10.0F, 1.0F, 3.0F)
-                // Wing struts
-                .uv(32, 36).cuboid(-4.0F, 12.0F, 6.0F, 1.0F, 3.0F, 1.0F)
-                .uv(32, 36).cuboid(3.0F, 12.0F, 6.0F, 1.0F, 3.0F, 1.0F);
+                // Front aerodynamic nose cone & bumper
+                .uv(0, 18).cuboid(-4.5F, 15.0F, -7.5F, 9.0F, 3.0F, 6.5F)
+                // Front low splitter
+                .uv(0, 0).cuboid(-5.0F, 18.5F, -8.5F, 10.0F, 1.5F, 1.0F)
+                // Cockpit cabin & tinted glass
+                .uv(32, 0).cuboid(-3.5F, 12.0F, -1.5F, 7.0F, 3.0F, 5.5F)
+                // Rear engine deck & trunk cover (closes the gap behind cockpit)
+                .uv(0, 18).cuboid(-4.5F, 15.0F, 3.5F, 9.0F, 3.0F, 4.5F)
+                // Rear aerodynamic spoiler wing
+                .uv(32, 32).cuboid(-5.5F, 10.5F, 4.5F, 11.0F, 1.0F, 3.5F)
+                // Wing struts (firmly anchored into rear engine deck at Y=15)
+                .uv(32, 36).cuboid(-3.5F, 11.5F, 5.5F, 1.0F, 3.5F, 1.5F)
+                .uv(32, 36).cuboid(2.5F, 11.5F, 5.5F, 1.0F, 3.5F, 1.5F)
+                // Side skirts (connecting wheels and chassis)
+                .uv(0, 0).cuboid(-5.2F, 18.0F, -3.0F, 0.4F, 1.5F, 6.0F)
+                .uv(0, 0).cuboid(4.8F, 18.0F, -3.0F, 0.4F, 1.5F, 6.0F);
         root.addChild("body", body, ModelTransform.NONE);
 
-        // Antenna
+        // Antenna (firmly mounted on cockpit roof)
         ModelPartBuilder ant = ModelPartBuilder.create()
                 .uv(34, 46).cuboid(-0.5F, -9.0F, -0.5F, 1.0F, 9.0F, 1.0F);
-        root.addChild("antenna", ant, ModelTransform.pivot(2.0F, 12.0F, 3.0F));
+        root.addChild("antenna", ant, ModelTransform.pivot(2.0F, 12.0F, 2.5F));
 
-        // Wheels
-        ModelPartBuilder wheel = ModelPartBuilder.create()
-                .uv(0, 32).cuboid(-1.0F, -2.0F, -2.0F, 2.0F, 4.0F, 4.0F);
+        // Wheels (placed flush against chassis sides with 0 gaps)
+        ModelPartBuilder wheelLeft = ModelPartBuilder.create()
+                .uv(0, 32).cuboid(-1.5F, -2.5F, -2.5F, 1.5F, 5.0F, 5.0F);
+        ModelPartBuilder wheelRight = ModelPartBuilder.create()
+                .uv(0, 32).cuboid(0.0F, -2.5F, -2.5F, 1.5F, 5.0F, 5.0F);
 
-        root.addChild("wheel_fl", wheel, ModelTransform.pivot(-5.5F, 20.0F, -5.0F));
-        root.addChild("wheel_fr", wheel, ModelTransform.pivot(5.5F, 20.0F, -5.0F));
-        root.addChild("wheel_rl", wheel, ModelTransform.pivot(-5.5F, 20.0F, 5.0F));
-        root.addChild("wheel_rr", wheel, ModelTransform.pivot(5.5F, 20.0F, 5.0F));
+        root.addChild("wheel_fl", wheelLeft, ModelTransform.pivot(-5.0F, 19.5F, -4.5F));
+        root.addChild("wheel_fr", wheelRight, ModelTransform.pivot(5.0F, 19.5F, -4.5F));
+        root.addChild("wheel_rl", wheelLeft, ModelTransform.pivot(-5.0F, 19.5F, 4.5F));
+        root.addChild("wheel_rr", wheelRight, ModelTransform.pivot(5.0F, 19.5F, 4.5F));
 
         return TexturedModelData.of(modelData, 64, 64);
     }

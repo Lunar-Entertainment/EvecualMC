@@ -48,30 +48,47 @@ public class RcDroneEntityModel extends EntityModel<RcDroneEntity> {
         ModelPartBuilder bodyBuilder = ModelPartBuilder.create()
                 // Main chassis body pod
                 .uv(0, 0).cuboid(-4.0F, 19.0F, -5.0F, 8.0F, 3.0F, 10.0F)
-                // Top aerodynamic battery canopy
-                .uv(0, 14).cuboid(-3.0F, 17.5F, -3.5F, 6.0F, 2.0F, 7.0F)
-                // Bottom cargo bay (trunk)
-                .uv(27, 14).cuboid(-3.5F, 22.0F, -3.0F, 7.0F, 2.0F, 6.0F)
+                // Top aerodynamic battery canopy (flush on top of main body)
+                .uv(0, 14).cuboid(-3.5F, 17.5F, -4.0F, 7.0F, 1.5F, 8.0F)
+                // Bottom cargo bay / payload trunk (flush on bottom)
+                .uv(27, 14).cuboid(-3.0F, 22.0F, -3.5F, 6.0F, 1.5F, 7.0F)
                 // Front FPV camera gimbal
                 .uv(0, 24).cuboid(-1.5F, 19.5F, -6.5F, 3.0F, 2.0F, 2.0F)
-                // Landing struts (Left and Right)
-                .uv(11, 24).cuboid(-4.5F, 23.5F, -5.0F, 1.0F, 1.0F, 10.0F)
-                .uv(11, 24).cuboid(3.5F, 23.5F, -5.0F, 1.0F, 1.0F, 10.0F)
-                // Landing strut legs
-                .uv(0, 29).cuboid(-4.5F, 21.0F, -3.5F, 1.0F, 3.0F, 1.0F)
-                .uv(0, 29).cuboid(-4.5F, 21.0F, 2.5F, 1.0F, 3.0F, 1.0F)
-                .uv(0, 29).cuboid(3.5F, 21.0F, -3.5F, 1.0F, 3.0F, 1.0F)
-                .uv(0, 29).cuboid(3.5F, 21.0F, 2.5F, 1.0F, 3.0F, 1.0F)
-                // Diagonal carbon fiber arms (FL, FR, RL, RR)
-                .uv(27, 0).cuboid(-8.0F, 19.5F, -8.0F, 4.0F, 1.0F, 4.0F)
-                .uv(27, 0).cuboid(4.0F, 19.5F, -8.0F, 4.0F, 1.0F, 4.0F)
-                .uv(27, 0).cuboid(-8.0F, 19.5F, 4.0F, 4.0F, 1.0F, 4.0F)
-                .uv(27, 0).cuboid(4.0F, 19.5F, 4.0F, 4.0F, 1.0F, 4.0F)
-                // Motor Pods at the arm tips
-                .uv(44, 0).cuboid(-8.5F, 18.5F, -8.5F, 3.0F, 3.0F, 3.0F)
-                .uv(44, 0).cuboid(5.5F, 18.5F, -8.5F, 3.0F, 3.0F, 3.0F)
-                .uv(44, 0).cuboid(-8.5F, 18.5F, 5.5F, 3.0F, 3.0F, 3.0F)
-                .uv(44, 0).cuboid(5.5F, 18.5F, 5.5F, 3.0F, 3.0F, 3.0F);
+                // Landing strut vertical legs (anchored from fuselage Y=21.5 to skids Y=24)
+                .uv(0, 29).cuboid(-3.5F, 21.5F, -3.0F, 1.0F, 2.5F, 1.0F)
+                .uv(0, 29).cuboid(-3.5F, 21.5F, 2.0F, 1.0F, 2.5F, 1.0F)
+                .uv(0, 29).cuboid(2.5F, 21.5F, -3.0F, 1.0F, 2.5F, 1.0F)
+                .uv(0, 29).cuboid(2.5F, 21.5F, 2.0F, 1.0F, 2.5F, 1.0F)
+                // Landing skid longitudinal rails
+                .uv(11, 24).cuboid(-4.0F, 23.5F, -5.5F, 1.5F, 1.0F, 11.0F)
+                .uv(11, 24).cuboid(2.5F, 23.5F, -5.5F, 1.5F, 1.0F, 11.0F)
+                // Landing skid upturned nose & tail tips
+                .uv(11, 24).cuboid(-4.0F, 22.5F, -6.5F, 1.5F, 1.0F, 1.0F)
+                .uv(11, 24).cuboid(2.5F, 22.5F, -6.5F, 1.5F, 1.0F, 1.0F)
+                .uv(11, 24).cuboid(-4.0F, 22.5F, 5.5F, 1.5F, 1.0F, 1.0F)
+                .uv(11, 24).cuboid(2.5F, 22.5F, 5.5F, 1.0F, 1.0F, 1.0F)
+                // Structural carbon fiber motor booms (firmly integrated into main fuselage)
+                // Front-Left Boom
+                .uv(27, 0).cuboid(-8.0F, 19.5F, -7.5F, 5.0F, 1.0F, 1.5F)
+                .uv(27, 0).cuboid(-7.5F, 19.5F, -8.0F, 1.5F, 1.0F, 4.0F)
+                .uv(27, 0).cuboid(-4.5F, 19.5F, -4.5F, 2.0F, 1.0F, 2.0F)
+                // Front-Right Boom
+                .uv(27, 0).cuboid(3.0F, 19.5F, -7.5F, 5.0F, 1.0F, 1.5F)
+                .uv(27, 0).cuboid(6.0F, 19.5F, -8.0F, 1.5F, 1.0F, 4.0F)
+                .uv(27, 0).cuboid(2.5F, 19.5F, -4.5F, 2.0F, 1.0F, 2.0F)
+                // Rear-Left Boom
+                .uv(27, 0).cuboid(-8.0F, 19.5F, 6.0F, 5.0F, 1.0F, 1.5F)
+                .uv(27, 0).cuboid(-7.5F, 19.5F, 4.0F, 1.5F, 1.0F, 4.0F)
+                .uv(27, 0).cuboid(-4.5F, 19.5F, 2.5F, 2.0F, 1.0F, 2.0F)
+                // Rear-Right Boom
+                .uv(27, 0).cuboid(3.0F, 19.5F, 6.0F, 5.0F, 1.0F, 1.5F)
+                .uv(27, 0).cuboid(6.0F, 19.5F, 4.0F, 1.5F, 1.0F, 4.0F)
+                .uv(27, 0).cuboid(2.5F, 19.5F, 2.5F, 2.0F, 1.0F, 2.0F)
+                // Motor Pods at the arm tips (encapsulating the motor shafts)
+                .uv(44, 0).cuboid(-8.5F, 18.0F, -8.5F, 3.0F, 3.0F, 3.0F)
+                .uv(44, 0).cuboid(5.5F, 18.0F, -8.5F, 3.0F, 3.0F, 3.0F)
+                .uv(44, 0).cuboid(-8.5F, 18.0F, 5.5F, 3.0F, 3.0F, 3.0F)
+                .uv(44, 0).cuboid(5.5F, 18.0F, 5.5F, 3.0F, 3.0F, 3.0F);
         root.addChild("body", bodyBuilder, ModelTransform.NONE);
 
         // 2. Propellers (Twin-blade aerofoil rotors centered on motor shafts)
@@ -83,19 +100,19 @@ public class RcDroneEntityModel extends EntityModel<RcDroneEntity> {
                 // Blade 2
                 .uv(0, 36).cuboid(-0.5F, -0.4F, 1.0F, 1.0F, 0.4F, 4.0F);
 
-        root.addChild("prop_fl", propBlade, ModelTransform.pivot(-7.0F, 18.0F, -7.0F));
-        root.addChild("prop_fr", propBlade, ModelTransform.pivot(7.0F, 18.0F, -7.0F));
-        root.addChild("prop_rl", propBlade, ModelTransform.pivot(-7.0F, 18.0F, 7.0F));
-        root.addChild("prop_rr", propBlade, ModelTransform.pivot(7.0F, 18.0F, 7.0F));
+        root.addChild("prop_fl", propBlade, ModelTransform.pivot(-7.0F, 17.5F, -7.0F));
+        root.addChild("prop_fr", propBlade, ModelTransform.pivot(7.0F, 17.5F, -7.0F));
+        root.addChild("prop_rl", propBlade, ModelTransform.pivot(-7.0F, 17.5F, 7.0F));
+        root.addChild("prop_rr", propBlade, ModelTransform.pivot(7.0F, 17.5F, 7.0F));
 
         // 3. Motion Blur Rotor Discs (Rendered when spinning at high RPM)
         ModelPartBuilder blurDisc = ModelPartBuilder.create()
                 .uv(0, 42).cuboid(-5.0F, -0.2F, -5.0F, 10.0F, 0.2F, 10.0F);
 
-        root.addChild("blur_disc_fl", blurDisc, ModelTransform.pivot(-7.0F, 18.0F, -7.0F));
-        root.addChild("blur_disc_fr", blurDisc, ModelTransform.pivot(7.0F, 18.0F, -7.0F));
-        root.addChild("blur_disc_rl", blurDisc, ModelTransform.pivot(-7.0F, 18.0F, 7.0F));
-        root.addChild("blur_disc_rr", blurDisc, ModelTransform.pivot(7.0F, 18.0F, 7.0F));
+        root.addChild("blur_disc_fl", blurDisc, ModelTransform.pivot(-7.0F, 17.5F, -7.0F));
+        root.addChild("blur_disc_fr", blurDisc, ModelTransform.pivot(7.0F, 17.5F, -7.0F));
+        root.addChild("blur_disc_rl", blurDisc, ModelTransform.pivot(-7.0F, 17.5F, 7.0F));
+        root.addChild("blur_disc_rr", blurDisc, ModelTransform.pivot(7.0F, 17.5F, 7.0F));
 
         return TexturedModelData.of(modelData, 64, 64);
     }

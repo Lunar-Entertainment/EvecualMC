@@ -1,5 +1,21 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.13] - 2026-09-05
+### Fixed & Improved
+- **Electronic Combiner UI Polish**:
+  - Replaced text/emoji labels on blueprint tab buttons with crisp native item icon rendering and active cyan highlight glows, eliminating `VS 16` character glyph artifacts.
+  - Resolved slot-on-text overlap by shifting CAD header watermark and re-indexing slot mounting coordinates across all 8 recipes so socket boxes never collide with title banners.
+  - Adjusted the bottom live HUD status bar inside the canvas and padded the Player Inventory header (`Y=76`) to eliminate border collision and text overlap.
+  - Polished technical CAD side-view vector illustrations for vehicles, drones, utility droids, transceivers, and controller terminals.
+- **RC Car Model Floating Spaces & Gap Fix**:
+  - Closed the open void behind the cabin by adding a solid rear engine deck & trunk cover.
+  - Extended and seated the rear spoiler wing struts directly onto the engine deck without floating gaps.
+  - Extended front nose cone, front splitter lip, cabin greenhouse, and side skirts flush against the chassis plate.
+  - Placed wheels tightly against chassis sides with seamless axle clearance.
+- **RC Drone Model Floating Spaces & Gap Fix**:
+  - Replaced isolated disconnected arm squares with continuous structural carbon fiber motor booms integrated directly into the central fuselage.
+  - Redesigned landing struts and skids: anchored legs solidly from fuselage to skids, added upturned nose/tail skid tips, and sealed top battery canopy and bottom cargo bay flush with the airframe.
+
 ## [1.3.12] - 2026-09-05
 ### Fixed & Improved
 - **RC Robot Trackband (Tread) Rotation Direction Fix**:
