@@ -302,6 +302,82 @@ public enum CombinerRecipe {
                     null,
                     null
             }
+    ),
+
+    HELI_CONTROLLER(
+            Category.RC,
+            "heli_controller",
+            "Heli Controller",
+            "Aerospace-grade long-range telecommand transmitter for EV Heli with 1024m range.",
+            () -> new ItemStack(EvecualMC.HELI_CONTROLLER_ITEM),
+            new SlotRequirement[]{
+                    new SlotRequirement("RC Receiver", "RC Receiver", "High-Bandwidth Receiver Core", 1, false,
+                            s -> s.isOf(EvecualMC.RC_RECEIVER_ITEM),
+                            () -> new ItemStack(EvecualMC.RC_RECEIVER_ITEM)),
+                    new SlotRequirement("Steel Enclosure", "Steel Ingot or Iron Ingot", "Reinforced Aerospace Casing", 2, false,
+                            s -> s.isOf(EvecualMC.STEEL_INGOT) || s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(EvecualMC.STEEL_INGOT)),
+                    new SlotRequirement("HUD Glass", "Glass Pane", "High-Resolution Flight Display", 1, false,
+                            s -> isGlassItem(s.getItem()),
+                            () -> new ItemStack(Items.GLASS_PANE)),
+                    new SlotRequirement("Flight Computer", "Redstone Dust", "Autopilot Telemetry Processor", 2, false,
+                            s -> s.isOf(Items.REDSTONE),
+                            () -> new ItemStack(Items.REDSTONE)),
+                    new SlotRequirement("High-Gain Antenna", "Copper Wire or Copper Ingot", "1024m Parabolic Antenna", 2, false,
+                            s -> s.isOf(EvecualMC.WIRE_ITEM) || s.isOf(Items.COPPER_INGOT),
+                            () -> new ItemStack(EvecualMC.WIRE_ITEM)),
+                    new SlotRequirement("Flight Sticks", "Lever or Stone Button", "Dual Helicopter Cyclic & Collective Sticks", 2, true,
+                            s -> s.isOf(Items.LEVER) || s.isOf(Items.STONE_BUTTON),
+                            () -> new ItemStack(Items.LEVER))
+            }
+    ),
+
+    HELI_MINING_ARM(
+            Category.VEHICLES,
+            "heli_mining_arm",
+            "Heli Mining Arm",
+            "Wing-mounted high-power titanium laser drill. Mines blocks in front of the helicopter.",
+            () -> new ItemStack(EvecualMC.HELI_MINING_ARM),
+            new SlotRequirement[]{
+                    new SlotRequirement("Drill Core", "Diamond / Iron Pickaxe", "Heavy Diamond Drill Bit", 1, false,
+                            s -> s.isOf(Items.DIAMOND_PICKAXE) || s.isOf(Items.IRON_PICKAXE),
+                            () -> new ItemStack(Items.DIAMOND_PICKAXE)),
+                    new SlotRequirement("Mounting Pylon", "Steel Ingot or Iron Ingot", "Wing Hardpoint Mounting Pylon", 3, false,
+                            s -> s.isOf(EvecualMC.STEEL_INGOT) || s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(EvecualMC.STEEL_INGOT)),
+                    new SlotRequirement("Excavation Motor", "Electric Engine or Upgraded Engine", "Rotary Drill Actuator Motor", 1, false,
+                            s -> s.isOf(EvecualMC.ENGINE) || s.isOf(EvecualMC.UPGRADED_ENGINE),
+                            () -> new ItemStack(EvecualMC.ENGINE)),
+                    new SlotRequirement("Heavy Wiring", "Copper Wire", "High-Current Power Harness", 2, false,
+                            s -> s.isOf(EvecualMC.WIRE_ITEM),
+                            () -> new ItemStack(EvecualMC.WIRE_ITEM)),
+                    null,
+                    null
+            }
+    ),
+
+    HELI_WEAPON_ARM(
+            Category.VEHICLES,
+            "heli_weapon_arm",
+            "Heli Weapon Arm",
+            "Wing-mounted plasma lightning blaster. Fires high-voltage electric discharges at targets.",
+            () -> new ItemStack(EvecualMC.HELI_WEAPON_ARM),
+            new SlotRequirement[]{
+                    new SlotRequirement("Lightning Emitter", "Lightning Rod or Dispenser", "Plasma Induction Emitter Tip", 1, false,
+                            s -> s.isOf(Items.LIGHTNING_ROD) || s.isOf(Items.DISPENSER),
+                            () -> new ItemStack(Items.LIGHTNING_ROD)),
+                    new SlotRequirement("Mounting Pylon", "Steel Ingot or Iron Ingot", "Wing Hardpoint Mounting Pylon", 3, false,
+                            s -> s.isOf(EvecualMC.STEEL_INGOT) || s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(EvecualMC.STEEL_INGOT)),
+                    new SlotRequirement("Capacitor Core", "Battery or Redstone Dust", "High-Voltage Capacitor Cell", 1, false,
+                            s -> s.isOf(EvecualMC.BATTERY_ITEM) || s.isOf(Items.REDSTONE),
+                            () -> new ItemStack(EvecualMC.BATTERY_ITEM)),
+                    new SlotRequirement("Discharge Wire", "Copper Wire", "Heavy Pulse Discharge Wiring", 2, false,
+                            s -> s.isOf(EvecualMC.WIRE_ITEM),
+                            () -> new ItemStack(EvecualMC.WIRE_ITEM)),
+                    null,
+                    null
+            }
     );
 
     public enum Category {
@@ -427,6 +503,26 @@ public enum CombinerRecipe {
                 {138, 36}, // 1: Crystal Oscillator (right crystal)
                 {96, 48},  // 2: Ground Shield (bottom ground)
                 {96, 22}   // 3: Copper Bus (top pins)
+            };
+            case HELI_CONTROLLER -> new int[][]{
+                {96, 36},  // 0: RC Receiver (internal RF board)
+                {96, 48},  // 1: Steel Enclosure (lower aerospace casing)
+                {96, 22},  // 2: HUD Glass (top flight HUD)
+                {48, 36},  // 3: Flight Computer (left autopilot)
+                {140, 22}, // 4: High-Gain Antenna (top 1024m antenna)
+                {140, 42}  // 5: Flight Sticks (right cyclic/collective sticks)
+            };
+            case HELI_MINING_ARM -> new int[][]{
+                {96, 22},  // 0: Drill Core (front tip)
+                {96, 36},  // 1: Mounting Pylon (pylon body)
+                {52, 36},  // 2: Excavation Motor (motor drive)
+                {138, 36}  // 3: Heavy Wiring (power wire)
+            };
+            case HELI_WEAPON_ARM -> new int[][]{
+                {96, 22},  // 0: Lightning Emitter (emitter tip)
+                {96, 36},  // 1: Mounting Pylon (pylon body)
+                {52, 36},  // 2: Capacitor Core (capacitor cell)
+                {138, 36}  // 3: Discharge Wire (heavy wire)
             };
         };
     }

@@ -27,6 +27,10 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
     private final ModelPart main_rotor;
     private final ModelPart tail_rotor;
     private final ModelPart glass;
+    private final ModelPart left_arm_mining;
+    private final ModelPart left_arm_weapon;
+    private final ModelPart right_arm_mining;
+    private final ModelPart right_arm_weapon;
 
     public HeliEntityModel(ModelPart root) {
         this.root = root;
@@ -39,6 +43,10 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         this.main_rotor = root.getChild("main_rotor");
         this.tail_rotor = root.getChild("tail_rotor");
         this.glass = root.getChild("glass");
+        this.left_arm_mining = root.getChild("left_arm_mining");
+        this.left_arm_weapon = root.getChild("left_arm_weapon");
+        this.right_arm_mining = root.getChild("right_arm_mining");
+        this.right_arm_weapon = root.getChild("right_arm_weapon");
     }
 
     public static TexturedModelData getTexturedModelData() {
@@ -197,6 +205,34 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("glass", glass, ModelTransform.NONE);
 
+        // 9. Left Wing Hardpoint Arms
+        ModelPartBuilder leftArmMining = ModelPartBuilder.create()
+                .uv(128, 0).cuboid(-17.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(0, 0).cuboid(-19.0F, 8.0F, -22.0F, 4.0F, 4.0F, 12.0F) // Heavy Titanium Drill Housing
+                .uv(128, 0).cuboid(-18.0F, 9.0F, -28.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
+        root.addChild("left_arm_mining", leftArmMining, ModelTransform.NONE);
+
+        ModelPartBuilder leftArmWeapon = ModelPartBuilder.create()
+                .uv(128, 0).cuboid(-17.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(128, 0).cuboid(-19.0F, 7.5F, -16.0F, 4.0F, 5.0F, 8.0F) // Capacitor Pod
+                .uv(0, 128).cuboid(-18.5F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F) // Upper Blaster Barrel
+                .uv(0, 128).cuboid(-16.5F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F); // Lower Blaster Barrel
+        root.addChild("left_arm_weapon", leftArmWeapon, ModelTransform.NONE);
+
+        // 10. Right Wing Hardpoint Arms
+        ModelPartBuilder rightArmMining = ModelPartBuilder.create()
+                .uv(128, 0).cuboid(14.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(0, 0).cuboid(15.0F, 8.0F, -22.0F, 4.0F, 4.0F, 12.0F) // Drill Housing
+                .uv(128, 0).cuboid(16.0F, 9.0F, -28.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
+        root.addChild("right_arm_mining", rightArmMining, ModelTransform.NONE);
+
+        ModelPartBuilder rightArmWeapon = ModelPartBuilder.create()
+                .uv(128, 0).cuboid(14.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(128, 0).cuboid(15.0F, 7.5F, -16.0F, 4.0F, 5.0F, 8.0F) // Capacitor Pod
+                .uv(0, 128).cuboid(15.0F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F) // Upper Blaster Barrel
+                .uv(0, 128).cuboid(17.0F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F); // Lower Blaster Barrel
+        root.addChild("right_arm_weapon", rightArmWeapon, ModelTransform.NONE);
+
         return TexturedModelData.of(modelData, 256, 256);
     }
 
@@ -221,13 +257,35 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         this.tail_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
-    public void renderFirstPersonCockpit(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+    public void renderHeli(HeliEntity heli, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+        render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        renderArms(heli, matrices, vertices, light, overlay, red, green, blue, alpha);
+    }
+
+    public void renderFirstPersonCockpit(HeliEntity heli, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
         this.fuselage_lower.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.fuselage_rear.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.interior.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.tail_boom.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.tail_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.skids.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        renderArms(heli, matrices, vertices, light, overlay, red, green, blue, alpha);
+    }
+
+    private void renderArms(HeliEntity heli, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+        int leftArm = heli.getLeftArmType();
+        if (leftArm == 1) {
+            this.left_arm_mining.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        } else if (leftArm == 2) {
+            this.left_arm_weapon.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        }
+
+        int rightArm = heli.getRightArmType();
+        if (rightArm == 1) {
+            this.right_arm_mining.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        } else if (rightArm == 2) {
+            this.right_arm_weapon.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        }
     }
 
     public void renderGlass(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float r, float g, float b, float a) {

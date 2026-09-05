@@ -83,6 +83,21 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "ev_heli"),
             new com.evecual.evecualmc.item.HeliItem(new Item.Settings().maxCount(1)));
 
+    public static final Item HELI_CONTROLLER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "heli_controller"),
+            new com.evecual.evecualmc.item.HeliControllerItem(new Item.Settings().maxCount(1)));
+
+    public static final Item HELI_MINING_ARM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "heli_mining_arm"),
+            new com.evecual.evecualmc.item.HeliMiningArmItem(new Item.Settings().maxCount(2)));
+
+    public static final Item HELI_WEAPON_ARM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "heli_weapon_arm"),
+            new com.evecual.evecualmc.item.HeliWeaponArmItem(new Item.Settings().maxCount(2)));
+
     public static final Item RC_CAR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_car"),
@@ -360,6 +375,13 @@ public class EvecualMC implements ModInitializer {
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.CarTrunkScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.HeliUpgradeScreenHandler> HELI_UPGRADE_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "heli_upgrade"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.HeliUpgradeScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
     // Entity Types
     public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
@@ -402,7 +424,7 @@ public class EvecualMC implements ModInitializer {
             FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.HeliEntity>create(SpawnGroup.MISC,
                     com.evecual.evecualmc.entity.HeliEntity::new)
                     .dimensions(EntityDimensions.fixed(2.2f, 1.85f))
-                    .trackRangeChunks(20)
+                    .trackRangeChunks(64) // 1024 blocks range
                     .build());
 
     // Creative Inventory Tab: "evecual" with lightning icon
@@ -421,6 +443,9 @@ public class EvecualMC implements ModInitializer {
                 entries.add(TRUNK_UPGRADE);
                 entries.add(CAR_ITEM);
                 entries.add(HELI_ITEM);
+                entries.add(HELI_CONTROLLER_ITEM);
+                entries.add(HELI_MINING_ARM);
+                entries.add(HELI_WEAPON_ARM);
                 entries.add(RC_CAR_ITEM);
                 entries.add(RC_DRONE_ITEM);
                 entries.add(RC_ROBOT_ITEM);
@@ -471,6 +496,11 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier DISMOUNT_HELI_PACKET_ID = new Identifier(MOD_ID, "dismount_heli");
     public static final Identifier START_HELI_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "start_heli_auto_park_s2c");
     public static final Identifier CANCEL_HELI_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_heli_auto_park_s2c");
+    public static final Identifier OPEN_HELI_UPGRADE_PACKET_ID = new Identifier(MOD_ID, "open_heli_upgrade");
+    public static final Identifier HELI_ARM_ACTION_PACKET_ID = new Identifier(MOD_ID, "heli_arm_action");
+    public static final Identifier HELI_CONTROLLER_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_controller_input");
+    public static final Identifier HELI_CONTROLLER_ARM_ACTION_PACKET_ID = new Identifier(MOD_ID, "heli_controller_arm_action");
+    public static final Identifier HELI_CONTROLLER_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "heli_controller_auto_dock");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -971,6 +1001,82 @@ public class EvecualMC implements ModInitializer {
                             net.minecraft.util.math.Vec3d dismountPos = heli.updatePassengerForDismount(player);
                             player.requestTeleport(dismountPos.x, dismountPos.y, dismountPos.z);
                             player.sendMessage(Text.literal("§e🚁 Exited Helicopter."), true);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(OPEN_HELI_UPGRADE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    int heliId = buf.readInt();
+                    server.execute(() -> {
+                        if (player.getWorld().getEntityById(heliId) instanceof HeliEntity heli && player.squaredDistanceTo(heli) < 64.0) {
+                            heli.openUpgradeScreen(player);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_ARM_ACTION_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        if (player.getVehicle() instanceof HeliEntity heli) {
+                            heli.performArmAction(player);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_CONTROLLER_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID heliUuid = buf.readUuid();
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean up = buf.readBoolean();
+                    boolean down = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
+                    float yaw = buf.isReadable(4) ? buf.readFloat() : Float.NaN;
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(heliUuid);
+                            if (target instanceof HeliEntity heli) {
+                                if (player.squaredDistanceTo(heli) <= 1048576.0) { // 1024 blocks range
+                                    heli.setRemoteInputs(forward, back, left, right, up, down, sprint);
+                                    if (!Float.isNaN(yaw)) {
+                                        heli.setRemoteYaw(yaw);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_CONTROLLER_ARM_ACTION_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID heliUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(heliUuid);
+                            if (target instanceof HeliEntity heli) {
+                                if (player.squaredDistanceTo(heli) <= 1048576.0) {
+                                    heli.performArmAction(player);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_CONTROLLER_AUTO_DOCK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID heliUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(heliUuid);
+                            if (target instanceof HeliEntity heli) {
+                                if (player.squaredDistanceTo(heli) <= 1048576.0) {
+                                    heli.toggleAutoPark(player);
+                                }
+                            }
                         }
                     });
                 });

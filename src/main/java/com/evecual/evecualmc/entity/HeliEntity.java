@@ -1,11 +1,12 @@
 package com.evecual.evecualmc.entity;
 
 import com.evecual.evecualmc.EvecualMC;
-import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import com.evecual.evecualmc.block.HeliChargerBlock;
 import com.evecual.evecualmc.block.HeliChargerPart;
+import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
+import com.evecual.evecualmc.screen.HeliUpgradeScreenHandler;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.GlassBlock;
 import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.block.StainedGlassPaneBlock;
@@ -29,6 +30,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -36,14 +38,19 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class HeliEntity extends Entity {
     public static final int BASE_MAX_ENERGY = 2000;
@@ -64,8 +71,15 @@ public class HeliEntity extends Entity {
     private static final TrackedData<Boolean> CHARGING = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IN_FLIGHT = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> AUTO_RETURNING = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> LEFT_ARM = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> RIGHT_ARM = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Boolean> STORAGE_UNLOCKED = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> MAX_ENERGY_CAP = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<String> PAIRED_PLAYER_UUID = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Boolean> ACTIVE_RC_LINK = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private final SimpleInventory trunk = new SimpleInventory(27);
+    private final SimpleInventory upgrades = new SimpleInventory(5);
 
     private boolean inputForward;
     private boolean inputBack;
@@ -74,6 +88,8 @@ public class HeliEntity extends Entity {
     private boolean inputUp;
     private boolean inputDown;
     private boolean inputSprint;
+
+    private int remoteControlTimeout = 0;
 
     private BlockPos targetHelipadPos = null;
     private int autoReturnStage = 0;
@@ -105,6 +121,12 @@ public class HeliEntity extends Entity {
         this.dataTracker.startTracking(CHARGING, false);
         this.dataTracker.startTracking(IN_FLIGHT, false);
         this.dataTracker.startTracking(AUTO_RETURNING, false);
+        this.dataTracker.startTracking(LEFT_ARM, 0); // 0: None, 1: Mining Arm, 2: Weapon Arm
+        this.dataTracker.startTracking(RIGHT_ARM, 0);
+        this.dataTracker.startTracking(STORAGE_UNLOCKED, false);
+        this.dataTracker.startTracking(MAX_ENERGY_CAP, BASE_MAX_ENERGY);
+        this.dataTracker.startTracking(PAIRED_PLAYER_UUID, "");
+        this.dataTracker.startTracking(ACTIVE_RC_LINK, false);
     }
 
     private void updateChunkLoading() {
@@ -144,7 +166,11 @@ public class HeliEntity extends Entity {
     }
 
     public int getMaxEnergy() {
-        return isUpgradedEngine() ? UPGRADED_MAX_ENERGY : BASE_MAX_ENERGY;
+        return this.dataTracker.get(MAX_ENERGY_CAP);
+    }
+
+    public void setMaxEnergyCap(int cap) {
+        this.dataTracker.set(MAX_ENERGY_CAP, Math.max(BASE_MAX_ENERGY, cap));
     }
 
     public int getColorVariant() {
@@ -169,6 +195,46 @@ public class HeliEntity extends Entity {
 
     public void setUpgradedEngine(boolean upgraded) {
         this.dataTracker.set(UPGRADED_ENGINE, upgraded);
+    }
+
+    public int getLeftArmType() {
+        return this.dataTracker.get(LEFT_ARM);
+    }
+
+    public void setLeftArmType(int arm) {
+        this.dataTracker.set(LEFT_ARM, arm);
+    }
+
+    public int getRightArmType() {
+        return this.dataTracker.get(RIGHT_ARM);
+    }
+
+    public void setRightArmType(int arm) {
+        this.dataTracker.set(RIGHT_ARM, arm);
+    }
+
+    public boolean isStorageUnlocked() {
+        return this.dataTracker.get(STORAGE_UNLOCKED);
+    }
+
+    public void setStorageUnlocked(boolean unlocked) {
+        this.dataTracker.set(STORAGE_UNLOCKED, unlocked);
+    }
+
+    public String getPairedPlayerUuid() {
+        return this.dataTracker.get(PAIRED_PLAYER_UUID);
+    }
+
+    public void setPairedPlayerUuid(String uuid) {
+        this.dataTracker.set(PAIRED_PLAYER_UUID, uuid != null ? uuid : "");
+    }
+
+    public boolean hasActiveRcLink() {
+        return this.dataTracker.get(ACTIVE_RC_LINK);
+    }
+
+    public void setActiveRcLink(boolean active) {
+        this.dataTracker.set(ACTIVE_RC_LINK, active);
     }
 
     public float getPitchTilt() {
@@ -207,6 +273,42 @@ public class HeliEntity extends Entity {
         return this.currentSpeed;
     }
 
+    public SimpleInventory getUpgrades() {
+        return this.upgrades;
+    }
+
+    public SimpleInventory getTrunk() {
+        return this.trunk;
+    }
+
+    public void syncUpgrades() {
+        // Slot 0: Speed Mod (Turbo Engine)
+        ItemStack engine = upgrades.getStack(0);
+        boolean isUpgraded = engine.isOf(EvecualMC.UPGRADED_ENGINE);
+        setUpgradedEngine(isUpgraded);
+
+        // Slot 1: Cargo Mod (Trunk Upgrade)
+        ItemStack trunkStack = upgrades.getStack(1);
+        setStorageUnlocked(!trunkStack.isEmpty() && trunkStack.isOf(EvecualMC.TRUNK_UPGRADE));
+
+        // Slot 2: Energy Storage Mod (Battery Item)
+        ItemStack batteryStack = upgrades.getStack(2);
+        int batteryCount = batteryStack.isOf(EvecualMC.BATTERY_ITEM) ? batteryStack.getCount() : 0;
+        int baseCap = isUpgraded ? UPGRADED_MAX_ENERGY : BASE_MAX_ENERGY;
+        int totalMaxEnergy = baseCap + (batteryCount * 1000);
+        setMaxEnergyCap(totalMaxEnergy);
+
+        // Slot 3: Left Wing Arm Hardpoint
+        ItemStack leftArm = upgrades.getStack(3);
+        int leftType = leftArm.isOf(EvecualMC.HELI_MINING_ARM) ? 1 : leftArm.isOf(EvecualMC.HELI_WEAPON_ARM) ? 2 : 0;
+        setLeftArmType(leftType);
+
+        // Slot 4: Right Wing Arm Hardpoint
+        ItemStack rightArm = upgrades.getStack(4);
+        int rightType = rightArm.isOf(EvecualMC.HELI_MINING_ARM) ? 1 : rightArm.isOf(EvecualMC.HELI_WEAPON_ARM) ? 2 : 0;
+        setRightArmType(rightType);
+    }
+
     public int charge(int amount) {
         int current = getEnergy();
         int max = getMaxEnergy();
@@ -227,8 +329,27 @@ public class HeliEntity extends Entity {
         this.inputSprint = sprint;
     }
 
+    public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint) {
+        setInputs(forward, back, left, right, up, down, sprint);
+        this.remoteControlTimeout = 10;
+    }
+
+    public void setRemoteYaw(float yaw) {
+        this.prevYaw = this.getYaw();
+        this.setYaw(yaw);
+        this.setBodyYaw(yaw);
+        this.setHeadYaw(yaw);
+    }
+
     public void openTrunk(PlayerEntity player) {
         if (!this.getWorld().isClient) {
+            if (!isStorageUnlocked() && !player.isCreative() && isTrunkEmpty()) {
+                player.sendMessage(Text.literal("§c📦 Cargo Bay Locked! Install a Trunk Upgrade via Heli Upgrade Terminal [X]."), true);
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.PLAYERS, 0.8F, 1.2F);
+                return;
+            }
+
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                     (syncId, playerInventory, p) -> new GenericContainerScreenHandler(
                             net.minecraft.screen.ScreenHandlerType.GENERIC_9X3, syncId, playerInventory, this.trunk, 3),
@@ -237,11 +358,150 @@ public class HeliEntity extends Entity {
         }
     }
 
+    private boolean isTrunkEmpty() {
+        for (int i = 0; i < trunk.size(); i++) {
+            if (!trunk.getStack(i).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    public void openUpgradeScreen(PlayerEntity player) {
+        if (!this.getWorld().isClient && player instanceof ServerPlayerEntity sp) {
+            sp.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                    (syncId, playerInventory, p) -> new HeliUpgradeScreenHandler(syncId, playerInventory, this.upgrades, this),
+                    Text.literal("EV Heli Upgrade Terminal")
+            ));
+        }
+    }
+
+    public void performArmAction(PlayerEntity player) {
+        if (this.getWorld().isClient) return;
+
+        int energy = getEnergy();
+        if (energy < 2) {
+            player.sendMessage(Text.literal("§c⚡ Heli Energy too low to fire hardpoint arms!"), true);
+            return;
+        }
+
+        int leftArm = getLeftArmType();
+        int rightArm = getRightArmType();
+
+        if (leftArm == 0 && rightArm == 0) {
+            player.sendMessage(Text.literal("§e⚠️ No hardpoint arms installed! Press [X] looking at Heli to install Mining or Weapon Arms."), true);
+            return;
+        }
+
+        setEnergy(energy - 2);
+
+        double radYaw = Math.toRadians(this.getYaw());
+        double curPitch = this.getPitchTilt();
+        double radPitch = Math.toRadians(curPitch);
+
+        Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
+        Vec3d rightDir = new Vec3d(Math.cos(radYaw), 0, Math.sin(radYaw)).normalize();
+
+        Vec3d leftArmPos = this.getPos().add(0, 0.6, 0).subtract(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
+        Vec3d rightArmPos = this.getPos().add(0, 0.6, 0).add(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
+
+        if (leftArm == 1) fireMiningBeam(player, leftArmPos, forwardDir);
+        else if (leftArm == 2) fireWeaponPlasma(player, leftArmPos, forwardDir);
+
+        if (rightArm == 1) fireMiningBeam(player, rightArmPos, forwardDir);
+        else if (rightArm == 2) fireWeaponPlasma(player, rightArmPos, forwardDir);
+    }
+
+    private void fireMiningBeam(PlayerEntity player, Vec3d startPos, Vec3d dir) {
+        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+
+        double maxDist = 16.0;
+        Vec3d endPos = startPos.add(dir.multiply(maxDist));
+        BlockHitResult hit = this.getWorld().raycast(new RaycastContext(
+                startPos, endPos, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, this));
+
+        // Beam particle trail
+        for (double d = 0.5; d < maxDist; d += 0.8) {
+            Vec3d p = startPos.add(dir.multiply(d));
+            serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.01);
+            if (hit.getType() != HitResult.Type.MISS && p.squaredDistanceTo(hit.getPos()) < 1.0) {
+                break;
+            }
+        }
+
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            BlockPos pos = hit.getBlockPos();
+            BlockState state = serverWorld.getBlockState(pos);
+            float hardness = state.getHardness(serverWorld, pos);
+
+            if (hardness >= 0 && hardness <= 50.0F && !state.isAir()) {
+                serverWorld.spawnParticles(ParticleTypes.CRIT, hit.getPos().x, hit.getPos().y, hit.getPos().z, 6, 0.15, 0.15, 0.15, 0.05);
+                serverWorld.playSound(null, pos, SoundEvents.BLOCK_ANVIL_HIT, SoundCategory.BLOCKS, 0.6F, 1.8F);
+
+                List<ItemStack> drops = Block.getDroppedStacks(state, serverWorld, pos, null, player, new ItemStack(Items.DIAMOND_PICKAXE));
+                serverWorld.breakBlock(pos, false, player);
+
+                for (ItemStack drop : drops) {
+                    if (isStorageUnlocked()) {
+                        ItemStack remainder = this.trunk.addStack(drop);
+                        if (!remainder.isEmpty()) {
+                            serverWorld.spawnEntity(new ItemEntity(serverWorld, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, remainder));
+                        }
+                    } else {
+                        serverWorld.spawnEntity(new ItemEntity(serverWorld, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, drop));
+                    }
+                }
+            }
+        }
+    }
+
+    private void fireWeaponPlasma(PlayerEntity player, Vec3d startPos, Vec3d dir) {
+        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+
+        double maxDist = 32.0;
+        Vec3d endPos = startPos.add(dir.multiply(maxDist));
+
+        // Raycast entities
+        Box searchBox = new Box(startPos, endPos).expand(1.5);
+        List<Entity> targets = serverWorld.getOtherEntities(this, searchBox, e -> e instanceof LivingEntity && e != player && e.isAlive());
+
+        LivingEntity hitEntity = null;
+        double closestDistSq = Double.MAX_VALUE;
+
+        for (Entity e : targets) {
+            Box bbox = e.getBoundingBox().expand(0.3);
+            if (bbox.raycast(startPos, endPos).isPresent()) {
+                double dSq = startPos.squaredDistanceTo(e.getPos());
+                if (dSq < closestDistSq) {
+                    closestDistSq = dSq;
+                    hitEntity = (LivingEntity) e;
+                }
+            }
+        }
+
+        double impactDist = hitEntity != null ? Math.sqrt(closestDistSq) : maxDist;
+
+        // Plasma beam effect
+        for (double d = 0.5; d < impactDist; d += 0.6) {
+            Vec3d p = startPos.add(dir.multiply(d));
+            serverWorld.spawnParticles(ParticleTypes.SONIC_BOOM, p.x, p.y, p.z, 1, 0, 0, 0, 0);
+            serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 2, 0.05, 0.05, 0.05, 0.02);
+        }
+
+        serverWorld.playSound(null, startPos.x, startPos.y, startPos.z, SoundEvents.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.6F, 2.0F);
+
+        if (hitEntity != null) {
+            DamageSource ds = serverWorld.getDamageSources().playerAttack(player);
+            hitEntity.damage(ds, 10.0F);
+            serverWorld.spawnParticles(ParticleTypes.EXPLOSION, hitEntity.getX(), hitEntity.getY() + 0.5, hitEntity.getZ(), 1, 0, 0, 0, 0);
+        }
+    }
+
     public void applyItemNbt(NbtCompound nbt) {
         if (nbt.contains("ColorVariant")) setColorVariant(nbt.getInt("ColorVariant"));
         if (nbt.contains("GlassColor")) setGlassColor(nbt.getInt("GlassColor"));
         if (nbt.contains("UpgradedEngine")) setUpgradedEngine(nbt.getBoolean("UpgradedEngine"));
         if (nbt.contains("Energy")) setEnergy(nbt.getInt("Energy"));
+        if (nbt.contains("Upgrades", 10)) upgrades.readNbtList(nbt.getList("Upgrades", 10));
+        syncUpgrades();
     }
 
     public ItemStack createHeliDropItem() {
@@ -251,6 +511,7 @@ public class HeliEntity extends Entity {
         nbt.putInt("GlassColor", getGlassColor());
         nbt.putBoolean("UpgradedEngine", isUpgradedEngine());
         nbt.putInt("Energy", getEnergy());
+        nbt.put("Upgrades", upgrades.toNbtList());
         return stack;
     }
 
@@ -315,15 +576,13 @@ public class HeliEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 3. Engine Upgrade Application
+        // 3. Engine Upgrade Application directly via item
         if (held.isOf(EvecualMC.UPGRADED_ENGINE) && !isUpgradedEngine()) {
             if (!this.getWorld().isClient) {
-                setUpgradedEngine(true);
+                upgrades.setStack(0, held.split(1));
+                syncUpgrades();
                 this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                         SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0F, 1.4F);
-                if (!player.isCreative()) {
-                    held.decrement(1);
-                }
                 player.sendMessage(Text.literal("§b⚡ High-Power Turbine Upgrade Installed! (+50% Battery & Efficiency)"), true);
             }
             return ActionResult.SUCCESS;
@@ -333,6 +592,7 @@ public class HeliEntity extends Entity {
         if (player.isSneaking()) {
             if (!this.getWorld().isClient) {
                 dropTrunkContents();
+                dropUpgradesContents();
                 ItemEntity dropped = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), createHeliDropItem());
                 this.getWorld().spawnEntity(dropped);
                 this.discard();
@@ -367,6 +627,17 @@ public class HeliEntity extends Entity {
         }
     }
 
+    private void dropUpgradesContents() {
+        for (int i = 0; i < upgrades.size(); ++i) {
+            ItemStack stack = upgrades.getStack(i);
+            if (!stack.isEmpty()) {
+                ItemEntity itemEntity = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), stack.copy());
+                this.getWorld().spawnEntity(itemEntity);
+                upgrades.setStack(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
     @Override
     public boolean damage(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
@@ -374,6 +645,7 @@ public class HeliEntity extends Entity {
         }
         if (!this.getWorld().isClient && !this.isRemoved()) {
             dropTrunkContents();
+            dropUpgradesContents();
             ItemEntity dropped = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), createHeliDropItem());
             this.getWorld().spawnEntity(dropped);
             this.discard();
@@ -393,16 +665,13 @@ public class HeliEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Position pilot comfortably inside front cockpit with kinematic pitch and yaw tracking
             double radYaw = Math.toRadians(this.getYaw());
             double curPitch = this.dataTracker.get(PITCH_TILT);
             double radPitch = Math.toRadians(curPitch);
 
-            // Local cockpit offset before tilt
             double localZ = 0.85; // forward in cockpit
             double localY = 0.40; // seat height
 
-            // Kinematic 3D pitch rotation
             double tiltedZ = localZ * Math.cos(radPitch) - localY * Math.sin(radPitch);
             double tiltedY = localY * Math.cos(radPitch) + localZ * Math.sin(radPitch);
 
@@ -484,7 +753,6 @@ public class HeliEntity extends Entity {
             return;
         }
 
-        // Fast & comprehensive search for nearest 3x3 Heli Charger Helipad within 64 blocks
         BlockPos heliPos = this.getBlockPos();
         BlockPos bestSpot = null;
         double bestDistSq = Double.MAX_VALUE;
@@ -511,7 +779,7 @@ public class HeliEntity extends Entity {
 
         if (bestSpot != null) {
             startAutoPark(bestSpot);
-            if (player instanceof net.minecraft.server.network.ServerPlayerEntity sp) {
+            if (player instanceof ServerPlayerEntity sp) {
                 net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
                 buf.writeInt(this.getId());
                 buf.writeInt(bestSpot.getX());
@@ -533,7 +801,7 @@ public class HeliEntity extends Entity {
             this.targetHelipadPos = null;
             this.autoReturnStage = 0;
             this.autoParkGraceTicks = 0;
-            if (player instanceof net.minecraft.server.network.ServerPlayerEntity sp) {
+            if (player instanceof ServerPlayerEntity sp) {
                 net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
                 buf.writeInt(this.getId());
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, EvecualMC.CANCEL_HELI_AUTO_PARK_S2C_PACKET_ID, buf);
@@ -552,16 +820,25 @@ public class HeliEntity extends Entity {
         boolean hasPower = energy > 0;
         boolean hasPilot = passenger instanceof PlayerEntity;
 
+        if (this.remoteControlTimeout > 0) {
+            this.remoteControlTimeout--;
+        }
+        boolean isRemotePiloted = this.remoteControlTimeout > 0;
+        boolean isPilotedOrRemote = hasPilot || isRemotePiloted;
+
         if (this.autoParkGraceTicks > 0) {
             this.autoParkGraceTicks--;
         }
 
-        // 1. Rotor Speed & Spool-up calculation
+        // 1. Rotor Speed & Spool-up calculation:
+        // When leaving the heli, it turns off and propellers stop spinning!
         float targetRotorSpeed = 0.0F;
-        if (hasPower && (hasPilot || isAutoReturning())) {
+        if (hasPower && (isPilotedOrRemote || isAutoReturning() || hasActiveRcLink())) {
             targetRotorSpeed = inputSprint ? 1.5F : 1.0F;
         } else if (hasPower && !this.isOnGround()) {
-            targetRotorSpeed = 0.6F; // emergency auto-rotation descent
+            targetRotorSpeed = 0.6F; // emergency auto-rotation descent until landed
+        } else {
+            targetRotorSpeed = 0.0F; // Engine OFF! Propellers stop completely!
         }
 
         float currentRotorSpeed = this.dataTracker.get(ROTOR_SPEED);
@@ -575,7 +852,7 @@ public class HeliEntity extends Entity {
         boolean flying = currentRotorSpeed > 0.3F && !this.isOnGround() && !isCharging();
         this.dataTracker.set(IN_FLIGHT, flying);
 
-        // 2. Flight Dynamics & Speed Control (Runs on both client and server for zero lag!)
+        // 2. Flight Dynamics & Speed Control
         double targetHozSpeed = 0.0;
         double targetVy = 0.0;
         float targetYawDelta = 0.0F;
@@ -656,15 +933,18 @@ public class HeliEntity extends Entity {
                                 p.sendMessage(Text.literal("§a⚡ Touchdown Complete! Recharging on 3x3 Helipad..."), true);
                             }
                             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
-                                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.2F);
+                                     SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.2F);
                         }
                     }
                 }
             }
         }
-        else if (hasPilot && hasPower) {
+        else if (isPilotedOrRemote && hasPower) {
             // Horizontal Cruise Speed: 12 blocks/s normal (0.60), 20 blocks/s boost (1.00)
-            double maxCruise = inputSprint ? BOOST_CRUISE_SPEED : NORMAL_CRUISE_SPEED;
+            double maxCruise = (inputSprint || isUpgradedEngine()) ? BOOST_CRUISE_SPEED : NORMAL_CRUISE_SPEED;
+            if (inputSprint && isUpgradedEngine()) {
+                maxCruise = 1.25; // 25 blocks/sec with turbo engine boost!
+            }
 
             if (inputForward) {
                 targetHozSpeed = maxCruise;
@@ -689,15 +969,10 @@ public class HeliEntity extends Entity {
             } else if (inputDown) {
                 targetVy = -0.40; // 8.0 blocks/sec descent
             } else {
-                // Hover stability: active altitude lock
-                if (this.isOnGround()) {
-                    targetVy = 0.0;
-                } else {
-                    targetVy = 0.0; // lock elevation
-                }
+                targetVy = 0.0; // altitude lock
             }
 
-            // Power consumption & effects (server authoritative)
+            // Power consumption & effects
             if (!this.getWorld().isClient) {
                 int drainInterval = inputSprint ? 6 : (inputForward || inputUp ? 12 : 20);
                 if (this.age % drainInterval == 0) {
@@ -721,7 +996,15 @@ public class HeliEntity extends Entity {
                 }
             }
         } else {
-            // Gravity & Auto-rotation descent when unpowered or no pilot
+            // No pilot and no active remote control: reset movement inputs and apply gentle descent/gravity
+            this.inputForward = false;
+            this.inputBack = false;
+            this.inputLeft = false;
+            this.inputRight = false;
+            this.inputUp = false;
+            this.inputDown = false;
+            this.inputSprint = false;
+
             if (this.isOnGround()) {
                 targetVy = 0.0;
             } else {
@@ -769,9 +1052,18 @@ public class HeliEntity extends Entity {
         setColorVariant(nbt.getInt("ColorVariant"));
         setGlassColor(nbt.getInt("GlassColor"));
         setUpgradedEngine(nbt.getBoolean("UpgradedEngine"));
+        if (nbt.contains("LeftArm")) setLeftArmType(nbt.getInt("LeftArm"));
+        if (nbt.contains("RightArm")) setRightArmType(nbt.getInt("RightArm"));
+        if (nbt.contains("StorageUnlocked")) setStorageUnlocked(nbt.getBoolean("StorageUnlocked"));
+        if (nbt.contains("MaxEnergyCap")) setMaxEnergyCap(nbt.getInt("MaxEnergyCap"));
+        if (nbt.contains("PairedPlayerUuid")) setPairedPlayerUuid(nbt.getString("PairedPlayerUuid"));
         if (nbt.contains("Trunk", 10)) {
             trunk.readNbtList(nbt.getList("Trunk", 10));
         }
+        if (nbt.contains("Upgrades", 10)) {
+            upgrades.readNbtList(nbt.getList("Upgrades", 10));
+        }
+        syncUpgrades();
     }
 
     @Override
@@ -780,6 +1072,12 @@ public class HeliEntity extends Entity {
         nbt.putInt("ColorVariant", getColorVariant());
         nbt.putInt("GlassColor", getGlassColor());
         nbt.putBoolean("UpgradedEngine", isUpgradedEngine());
+        nbt.putInt("LeftArm", getLeftArmType());
+        nbt.putInt("RightArm", getRightArmType());
+        nbt.putBoolean("StorageUnlocked", isStorageUnlocked());
+        nbt.putInt("MaxEnergyCap", getMaxEnergy());
+        nbt.putString("PairedPlayerUuid", getPairedPlayerUuid());
         nbt.put("Trunk", trunk.toNbtList());
+        nbt.put("Upgrades", upgrades.toNbtList());
     }
 }

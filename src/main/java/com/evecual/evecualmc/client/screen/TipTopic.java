@@ -652,6 +652,34 @@ public enum TipTopic {
                     "Electric flavor grants a burst of energetic speed perfect for pit stops.",
                     "Enjoyable treat during long journeys across hot desert biomes."
             }
+    ),
+
+    HELI_CONTROLLER(
+            "heli_controller",
+            "Heli Controller",
+            "📡 Long-Range Telecommand",
+            () -> new ItemStack(EvecualMC.HELI_CONTROLLER_ITEM),
+            "Aerospace-grade flight controller capable of remote piloting the EV Heli from up to 1024 blocks away.",
+            new String[]{
+                    "Aim at an EV Heli within 12 blocks and right-click with the controller to pair.",
+                    "Right-click anytime to toggle the active telecommand link online/standby.",
+                    "Press F to switch camera view between player and the remote helicopter.",
+                    "Operates seamlessly at extreme ranges up to 1024 blocks."
+            },
+            new String[][]{
+                    {"Right-Click Heli", "Pair controller with EV Heli"},
+                    {"Right-Click", "Toggle Active Remote Link ON/OFF"},
+                    {"Shift + Right-Click", "Unpair / Re-pair"},
+                    {"WASD + Space/Shift", "Fly and maneuver helicopter remotely"},
+                    {"LMB (Attack)", "Trigger hardpoint arms remotely"},
+                    {"C", "Trigger 3x3 Helipad Autopilot remotely"},
+                    {"F", "Toggle 3rd Person / FPV remote camera view"}
+            },
+            new String[]{
+                    "With 1024m range, you can scout entire maps and mine distant terrain safely.",
+                    "Combine with Mining Arms to create an autonomous aerial mining drone.",
+                    "Helicopter chunk remains loaded during active flight operations."
+            }
     );
 
     public final String id;
@@ -739,6 +767,8 @@ public enum TipTopic {
         if (item == null) return null;
         if (item == EvecualMC.CAR_ITEM) return CAR;
         if (item == EvecualMC.HELI_ITEM) return EV_HELI;
+        if (item == EvecualMC.HELI_CONTROLLER_ITEM) return HELI_CONTROLLER;
+        if (item == EvecualMC.HELI_MINING_ARM || item == EvecualMC.HELI_WEAPON_ARM) return EV_HELI;
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;

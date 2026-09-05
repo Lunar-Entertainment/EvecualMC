@@ -67,11 +67,11 @@ public class HeliEntityRenderer extends EntityRenderer<HeliEntity> {
         if (isFirstPersonPilot) {
             // In first person: Render the cockpit interior dashboard, cyclic flight stick, floor, and skids
             // without the upper roof/rotor mast clipping through the camera when pitching forward!
-            this.model.renderFirstPersonCockpit(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.model.renderFirstPersonCockpit(heli, matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
             this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3] * 0.35F);
         } else {
-            // In 3rd person / exterior view: Full helicopter model, rotor blades, tail boom, and motion blur
-            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            // In 3rd person / exterior view: Full helicopter model, rotor blades, tail boom, modular arms, and motion blur
+            this.model.renderHeli(heli, matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
             this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
 
             float rotorSpeed = heli.getRotorSpeed();

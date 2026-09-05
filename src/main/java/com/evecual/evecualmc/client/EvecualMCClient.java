@@ -277,7 +277,7 @@ public class EvecualMCClient implements ClientModInitializer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null) return false;
         Entity cam = client.getCameraEntity();
-        return cam instanceof RcCarEntity || cam instanceof RcDroneEntity || cam instanceof RcRobotEntity;
+        return cam instanceof RcCarEntity || cam instanceof RcDroneEntity || cam instanceof RcRobotEntity || cam instanceof HeliEntity;
     }
 
     public static BlockPos activeStationPos = null;
@@ -293,16 +293,37 @@ public class EvecualMCClient implements ClientModInitializer {
             return true;
         }
         net.minecraft.item.ItemStack held = null;
-        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM) || client.player.getMainHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
             held = client.player.getMainHandStack();
-        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)) {
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM) || client.player.getOffHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
             held = client.player.getOffHandStack();
         }
         if (held != null && held.hasNbt()) {
             net.minecraft.nbt.NbtCompound nbt = held.getNbt();
-            return nbt != null && (nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone") || nbt.containsUuid("PairedRobot")) && nbt.getBoolean("ActiveLink");
+            return nbt != null && (nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone") || nbt.containsUuid("PairedRobot") || nbt.containsUuid("PairedHeli")) && nbt.getBoolean("ActiveLink");
         }
         return false;
+    }
+
+    public static HeliEntity getTargetHeli(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return null;
+        net.minecraft.item.ItemStack held = null;
+        if (client.player.getMainHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
+            held = client.player.getMainHandStack();
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
+            held = client.player.getOffHandStack();
+        }
+        if (held == null || !held.hasNbt()) return null;
+        net.minecraft.nbt.NbtCompound nbt = held.getNbt();
+        if (nbt == null || !nbt.containsUuid("PairedHeli")) return null;
+        java.util.UUID pairedUuid = nbt.getUuid("PairedHeli");
+
+        for (Entity e : client.world.getEntities()) {
+            if (e instanceof HeliEntity heli && heli.getUuid().equals(pairedUuid)) {
+                return heli;
+            }
+        }
+        return null;
     }
 
     public static RcCarEntity getTargetRcCar(MinecraftClient client) {
@@ -414,9 +435,12 @@ public class EvecualMCClient implements ClientModInitializer {
         if (targetRc == null) {
             targetRc = getTargetRcRobot(client);
         }
+        if (targetRc == null) {
+            targetRc = getTargetHeli(client);
+        }
 
         if (targetRc == null) {
-            client.player.sendMessage(Text.literal("§c📷 No linked RC Car, Drone, or Robot found in range!"), true);
+            client.player.sendMessage(Text.literal("§c📷 No linked RC Vehicle or EV Heli found in range!"), true);
             return;
         }
 
@@ -428,14 +452,14 @@ public class EvecualMCClient implements ClientModInitializer {
             sendSafeActionBar(client, "§7📷 RC Camera: §cDISABLED §7[Player View]");
         } else {
             resetRcCameraAngle();
-            targetRcCameraDistance = 3.5F;
-            rcCameraDistance = 3.5F;
+            targetRcCameraDistance = (targetRc instanceof HeliEntity) ? 6.5F : 3.5F;
+            rcCameraDistance = targetRcCameraDistance;
             targetRcFpZoom = 1.0F;
             rcFpZoom = 1.0F;
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-            String name = (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
+            String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
             sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[RMB: View | F: Exit]");
         }
     }
@@ -448,6 +472,7 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register Screens
         HandledScreens.register(EvecualMC.ELECTRONIC_COMBINER_SCREEN_HANDLER, ElectronicCombinerScreen::new);
         HandledScreens.register(EvecualMC.CAR_TRUNK_SCREEN_HANDLER, CarTrunkScreen::new);
+        HandledScreens.register(EvecualMC.HELI_UPGRADE_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.HeliUpgradeScreen::new);
 
         // Register Car Entity Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);
@@ -696,9 +721,30 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
-                // Attach Cable Key
+                // Attach Cable / Open Heli Upgrade Key ('X')
                 while (ATTACH_CABLE_KEY.wasPressed()) {
-                    ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
+                    Entity targetHeli = null;
+                    if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit && hit.getEntity() instanceof HeliEntity heli) {
+                        targetHeli = heli;
+                    } else if (client.player != null && client.world != null) {
+                        net.minecraft.util.math.Vec3d eyePos = client.player.getEyePos();
+                        net.minecraft.util.math.Vec3d lookVec = client.player.getRotationVec(1.0F);
+                        for (HeliEntity heli : client.world.getEntitiesByClass(HeliEntity.class, client.player.getBoundingBox().expand(8.0), Entity::isAlive)) {
+                            net.minecraft.util.math.Vec3d toEntity = heli.getBoundingBox().getCenter().subtract(eyePos).normalize();
+                            if (lookVec.dotProduct(toEntity) > 0.35 && client.player.squaredDistanceTo(heli) < 64.0) {
+                                targetHeli = heli;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetHeli != null) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(targetHeli.getId());
+                        ClientPlayNetworking.send(EvecualMC.OPEN_HELI_UPGRADE_PACKET_ID, buf);
+                    } else {
+                        ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
+                    }
                 }
 
                 // Auto Park Key (for full-size Car & EV Heli)
@@ -752,7 +798,7 @@ public class EvecualMCClient implements ClientModInitializer {
                     ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
                 }
 
-                // EV Helicopter flight inputs & sneak dismount suppression
+                // EV Helicopter flight inputs, arm actions & sneak dismount suppression
                 if (client.player.getVehicle() instanceof HeliEntity heli) {
                     // Suppress vanilla sneak dismount so Shift ONLY acts as vertical descent (Go Down)
                     if (client.player.input != null) {
@@ -778,6 +824,15 @@ public class EvecualMCClient implements ClientModInitializer {
                     buf.writeBoolean(down);
                     buf.writeBoolean(sprint);
                     ClientPlayNetworking.send(EvecualMC.HELI_INPUT_PACKET_ID, buf);
+
+                    // LMB: Fire hardpoint arms while in flight
+                    if (client.options.attackKey.isPressed()) {
+                        if (!wasAttackPressed || robotAttackCooldown <= 0) {
+                            wasAttackPressed = true;
+                            robotAttackCooldown = 4;
+                            ClientPlayNetworking.send(EvecualMC.HELI_ARM_ACTION_PACKET_ID, PacketByteBufs.empty());
+                        }
+                    }
                 }
 
                 // Stationary RC Controller handling
@@ -971,6 +1026,59 @@ public class EvecualMCClient implements ClientModInitializer {
 
                         }
                     }
+
+                    // --- 4. EV Heli Controller Handling ---
+                    HeliEntity targetHeli = getTargetHeli(client);
+                    if (targetHeli != null) {
+                        java.util.UUID pairedUuid = targetHeli.getUuid();
+
+                        // 'C' Key while Heli RC link is active: Auto Return to 3x3 Helipad!
+                        if (cDown && !wasCPressed) {
+                            wasCPressed = true;
+                            PacketByteBuf dockBuf = PacketByteBufs.create();
+                            dockBuf.writeUuid(pairedUuid);
+                            ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_AUTO_DOCK_PACKET_ID, dockBuf);
+                        }
+
+                        if (client.player.squaredDistanceTo(targetHeli) <= 1048576.0) { // 1024m max range (1024^2)
+                            boolean rcFwd = client.options.forwardKey.isPressed();
+                            boolean rcBack = client.options.backKey.isPressed();
+                            boolean rcLeft = client.options.leftKey.isPressed();
+                            boolean rcRight = client.options.rightKey.isPressed();
+                            boolean rcUp = client.options.jumpKey.isPressed();
+                            boolean rcDown = client.options.sneakKey.isPressed();
+                            boolean rcSprint = client.options.sprintKey.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_LEFT_CONTROL) || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_RIGHT_CONTROL);
+
+                            boolean hasManualMove = rcFwd || rcBack || rcLeft || rcRight || rcUp || rcDown;
+
+                            if (!targetHeli.isAutoReturning() || hasManualMove) {
+                                targetHeli.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint);
+
+                                PacketByteBuf heliBuf = PacketByteBufs.create();
+                                heliBuf.writeUuid(pairedUuid);
+                                heliBuf.writeBoolean(rcFwd);
+                                heliBuf.writeBoolean(rcBack);
+                                heliBuf.writeBoolean(rcLeft);
+                                heliBuf.writeBoolean(rcRight);
+                                heliBuf.writeBoolean(rcUp);
+                                heliBuf.writeBoolean(rcDown);
+                                heliBuf.writeBoolean(rcSprint);
+                                heliBuf.writeFloat(targetHeli.getYaw());
+                                ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_INPUT_PACKET_ID, heliBuf);
+                            }
+
+                            // LMB: Fire hardpoint arms remotely
+                            if (client.options.attackKey.isPressed()) {
+                                if (!wasAttackPressed || robotAttackCooldown <= 0) {
+                                    wasAttackPressed = true;
+                                    robotAttackCooldown = 4;
+                                    PacketByteBuf armBuf = PacketByteBufs.create();
+                                    armBuf.writeUuid(pairedUuid);
+                                    ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_ARM_ACTION_PACKET_ID, armBuf);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Arrow keys support as secondary camera control
@@ -991,6 +1099,9 @@ public class EvecualMCClient implements ClientModInitializer {
                         } else if (cam instanceof RcCarEntity car) {
                             if (left) { car.setYaw(MathHelper.wrapDegrees(car.getYaw() - 3.0F)); car.prevYaw -= 3.0F; }
                             if (right) { car.setYaw(MathHelper.wrapDegrees(car.getYaw() + 3.0F)); car.prevYaw += 3.0F; }
+                        } else if (cam instanceof HeliEntity heli) {
+                            if (left) { heli.setYaw(MathHelper.wrapDegrees(heli.getYaw() - 3.0F)); heli.prevYaw -= 3.0F; }
+                            if (right) { heli.setYaw(MathHelper.wrapDegrees(heli.getYaw() + 3.0F)); heli.prevYaw += 3.0F; }
                         }
                         targetRcCameraYaw = 0.0F;
                         smoothRcCameraYaw = 0.0F;
@@ -1017,6 +1128,12 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 } else if (client.getCameraEntity() instanceof RcRobotEntity robot) {
                     boolean valid = isRcActive && robot.isAlive() && !robot.isRemoved() && client.player.squaredDistanceTo(robot) <= 65536.0;
+                    if (!valid) {
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective);
+                    }
+                } else if (client.getCameraEntity() instanceof HeliEntity heli) {
+                    boolean valid = isRcActive && heli.isAlive() && !heli.isRemoved() && client.player.squaredDistanceTo(heli) <= 1048576.0;
                     if (!valid) {
                         client.setCameraEntity(client.player);
                         client.options.setPerspective(previousPerspective);
