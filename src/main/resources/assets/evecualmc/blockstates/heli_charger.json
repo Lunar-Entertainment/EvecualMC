@@ -1,8 +1,37 @@
 {
   "variants": {
-    "facing=north": { "model": "evecualmc:block/heli_charger" },
-    "facing=south": { "model": "evecualmc:block/heli_charger", "y": 180 },
-    "facing=west":  { "model": "evecualmc:block/heli_charger", "y": 270 },
-    "facing=east":  { "model": "evecualmc:block/heli_charger", "y": 90 }
+    "part=center": {
+      "model": "evecualmc:block/heli_charger_center"
+    },
+    "part=north": {
+      "model": "evecualmc:block/heli_charger_edge"
+    },
+    "part=east": {
+      "model": "evecualmc:block/heli_charger_edge",
+      "y": 90
+    },
+    "part=south": {
+      "model": "evecualmc:block/heli_charger_edge",
+      "y": 180
+    },
+    "part=west": {
+      "model": "evecualmc:block/heli_charger_edge",
+      "y": 270
+    },
+    "part=north_west": {
+      "model": "evecualmc:block/heli_charger_corner"
+    },
+    "part=north_east": {
+      "model": "evecualmc:block/heli_charger_corner",
+      "y": 90
+    },
+    "part=south_east": {
+      "model": "evecualmc:block/heli_charger_corner",
+      "y": 180
+    },
+    "part=south_west": {
+      "model": "evecualmc:block/heli_charger_corner",
+      "y": 270
+    }
   }
 }

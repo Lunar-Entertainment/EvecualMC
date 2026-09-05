@@ -55,21 +55,30 @@ public class HeliEntityRenderer extends EntityRenderer<HeliEntity> {
         // Update rotor rotation angles
         this.model.setAngles(heli, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
 
-        // 3. Render Solid Fuselage, Skids, Tail Boom & Rotors
+        // Check if the local client player is piloting this helicopter in first person
+        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+        boolean isFirstPersonPilot = (mc.player != null && mc.player.getVehicle() == heli && mc.options.getPerspective().isFirstPerson());
+
         Identifier texture = this.getTexture(heli);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(texture));
-        this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
-
-        // 4. Render Transparent Colored Glass Bubble Cockpit Canopy
         float[] glassRgba = CarEntityRenderer.getGlassColorRgba(heli.getGlassColor());
         VertexConsumer glassConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
-        this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
 
-        // 5. Main Rotor Motion Blur when spinning
-        float rotorSpeed = heli.getRotorSpeed();
-        if (rotorSpeed > 0.25F) {
-            VertexConsumer blurConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
-            this.model.renderRotorMotionBlur(matrices, blurConsumer, light, OverlayTexture.DEFAULT_UV, rotorSpeed);
+        if (isFirstPersonPilot) {
+            // In first person: Render the cockpit interior dashboard, cyclic flight stick, floor, and skids
+            // without the upper roof/rotor mast clipping through the camera when pitching forward!
+            this.model.renderFirstPersonCockpit(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3] * 0.35F);
+        } else {
+            // In 3rd person / exterior view: Full helicopter model, rotor blades, tail boom, and motion blur
+            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
+
+            float rotorSpeed = heli.getRotorSpeed();
+            if (rotorSpeed > 0.25F) {
+                VertexConsumer blurConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
+                this.model.renderRotorMotionBlur(matrices, blurConsumer, light, OverlayTexture.DEFAULT_UV, rotorSpeed);
+            }
         }
 
         matrices.pop();

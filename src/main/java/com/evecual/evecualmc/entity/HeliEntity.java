@@ -382,16 +382,22 @@ public class HeliEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Position pilot comfortably inside front cockpit with panoramic forward view
-            double rad = Math.toRadians(this.getYaw());
-            double cos = Math.cos(rad);
-            double sin = Math.sin(rad);
-            double forwardOffset = 0.90; // situated right in the forward cockpit bubble
-            double heightOffset = 0.45;  // eye level aligned with windshield center
+            // Position pilot comfortably inside front cockpit with kinematic pitch and yaw tracking
+            double radYaw = Math.toRadians(this.getYaw());
+            double curPitch = this.dataTracker.get(PITCH_TILT);
+            double radPitch = Math.toRadians(curPitch);
 
-            double px = this.getX() - sin * forwardOffset;
-            double py = this.getY() + heightOffset;
-            double pz = this.getZ() + cos * forwardOffset;
+            // Local cockpit offset before tilt
+            double localZ = 0.85; // forward in cockpit
+            double localY = 0.40; // seat height
+
+            // Kinematic 3D pitch rotation
+            double tiltedZ = localZ * Math.cos(radPitch) - localY * Math.sin(radPitch);
+            double tiltedY = localY * Math.cos(radPitch) + localZ * Math.sin(radPitch);
+
+            double px = this.getX() - Math.sin(radYaw) * tiltedZ;
+            double py = this.getY() + tiltedY;
+            double pz = this.getZ() + Math.cos(radYaw) * tiltedZ;
             positionUpdater.accept(passenger, px, py, pz);
 
             float deltaYaw = this.getYaw() - this.prevYaw;
@@ -480,10 +486,10 @@ public class HeliEntity extends Entity {
 
             if (inputForward) {
                 targetHozSpeed = maxCruise;
-                targetPitch = inputSprint ? 18.0F : 12.0F; // tilt nose down forward
+                targetPitch = inputSprint ? -20.0F : -14.0F; // Realistic helicopter nose-down tilt forward
             } else if (inputBack) {
                 targetHozSpeed = -0.35;
-                targetPitch = -10.0F; // tilt nose up backward
+                targetPitch = 12.0F; // Realistic helicopter nose-up flare backward
             }
 
             // Yaw Steering

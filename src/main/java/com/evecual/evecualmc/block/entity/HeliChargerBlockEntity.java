@@ -62,18 +62,18 @@ public class HeliChargerBlockEntity extends BlockEntity {
         ServerWorld serverWorld = (ServerWorld) world;
         ChargerBlockEntity baseCharger = be.findConnectedBase();
 
-        // Search for EV Heli positioned on or landed slightly above the pad (within 2 blocks)
-        Box searchBox = new Box(pos.getX() - 0.6, pos.getY(), pos.getZ() - 0.6,
-                pos.getX() + 1.6, pos.getY() + 2.2, pos.getZ() + 1.6);
+        // Search for EV Heli positioned on or landed on the 3x3 Helipad (3x3 blocks footprint)
+        Box searchBox = new Box(pos.getX() - 2.0, pos.getY(), pos.getZ() - 2.0,
+                pos.getX() + 3.0, pos.getY() + 2.8, pos.getZ() + 3.0);
         List<HeliEntity> helis = world.getEntitiesByClass(HeliEntity.class, searchBox, Entity -> true);
 
         boolean chargingAny = false;
         for (HeliEntity heli : helis) {
             double dx = Math.abs(heli.getX() - (pos.getX() + 0.5));
             double dz = Math.abs(heli.getZ() - (pos.getZ() + 0.5));
-            double dy = heli.getY() - (pos.getY() + 0.125);
+            double dy = heli.getY() - (pos.getY() + 0.05);
 
-            if (dx <= 0.85 && dz <= 0.85 && dy >= -0.2 && dy <= 1.5) {
+            if (dx <= 2.2 && dz <= 2.2 && dy >= -0.2 && dy <= 1.8) {
                 if (baseCharger != null && baseCharger.getEnergy() > 0 && heli.getEnergy() < heli.getMaxEnergy()) {
                     int needed = heli.getMaxEnergy() - heli.getEnergy();
                     int transfer = Math.min((int) baseCharger.getEnergy(), Math.min(needed, 15)); // 300 EU/s
@@ -85,10 +85,11 @@ public class HeliChargerBlockEntity extends BlockEntity {
 
                         // Visual electric sparks between charger pad and helicopter skids
                         if (world.getTime() % 2 == 0) {
+                            // Center & Corner spark emissions
+                            double sx = pos.getX() + 0.5 + (world.random.nextDouble() - 0.5) * 2.0;
+                            double sz = pos.getZ() + 0.5 + (world.random.nextDouble() - 0.5) * 2.0;
                             serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK,
-                                    pos.getX() + 0.2 + world.random.nextDouble() * 0.6,
-                                    pos.getY() + 0.15,
-                                    pos.getZ() + 0.2 + world.random.nextDouble() * 0.6,
+                                    sx, pos.getY() + 0.15, sz,
                                     2, 0.05, 0.05, 0.05, 0.01);
                             serverWorld.spawnParticles(ParticleTypes.COMPOSTER,
                                     heli.getX(), heli.getY() + 0.3, heli.getZ(),

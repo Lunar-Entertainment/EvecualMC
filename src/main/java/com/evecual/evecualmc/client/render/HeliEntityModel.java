@@ -194,6 +194,11 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         this.tail_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
+    public void renderFirstPersonCockpit(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+        this.root.getChild("interior").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.root.getChild("skids").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+    }
+
     public void renderGlass(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float r, float g, float b, float a) {
         this.glass.render(matrices, vertices, light, overlay, r, g, b, a);
     }
