@@ -314,64 +314,64 @@ public enum CombinerRecipe {
     public int[][] getSlotCoordinates() {
         return switch (this) {
             case ELECTRIC_CAR -> new int[][]{
-                {44, 38},  // 0: Engine (front hood)
-                {95, 54},  // 1: Steel Chassis (lower chassis)
-                {88, 22},  // 2: Windshield Glass (front canopy)
-                {118, 36}, // 3: Leather Interior (cockpit seat)
-                {120, 18}, // 4: Body Paint Dye (outer roof)
-                {150, 38}  // 5: Trunk Upgrade (rear trunk)
+                {34, 32},  // 0: Engine (front hood)
+                {88, 48},  // 1: Steel Chassis (lower chassis)
+                {62, 23},  // 2: Windshield Glass (front canopy)
+                {96, 31},  // 3: Leather Interior (cockpit seat)
+                {124, 21}, // 4: Body Paint Dye (outer roof)
+                {154, 32}  // 5: Trunk Upgrade (rear trunk)
             };
             case RC_CAR -> new int[][]{
-                {112, 18}, // 0: RC Sender (roof antenna)
-                {48, 40},  // 1: Electric Engine (front motor)
-                {95, 54},  // 2: Steel Frame (lower chassis)
-                {144, 46}, // 3: Tread Wheels (rear wheel)
-                {95, 34},  // 4: Battery Cell (center battery)
-                {68, 22}   // 5: Shell Dye (front hood spoiler)
+                {104, 21}, // 0: RC Sender (roof antenna)
+                {34, 34},  // 1: Electric Engine (front motor)
+                {68, 48},  // 2: Steel Frame (lower chassis)
+                {142, 44}, // 3: Tread Wheels (rear wheel)
+                {86, 32},  // 4: Battery Cell (center battery)
+                {58, 22}   // 5: Shell Dye (front hood cowl)
             };
             case RC_DRONE -> new int[][]{
-                {105, 18}, // 0: RC Sender (top dome antenna)
-                {105, 36}, // 1: High-RPM Motor (center motor hub)
-                {72, 52},  // 2: Carbon Frame (frame strut)
-                {42, 26},  // 3: Propellers (front rotor mount)
-                {105, 54}, // 4: Battery Cell (underslung battery)
-                {150, 26}  // 5: Gyro Stabilizer (rear avionics)
+                {92, 21},  // 0: RC Sender (top dome antenna)
+                {92, 35},  // 1: High-RPM Motor (center motor hub)
+                {60, 47},  // 2: Carbon Frame (frame strut)
+                {32, 23},  // 3: Propellers (left rotor mount)
+                {124, 47}, // 4: Battery Cell (underslung battery)
+                {152, 23}  // 5: Gyro Stabilizer (right avionics)
             };
             case RC_ROBOT -> new int[][]{
-                {68, 20},  // 0: RC Sender (sensor head)
-                {105, 36}, // 1: Heavy Engine (chassis core)
-                {105, 54}, // 2: Steel Chassis (heavy treads)
-                {146, 30}, // 3: Cargo Hold (rear hopper)
-                {146, 50}, // 4: Battery Cell (lower battery)
-                {40, 38}   // 5: Tool Mount Arm (front arm)
+                {56, 21},  // 0: RC Sender (sensor head)
+                {90, 32},  // 1: Heavy Engine (chassis core)
+                {90, 48},  // 2: Steel Chassis (heavy treads)
+                {136, 26}, // 3: Cargo Hold (rear hopper)
+                {136, 46}, // 4: Battery Cell (lower battery)
+                {28, 32}   // 5: Tool Mount Arm (front arm)
             };
             case RC_CONTROLLER -> new int[][]{
-                {95, 38},  // 0: RC Receiver (internal RF board)
-                {95, 54},  // 1: Casing Shell (lower grip)
-                {95, 20},  // 2: Monitor Screen (top LCD display)
-                {58, 40},  // 3: Transmitter Logic (left grip)
-                {140, 20}, // 4: Antenna & Wire (top antenna)
-                {140, 44}  // 5: Analog Sticks (right sticks)
+                {92, 36},  // 0: RC Receiver (internal RF board)
+                {92, 50},  // 1: Casing Shell (lower grip)
+                {92, 21},  // 2: Monitor Screen (top LCD display)
+                {52, 34},  // 3: Transmitter Logic (left grip)
+                {132, 21}, // 4: Antenna & Wire (top antenna)
+                {132, 42}  // 5: Analog Sticks (right sticks)
             };
             case STATIONARY_RC_CONTROLLER -> new int[][]{
-                {98, 36},  // 0: RC Controller (console cradle)
-                {98, 54},  // 1: Terminal Stand (stand pillar)
-                {58, 22},  // 2: Monitor Screen (top monitor)
-                {58, 44},  // 3: Relay Circuit (side circuit)
-                {138, 54}, // 4: Terminal Pedestal (floor pedestal)
-                {138, 24}  // 5: Signal Booster (top dish antenna)
+                {92, 34},  // 0: RC Controller (console cradle)
+                {92, 50},  // 1: Terminal Stand (stand pillar)
+                {54, 23},  // 2: Monitor Screen (top monitor)
+                {54, 44},  // 3: Relay Circuit (side circuit)
+                {132, 50}, // 4: Terminal Pedestal (floor pedestal)
+                {132, 23}  // 5: Signal Booster (top dish antenna)
             };
             case RC_SENDER -> new int[][]{
-                {98, 20},  // 0: Broadcast Antenna (top antenna)
-                {64, 40},  // 1: Signal Logic (left logic IC)
-                {134, 40}, // 2: Steel Shield (right shield)
-                {98, 54}   // 3: RF Inductor Coil (bottom coil)
+                {92, 21},  // 0: Broadcast Antenna (top antenna)
+                {58, 34},  // 1: Signal Logic (left logic IC)
+                {126, 34}, // 2: Steel Shield (right shield)
+                {92, 48}   // 3: RF Inductor Coil (bottom coil)
             };
             case RC_RECEIVER -> new int[][]{
-                {64, 34},  // 0: Signal Decoder (left comparator)
-                {134, 34}, // 1: Crystal Oscillator (right crystal)
-                {98, 54},  // 2: Ground Shield (bottom ground)
-                {98, 20}   // 3: Copper Bus (top pins)
+                {58, 34},  // 0: Signal Decoder (left comparator)
+                {126, 34}, // 1: Crystal Oscillator (right crystal)
+                {92, 48},  // 2: Ground Shield (bottom ground)
+                {92, 21}   // 3: Copper Bus (top pins)
             };
         };
     }
