@@ -18,12 +18,22 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
     public static final EntityModelLayer MODEL_LAYER = new EntityModelLayer(new Identifier("evecualmc", "ev_heli"), "main");
 
     private final ModelPart root;
+    private final ModelPart fuselage_lower;
+    private final ModelPart fuselage_upper;
+    private final ModelPart interior;
+    private final ModelPart skids;
+    private final ModelPart tail_boom;
     private final ModelPart main_rotor;
     private final ModelPart tail_rotor;
     private final ModelPart glass;
 
     public HeliEntityModel(ModelPart root) {
         this.root = root;
+        this.fuselage_lower = root.getChild("fuselage_lower");
+        this.fuselage_upper = root.getChild("fuselage_upper");
+        this.interior = root.getChild("interior");
+        this.skids = root.getChild("skids");
+        this.tail_boom = root.getChild("tail_boom");
         this.main_rotor = root.getChild("main_rotor");
         this.tail_rotor = root.getChild("tail_rotor");
         this.glass = root.getChild("glass");
@@ -33,29 +43,33 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         ModelData modelData = new ModelData();
         ModelPartData root = modelData.getRoot();
 
-        // 1. Aerodynamic Fuselage & Airframe (Primary Body Paint, uv: 0, 0 in 256x256)
-        // Perfectly centered around Rotor Mast at Z = 0.0!
-        ModelPartBuilder fuselage = ModelPartBuilder.create()
+        // 1. Lower Fuselage & Cabin Shell (Renders in BOTH 1st Person & 3rd Person view!)
+        ModelPartBuilder fuselageLower = ModelPartBuilder.create()
                 // Cabin Floor: 26 wide, 2 tall, 36 long (Z: -26 to 10)
                 .uv(0, 0).cuboid(-13.0F, 13.0F, -26.0F, 26.0F, 2.0F, 36.0F)
                 // Lower Battery Belly (Carbon, uv: 128, 0): 22 wide, 3 tall, 30 long (Z: -22 to 8)
                 .uv(128, 0).cuboid(-11.0F, 15.0F, -22.0F, 22.0F, 3.0F, 30.0F)
-                // Front Lower Chin Wedge: X: -10 to 10, Y: 13 to 16, Z: -34 to -26
+                // Front Lower Chin Wedge (Sleek nose sloping forward!): X: -10 to 10, Y: 13 to 16, Z: -34 to -26
                 .uv(0, 0).cuboid(-10.0F, 13.0F, -34.0F, 20.0F, 3.0F, 8.0F)
                 // Aerodynamic Nose Tip (Carbon): X: -7 to 7, Y: 12 to 15, Z: -38 to -34
                 .uv(128, 0).cuboid(-7.0F, 12.0F, -38.0F, 14.0F, 3.0F, 4.0F)
-                // Left Lower Side Sill: X: -14.5 to -12.5, Y: 8 to 14, Z: -24 to 10
+                // Left Lower Side Door Sill: X: -14.5 to -12.5, Y: 8 to 14, Z: -24 to 10
                 .uv(0, 0).cuboid(-14.5F, 8.0F, -24.0F, 2.0F, 6.0F, 34.0F)
-                // Right Lower Side Sill: X: 12.5 to 14.5, Y: 8 to 14, Z: -24 to 10
+                // Right Lower Side Door Sill: X: 12.5 to 14.5, Y: 8 to 14, Z: -24 to 10
                 .uv(0, 0).cuboid(12.5F, 8.0F, -24.0F, 2.0F, 6.0F, 34.0F)
+                // Left Windshield A-Pillar: X: -13.5 to -12.0, Y: -5 to 11, Z: -26 to -24.5
+                .uv(0, 0).cuboid(-13.5F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F)
+                // Right Windshield A-Pillar: X: 12.0 to 13.5, Y: -5 to 11, Z: -26 to -24.5
+                .uv(0, 0).cuboid(12.0F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F);
+
+        root.addChild("fuselage_lower", fuselageLower, ModelTransform.NONE);
+
+        // 2. Upper Fuselage, Roof & Turbines (Renders in 3rd Person only so it never blocks 1st-person view!)
+        ModelPartBuilder fuselageUpper = ModelPartBuilder.create()
                 // Upper Roof Cowling: X: -11 to 11, Y: -6 to -3, Z: -16 to 10
                 .uv(0, 0).cuboid(-11.0F, -6.0F, -16.0F, 22.0F, 3.0F, 26.0F)
                 // Rear Bulkhead Wall: X: -13 to 13, Y: -3 to 13, Z: 9 to 11
                 .uv(0, 0).cuboid(-13.0F, -3.0F, 9.0F, 26.0F, 16.0F, 2.0F)
-                // Left A-Pillar: X: -13.5 to -12.0, Y: -5 to 11, Z: -26 to -24.5
-                .uv(0, 0).cuboid(-13.5F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F)
-                // Right A-Pillar: X: 12.0 to 13.5, Y: -5 to 11, Z: -26 to -24.5
-                .uv(0, 0).cuboid(12.0F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F)
                 // Left Turbine Pod (Carbon): X: -14 to -10, Y: -7 to -3, Z: -10 to 10
                 .uv(128, 0).cuboid(-14.0F, -7.0F, -10.0F, 4.0F, 4.0F, 20.0F)
                 // Right Turbine Pod (Carbon): X: 10 to 14, Y: -7 to -3, Z: -10 to 10
@@ -69,9 +83,9 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
                 // Right Titanium Exhaust (Carbon)
                 .uv(128, 0).cuboid(10.0F, -6.0F, 10.0F, 3.0F, 3.0F, 5.0F);
 
-        root.addChild("fuselage", fuselage, ModelTransform.NONE);
+        root.addChild("fuselage_upper", fuselageUpper, ModelTransform.NONE);
 
-        // 2. Cockpit Interior (Low-profile Console & Pilot Bucket Seat, uv: 128, 0)
+        // 3. Cockpit Interior (Low-profile Console & Pilot Bucket Seat, uv: 128, 0)
         ModelPartBuilder interior = ModelPartBuilder.create()
                 // Low-profile Avionics Instrument Dashboard (Deep down near floor at Z: -26)
                 .uv(128, 0).cuboid(-9.0F, 9.0F, -26.0F, 18.0F, 4.0F, 2.0F)
@@ -85,7 +99,7 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. Tail Boom, Tall Vertical Fin & Stabilizer Wings
+        // 4. Tail Boom, Tall Vertical Fin & Stabilizer Wings
         ModelPartBuilder tailBoom = ModelPartBuilder.create()
                 // Tapered Tail Boom (Body Paint): X: -3.5 to 3.5, Y: -1 to 5, Z: 10 to 38
                 .uv(0, 0).cuboid(-3.5F, -1.0F, 10.0F, 7.0F, 6.0F, 28.0F)
@@ -104,7 +118,7 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("tail_boom", tailBoom, ModelTransform.NONE);
 
-        // 4. Heavy Tubular Landing Skids & Induction Charging Plates
+        // 5. Heavy Tubular Landing Skids & Induction Charging Plates
         ModelPartBuilder skids = ModelPartBuilder.create()
                 // Left Tubular Skid: X: -16 to -13, Y: 20 to 23, Z: -28 to 20
                 .uv(128, 0).cuboid(-16.0F, 20.0F, -28.0F, 3.0F, 3.0F, 48.0F)
@@ -128,7 +142,7 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("skids", skids, ModelTransform.NONE);
 
-        // 5. Main Rotor Assembly (Centered exactly at X = 0, Y = -5, Z = 0!)
+        // 6. Main Rotor Assembly (Centered exactly at X = 0, Y = -5, Z = 0!)
         ModelPartBuilder mainRotor = ModelPartBuilder.create()
                 // Rotor Mast Column
                 .uv(128, 0).cuboid(-2.5F, -7.0F, -2.5F, 5.0F, 7.0F, 5.0F)
@@ -142,7 +156,7 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("main_rotor", mainRotor, ModelTransform.pivot(0.0F, -5.0F, 0.0F));
 
-        // 6. Tail Anti-Torque Rotor Assembly (Pivot at Z = 36)
+        // 7. Tail Anti-Torque Rotor Assembly (Pivot at Z = 36)
         ModelPartBuilder tailRotor = ModelPartBuilder.create()
                 // Tail Rotor Hub
                 .uv(128, 0).cuboid(-1.5F, -1.5F, -1.5F, 3.0F, 3.0F, 3.0F)
@@ -153,7 +167,7 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("tail_rotor", tailRotor, ModelTransform.pivot(2.5F, -8.0F, 36.0F));
 
-        // 7. Crystal-Clear Panoramic Glass Canopy (Thin 0.5-1.0 unit panes, uv: 128, 128)
+        // 8. Crystal-Clear Panoramic Glass Canopy (Thin 0.5-1.0 unit panes, uv: 128, 128)
         ModelPartBuilder glass = ModelPartBuilder.create()
                 // 1) Front Upper Windshield: Thin 1-unit pane
                 .uv(128, 128).cuboid(-11.5F, -4.5F, -25.5F, 23.0F, 14.0F, 1.0F)
@@ -186,17 +200,19 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-        this.root.getChild("fuselage").render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        this.root.getChild("interior").render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        this.root.getChild("tail_boom").render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        this.root.getChild("skids").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.fuselage_lower.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.fuselage_upper.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.interior.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.tail_boom.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.skids.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.main_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.tail_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
     public void renderFirstPersonCockpit(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-        this.root.getChild("interior").render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        this.root.getChild("skids").render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.fuselage_lower.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.interior.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.skids.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
     public void renderGlass(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float r, float g, float b, float a) {

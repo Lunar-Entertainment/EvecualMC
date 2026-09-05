@@ -375,6 +375,7 @@ public enum TipTopic {
                     {"Space", "Ascend (Altitude Up)"},
                     {"Shift / Down", "Descend (Altitude Down / Land)"},
                     {"Ctrl / Sprint", "Engage 20 m/s Turbine Boost"},
+                    {"C", "Helipad Autopilot return & vertical landing"},
                     {"Z", "Open 27-Slot Internal Cargo Bay"},
                     {"Shift (On Ground)", "Dismount Helicopter"}
             },

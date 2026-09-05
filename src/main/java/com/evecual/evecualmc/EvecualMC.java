@@ -10,6 +10,7 @@ import com.evecual.evecualmc.block.entity.ChargerBlockEntity;
 import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
 import com.evecual.evecualmc.block.entity.SolarPanelBlockEntity;
 import com.evecual.evecualmc.entity.CarEntity;
+import com.evecual.evecualmc.entity.HeliEntity;
 import com.evecual.evecualmc.item.CarItem;
 import com.evecual.evecualmc.item.LightningItem;
 import com.evecual.evecualmc.screen.ElectronicCombinerScreenHandler;
@@ -825,8 +826,13 @@ public class EvecualMC implements ModInitializer {
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(AUTO_PARK_PACKET_ID,
                 (server, player, handler, buf, responseSender) -> {
                     server.execute(() -> {
+                        if (player.getVehicle() instanceof HeliEntity heli) {
+                            heli.toggleAutoPark(player);
+                            return;
+                        }
+
                         if (!(player.getVehicle() instanceof CarEntity car)) {
-                            player.sendMessage(Text.literal("§c🅿️ You must be driving an Electric Car to auto-park!"),
+                            player.sendMessage(Text.literal("§c🅿️ You must be driving an Electric Car or EV Heli to auto-park!"),
                                     false);
                             return;
                         }

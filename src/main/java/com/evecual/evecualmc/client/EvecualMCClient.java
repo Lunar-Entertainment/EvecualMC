@@ -679,11 +679,15 @@ public class EvecualMCClient implements ClientModInitializer {
                     ClientPlayNetworking.send(EvecualMC.TOGGLE_CABLE_PACKET_ID, PacketByteBufs.empty());
                 }
 
-                // Auto Park Key (for full-size Car)
+                // Auto Park Key (for full-size Car & EV Heli)
                 while (AUTO_PARK_KEY.wasPressed()) {
                     if (client.player.getVehicle() instanceof CarEntity car) {
                         PacketByteBuf buf = PacketByteBufs.create();
                         buf.writeInt(car.getId());
+                        ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, buf);
+                    } else if (client.player.getVehicle() instanceof HeliEntity heli) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(heli.getId());
                         ClientPlayNetworking.send(EvecualMC.AUTO_PARK_PACKET_ID, buf);
                     }
                 }

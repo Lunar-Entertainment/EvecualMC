@@ -3,6 +3,9 @@ package com.evecual.evecualmc.entity;
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import com.evecual.evecualmc.block.HeliChargerBlock;
+import com.evecual.evecualmc.block.HeliChargerPart;
 import net.minecraft.block.GlassBlock;
 import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.block.StainedGlassPaneBlock;
@@ -60,6 +63,7 @@ public class HeliEntity extends Entity {
     private static final TrackedData<Float> ROTOR_SPEED = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> CHARGING = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IN_FLIGHT = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> AUTO_RETURNING = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private final SimpleInventory trunk = new SimpleInventory(27);
 
@@ -70,6 +74,11 @@ public class HeliEntity extends Entity {
     private boolean inputUp;
     private boolean inputDown;
     private boolean inputSprint;
+
+    private BlockPos targetHelipadPos = null;
+    private int autoReturnStage = 0;
+    private int autoReturnTicks = 0;
+    private double cruiseAltitude = 0.0;
 
     private double currentSpeed = 0.0;
     private float rotorAngle = 0.0F;
@@ -94,6 +103,7 @@ public class HeliEntity extends Entity {
         this.dataTracker.startTracking(ROTOR_SPEED, 0.0F);
         this.dataTracker.startTracking(CHARGING, false);
         this.dataTracker.startTracking(IN_FLIGHT, false);
+        this.dataTracker.startTracking(AUTO_RETURNING, false);
     }
 
     private void updateChunkLoading() {
@@ -444,6 +454,64 @@ public class HeliEntity extends Entity {
         );
     }
 
+    public boolean isAutoReturning() {
+        return this.dataTracker.get(AUTO_RETURNING);
+    }
+
+    public BlockPos getTargetHelipadPos() {
+        return this.targetHelipadPos;
+    }
+
+    public void toggleAutoPark(PlayerEntity player) {
+        if (isAutoReturning()) {
+            cancelAutoPark(player);
+            return;
+        }
+
+        // Search for nearest 3x3 Heli Charger Helipad within 128 blocks
+        BlockPos heliPos = this.getBlockPos();
+        BlockPos bestSpot = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        int radius = 128;
+        for (BlockPos p : BlockPos.iterateOutwards(heliPos, radius, 32, radius)) {
+            BlockState state = this.getWorld().getBlockState(p);
+            if (state.isOf(EvecualMC.HELI_CHARGER_BLOCK)) {
+                HeliChargerPart part = state.get(HeliChargerBlock.PART);
+                BlockPos center = HeliChargerBlock.getCenterPos(p, part);
+                double distSq = heliPos.getSquaredDistance(center);
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq;
+                    bestSpot = center;
+                }
+            }
+        }
+
+        if (bestSpot != null) {
+            this.targetHelipadPos = bestSpot;
+            this.dataTracker.set(AUTO_RETURNING, true);
+            this.autoReturnStage = 0;
+            this.autoReturnTicks = 0;
+            this.cruiseAltitude = Math.max(this.getY() + 8.0, bestSpot.getY() + 8.0);
+            player.sendMessage(Text.literal("§a🚁 Helipad Autopilot engaged! Navigating to 3x3 Helipad..."), true);
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 1.0F, 1.5F);
+        } else {
+            player.sendMessage(Text.literal("§c❌ No 3x3 Helipad found within 128 blocks!"), true);
+        }
+    }
+
+    public void cancelAutoPark(Entity player) {
+        if (isAutoReturning()) {
+            this.dataTracker.set(AUTO_RETURNING, false);
+            this.targetHelipadPos = null;
+            this.autoReturnStage = 0;
+            if (player instanceof PlayerEntity p) {
+                p.sendMessage(Text.literal("§e⚠️ Helipad Autopilot cancelled by pilot."), true);
+            }
+        }
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -456,7 +524,7 @@ public class HeliEntity extends Entity {
 
         // 1. Rotor Speed & Spool-up calculation
         float targetRotorSpeed = 0.0F;
-        if (hasPower && hasPilot) {
+        if (hasPower && (hasPilot || isAutoReturning())) {
             targetRotorSpeed = inputSprint ? 1.5F : 1.0F;
         } else if (hasPower && !this.isOnGround()) {
             targetRotorSpeed = 0.6F; // emergency auto-rotation descent
@@ -480,7 +548,72 @@ public class HeliEntity extends Entity {
         float targetPitch = 0.0F;
         float targetRoll = 0.0F;
 
-        if (hasPilot && hasPower) {
+        // --- Auto-Park Navigation to 3x3 Helipad ---
+        if (isAutoReturning() && this.targetHelipadPos != null && hasPower) {
+            boolean hasManualMove = (inputForward || inputBack || inputLeft || inputRight || inputUp || inputDown);
+            if (hasManualMove) {
+                cancelAutoPark(passenger);
+            } else {
+                this.autoReturnTicks++;
+                if (this.autoReturnTicks > 2400) { // 120s timeout
+                    cancelAutoPark(passenger);
+                } else {
+                    double targetX = this.targetHelipadPos.getX() + 0.5;
+                    double targetY = this.targetHelipadPos.getY() + 0.0625;
+                    double targetZ = this.targetHelipadPos.getZ() + 0.5;
+
+                    double dx = targetX - this.getX();
+                    double dz = targetZ - this.getZ();
+                    double horizDist = Math.sqrt(dx * dx + dz * dz);
+
+                    // Stage 0: Ascend to safe cruising altitude
+                    if (this.autoReturnStage == 0) {
+                        if (this.getY() < this.cruiseAltitude - 0.5) {
+                            targetVy = 0.40; // climb
+                            targetHozSpeed = 0.0;
+                            targetPitch = 0.0F;
+                        } else {
+                            this.autoReturnStage = 1;
+                        }
+                    }
+                    // Stage 1: Fly horizontally toward target X/Z with smooth heading alignment and pitch
+                    else if (this.autoReturnStage == 1) {
+                        float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                        float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                        targetYawDelta = MathHelper.clamp(yawDiff * 0.25F, -5.0F, 5.0F);
+
+                        targetPitch = -14.0F; // nose down forward cruise
+                        targetRoll = MathHelper.clamp(-yawDiff * 0.5F, -18.0F, 18.0F);
+                        targetHozSpeed = NORMAL_CRUISE_SPEED; // 12 blocks/sec
+                        targetVy = 0.0; // altitude hold
+
+                        if (horizDist < 1.0) {
+                            this.autoReturnStage = 2; // Arrived above pad: begin vertical touchdown
+                        }
+                    }
+                    // Stage 2: Vertical touchdown on helipad center
+                    else if (this.autoReturnStage == 2) {
+                        targetHozSpeed = 0.0;
+                        targetPitch = 0.0F;
+                        targetRoll = 0.0F;
+                        targetVy = -0.22; // gentle landing descent
+
+                        if (this.isOnGround() || this.getY() <= targetY + 0.15) {
+                            this.dataTracker.set(AUTO_RETURNING, false);
+                            this.targetHelipadPos = null;
+                            this.setVelocity(0, 0, 0);
+                            setCharging(true);
+                            if (passenger instanceof PlayerEntity p) {
+                                p.sendMessage(Text.literal("§a⚡ Touchdown Complete! Recharging on 3x3 Helipad..."), true);
+                            }
+                            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                    SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.2F);
+                        }
+                    }
+                }
+            }
+        }
+        else if (hasPilot && hasPower) {
             // Horizontal Cruise Speed: 12 blocks/s normal (0.60), 20 blocks/s boost (1.00)
             double maxCruise = inputSprint ? BOOST_CRUISE_SPEED : NORMAL_CRUISE_SPEED;
 
