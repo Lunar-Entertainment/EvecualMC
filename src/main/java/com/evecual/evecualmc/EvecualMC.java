@@ -1017,9 +1017,10 @@ public class EvecualMC implements ModInitializer {
 
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_ARM_ACTION_PACKET_ID,
                 (server, player, handler, buf, responseSender) -> {
+                    int armIndex = buf.isReadable(4) ? buf.readInt() : 0;
                     server.execute(() -> {
                         if (player.getVehicle() instanceof HeliEntity heli) {
-                            heli.performArmAction(player);
+                            heli.performArmAction(player, armIndex);
                         }
                     });
                 });
@@ -1054,12 +1055,13 @@ public class EvecualMC implements ModInitializer {
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_CONTROLLER_ARM_ACTION_PACKET_ID,
                 (server, player, handler, buf, responseSender) -> {
                     java.util.UUID heliUuid = buf.readUuid();
+                    int armIndex = buf.isReadable(4) ? buf.readInt() : 0;
                     server.execute(() -> {
                         if (player.getServerWorld() != null) {
                             Entity target = player.getServerWorld().getEntity(heliUuid);
                             if (target instanceof HeliEntity heli) {
                                 if (player.squaredDistanceTo(heli) <= 1048576.0) {
-                                    heli.performArmAction(player);
+                                    heli.performArmAction(player, armIndex);
                                 }
                             }
                         }

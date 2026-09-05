@@ -21,27 +21,30 @@ void main() {
     vec3 viewDir = normalize(-worldPos);
     vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
 
-    // Animated water surface normal perturbation
+    // High-Fidelity Multi-frequency Animated Water Waves
     vec3 perturbedNormal = normal;
     #ifdef WAVING_WATER
-    float time = frameTimeCounter * 2.0;
-    float waveX = sin(worldPos.x * 2.5 + time) * cos(worldPos.z * 2.0 + time * 0.8) * 0.12;
-    float waveZ = cos(worldPos.x * 2.0 - time * 0.7) * sin(worldPos.z * 2.5 + time * 1.1) * 0.12;
-    perturbedNormal = normalize(normal + vec3(waveX, 0.0, waveZ));
+    float time = frameTimeCounter * 2.2;
+    float w1 = sin(worldPos.x * 2.8 + time) * cos(worldPos.z * 2.2 + time * 0.85) * 0.10;
+    float w2 = cos(worldPos.x * 1.6 - time * 0.75) * sin(worldPos.z * 3.2 + time * 1.15) * 0.08;
+    float w3 = sin((worldPos.x + worldPos.z) * 4.2 + time * 1.6) * 0.04;
+    perturbedNormal = normalize(normal + vec3(w1 + w3, 0.0, w2 + w3));
     #endif
 
     // Water sun specular glint & Fresnel reflection
     vec3 halfDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(perturbedNormal, halfDir), 0.0), 64.0) * 0.65;
-    float fresnel = pow(1.0 - max(dot(perturbedNormal, viewDir), 0.0), 4.0);
+    float specSharp = pow(max(dot(perturbedNormal, halfDir), 0.0), 96.0) * 0.85;
+    float specBroad = pow(max(dot(perturbedNormal, halfDir), 0.0), 24.0) * 0.25;
+    float fresnel = pow(1.0 - max(dot(perturbedNormal, viewDir), 0.0), 4.2);
 
-    // Crystal aqua-blue tint with depth translucency
-    vec3 waterColor = mix(albedo.rgb, vec3(0.12, 0.58, 0.85), 0.45);
-    vec3 skyReflect = mix(vec3(0.65, 0.85, 1.0), vec3(1.0, 1.0, 1.0), fresnel);
+    // Crystal aqua-turquoise ocean scattering
+    vec3 waterColor = mix(albedo.rgb, vec3(0.08, 0.52, 0.82), 0.55);
+    vec3 skyReflect = mix(vec3(0.60, 0.82, 0.98), vec3(1.0, 1.0, 1.0), fresnel);
 
-    vec3 shaded = waterColor * light.rgb * 0.90 + skyReflect * fresnel * 0.45 + vec3(spec * light.a);
-    float alpha = clamp(albedo.a * 0.65 + fresnel * 0.35, 0.30, 0.85);
+    vec3 shaded = waterColor * light.rgb * 0.92 + skyReflect * fresnel * 0.55 + vec3((specSharp + specBroad) * light.a);
+    float alpha = clamp(albedo.a * 0.60 + fresnel * 0.40, 0.28, 0.88);
 
     gl_FragData[0] = vec4(shaded, alpha);
-    gl_FragData[1] = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragData[1] = vec4(vec3(specSharp * 0.5), 1.0);
 }
+

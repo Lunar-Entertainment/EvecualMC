@@ -84,9 +84,27 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding HELI_LEFT_ARM_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.heli_left_arm",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_I,
+            "category.evecualmc.evecual"
+    ));
+
+    public static final KeyBinding HELI_RIGHT_ARM_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.heli_right_arm",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_O,
+            "category.evecualmc.evecual"
+    ));
+
     private static boolean wasCPressed = false;
     private static boolean wasAttackPressed = false;
+    private static boolean wasLeftArmPressed = false;
+    private static boolean wasRightArmPressed = false;
     private static int robotAttackCooldown = 0;
+    private static int heliLeftArmCooldown = 0;
+    private static int heliRightArmCooldown = 0;
     private static Perspective previousPerspective = Perspective.FIRST_PERSON;
 
     // Camera angles with exponential smoothing for ultra-fluid mouse orbiting
@@ -651,6 +669,12 @@ public class EvecualMCClient implements ClientModInitializer {
                 if (robotAttackCooldown > 0) {
                     robotAttackCooldown--;
                 }
+                if (heliLeftArmCooldown > 0) {
+                    heliLeftArmCooldown--;
+                }
+                if (heliRightArmCooldown > 0) {
+                    heliRightArmCooldown--;
+                }
 
                 // Open Trunk / Cargo Key ('Z')
                 while (OPEN_TRUNK_KEY.wasPressed()) {
@@ -825,13 +849,33 @@ public class EvecualMCClient implements ClientModInitializer {
                     buf.writeBoolean(sprint);
                     ClientPlayNetworking.send(EvecualMC.HELI_INPUT_PACKET_ID, buf);
 
-                    // LMB: Fire hardpoint arms while in flight
-                    if (client.options.attackKey.isPressed()) {
-                        if (!wasAttackPressed || robotAttackCooldown <= 0) {
-                            wasAttackPressed = true;
-                            robotAttackCooldown = 4;
-                            ClientPlayNetworking.send(EvecualMC.HELI_ARM_ACTION_PACKET_ID, PacketByteBufs.empty());
+                    // Left Arm [ I Key ] & Right Arm [ O Key ]: Fire hardpoint arms while in flight
+                    long wHandle = client.getWindow().getHandle();
+                    boolean iDown = HELI_LEFT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_I);
+                    boolean oDown = HELI_RIGHT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_O);
+
+                    if (iDown) {
+                        if (!wasLeftArmPressed || heliLeftArmCooldown <= 0) {
+                            wasLeftArmPressed = true;
+                            heliLeftArmCooldown = 4;
+                            PacketByteBuf armBuf = PacketByteBufs.create();
+                            armBuf.writeInt(0); // 0 = Left Arm
+                            ClientPlayNetworking.send(EvecualMC.HELI_ARM_ACTION_PACKET_ID, armBuf);
                         }
+                    } else {
+                        wasLeftArmPressed = false;
+                    }
+
+                    if (oDown) {
+                        if (!wasRightArmPressed || heliRightArmCooldown <= 0) {
+                            wasRightArmPressed = true;
+                            heliRightArmCooldown = 4;
+                            PacketByteBuf armBuf = PacketByteBufs.create();
+                            armBuf.writeInt(1); // 1 = Right Arm
+                            ClientPlayNetworking.send(EvecualMC.HELI_ARM_ACTION_PACKET_ID, armBuf);
+                        }
+                    } else {
+                        wasRightArmPressed = false;
                     }
                 }
 
@@ -1067,15 +1111,34 @@ public class EvecualMCClient implements ClientModInitializer {
                                 ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_INPUT_PACKET_ID, heliBuf);
                             }
 
-                            // LMB: Fire hardpoint arms remotely
-                            if (client.options.attackKey.isPressed()) {
-                                if (!wasAttackPressed || robotAttackCooldown <= 0) {
-                                    wasAttackPressed = true;
-                                    robotAttackCooldown = 4;
+                            // Left Arm [ I Key ] & Right Arm [ O Key ] remotely
+                            boolean remoteI = HELI_LEFT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_I);
+                            boolean remoteO = HELI_RIGHT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_O);
+
+                            if (remoteI) {
+                                if (!wasLeftArmPressed || heliLeftArmCooldown <= 0) {
+                                    wasLeftArmPressed = true;
+                                    heliLeftArmCooldown = 4;
                                     PacketByteBuf armBuf = PacketByteBufs.create();
                                     armBuf.writeUuid(pairedUuid);
+                                    armBuf.writeInt(0); // 0 = Left Arm
                                     ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_ARM_ACTION_PACKET_ID, armBuf);
                                 }
+                            } else {
+                                wasLeftArmPressed = false;
+                            }
+
+                            if (remoteO) {
+                                if (!wasRightArmPressed || heliRightArmCooldown <= 0) {
+                                    wasRightArmPressed = true;
+                                    heliRightArmCooldown = 4;
+                                    PacketByteBuf armBuf = PacketByteBufs.create();
+                                    armBuf.writeUuid(pairedUuid);
+                                    armBuf.writeInt(1); // 1 = Right Arm
+                                    ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_ARM_ACTION_PACKET_ID, armBuf);
+                                }
+                            } else {
+                                wasRightArmPressed = false;
                             }
                         }
                     }

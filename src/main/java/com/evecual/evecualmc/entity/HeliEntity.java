@@ -374,40 +374,51 @@ public class HeliEntity extends Entity {
         }
     }
 
-    public void performArmAction(PlayerEntity player) {
+    public void performArmAction(PlayerEntity player, int armIndex) {
         if (this.getWorld().isClient) return;
 
         int energy = getEnergy();
-        if (energy < 2) {
-            player.sendMessage(Text.literal("§c⚡ Heli Energy too low to fire hardpoint arms!"), true);
+        if (energy < 1) {
+            player.sendMessage(Text.literal("§c⚡ Heli Energy too low to fire hardpoint arm!"), true);
             return;
         }
 
         int leftArm = getLeftArmType();
         int rightArm = getRightArmType();
 
-        if (leftArm == 0 && rightArm == 0) {
-            player.sendMessage(Text.literal("§e⚠️ No hardpoint arms installed! Press [X] looking at Heli to install Mining or Weapon Arms."), true);
-            return;
+        if (armIndex == 0) { // Left Arm [ I Key ]
+            if (leftArm == 0) {
+                player.sendMessage(Text.literal("§e⚠️ No Left Wing Arm installed! Press [X] looking at Heli to install in Left Arm slot."), true);
+                return;
+            }
+            setEnergy(energy - 1);
+            double radYaw = Math.toRadians(this.getYaw());
+            double curPitch = this.getPitchTilt();
+            double radPitch = Math.toRadians(curPitch);
+
+            Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
+            Vec3d rightDir = new Vec3d(Math.cos(radYaw), 0, Math.sin(radYaw)).normalize();
+            Vec3d leftArmPos = this.getPos().add(0, 0.6, 0).subtract(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
+
+            if (leftArm == 1) fireMiningBeam(player, leftArmPos, forwardDir);
+            else if (leftArm == 2) fireWeaponPlasma(player, leftArmPos, forwardDir);
+        } else { // Right Arm [ O Key ]
+            if (rightArm == 0) {
+                player.sendMessage(Text.literal("§e⚠️ No Right Wing Arm installed! Press [X] looking at Heli to install in Right Arm slot."), true);
+                return;
+            }
+            setEnergy(energy - 1);
+            double radYaw = Math.toRadians(this.getYaw());
+            double curPitch = this.getPitchTilt();
+            double radPitch = Math.toRadians(curPitch);
+
+            Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
+            Vec3d rightDir = new Vec3d(Math.cos(radYaw), 0, Math.sin(radYaw)).normalize();
+            Vec3d rightArmPos = this.getPos().add(0, 0.6, 0).add(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
+
+            if (rightArm == 1) fireMiningBeam(player, rightArmPos, forwardDir);
+            else if (rightArm == 2) fireWeaponPlasma(player, rightArmPos, forwardDir);
         }
-
-        setEnergy(energy - 2);
-
-        double radYaw = Math.toRadians(this.getYaw());
-        double curPitch = this.getPitchTilt();
-        double radPitch = Math.toRadians(curPitch);
-
-        Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
-        Vec3d rightDir = new Vec3d(Math.cos(radYaw), 0, Math.sin(radYaw)).normalize();
-
-        Vec3d leftArmPos = this.getPos().add(0, 0.6, 0).subtract(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
-        Vec3d rightArmPos = this.getPos().add(0, 0.6, 0).add(rightDir.multiply(1.3)).add(forwardDir.multiply(0.8));
-
-        if (leftArm == 1) fireMiningBeam(player, leftArmPos, forwardDir);
-        else if (leftArm == 2) fireWeaponPlasma(player, leftArmPos, forwardDir);
-
-        if (rightArm == 1) fireMiningBeam(player, rightArmPos, forwardDir);
-        else if (rightArm == 2) fireWeaponPlasma(player, rightArmPos, forwardDir);
     }
 
     private void fireMiningBeam(PlayerEntity player, Vec3d startPos, Vec3d dir) {
