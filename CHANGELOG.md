@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.4.0] - 2026-09-05
+### Added & Improved
+- **EV Helicopter (EV Heli)**:
+  - Added full-sized drivable high-speed electric helicopter (`EvHeliEntity` / `HeliItem`).
+  - **Flight Speed & Controls**: 12 blocks per second (0.60 bps) normal cruise speed, and **20 blocks per second** (1.00 bps) on Sprint/Boost!
+  - **Dynamic Aerodynamics & VTOL Flight**: Space to ascend vertically, Shift/Down to descend smoothly, and active altitude hold hover computer when stationary.
+  - **Dual Spinning Rotors**: Detailed main 4-blade top rotor and rear anti-torque tail rotor with dynamic rotation and motion blur.
+  - **Aerodynamic Tilting**: Realistic nose-down forward pitch tilt and side banking roll during turns.
+  - **Full Customization**: Custom color liveries using Dyes (6 variants), tinted cockpit bubble glass using Stained Glass (12 tints), and high-power turbine upgrades.
+  - **Internal Cargo**: 27-slot onboard cargo bay accessible by pressing 'Z'.
+  - **Active Chunk Loading**: Automatically keeps its current chunk force-loaded while alive.
+- **Heli Charger Helipad**:
+  - Added the **Heli Charger** block (`HeliChargerBlock` / `HeliChargerBlockEntity`).
+  - Place directly on top of or adjacent to a **Vehicle Charger Base** to power it.
+  - Automatically rapid-charges any EV Heli landed on the pad (300 EU/s) with electric charging sparks and sound effects.
+- **Electronic Combiner Recipe & In-Game Guide**:
+  - Added the **EV Helicopter** CAD blueprint crafting recipe to the Electronic Combiner (Vehicles category).
+  - Added Field Guide & Tip Menu topics for EV Heli and Heli Charger.
+
 ## [1.3.14] - 2026-09-05
 ### Added & Improved
 - **RC Vehicle Active Chunk Loading**:

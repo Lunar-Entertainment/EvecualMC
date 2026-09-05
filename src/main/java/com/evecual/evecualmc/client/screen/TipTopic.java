@@ -356,6 +356,56 @@ public enum TipTopic {
             }
     ),
 
+    EV_HELI(
+            "ev_heli",
+            "EV Helicopter",
+            "🚁 High-Speed VTOL Aircraft",
+            () -> new ItemStack(EvecualMC.HELI_ITEM),
+            "High-speed passenger VTOL electric helicopter featuring 12 m/s cruise speed, 20 m/s boost, dual rotors, and rapid helipad charging.",
+            new String[]{
+                    "Right-click with empty hand to board the cockpit as pilot.",
+                    "Cruises at 12 blocks/second (0.60 bps) and reaches 20 blocks/second (1.00 bps) on Sprint/Boost.",
+                    "Holds a generous 27-slot internal cargo bay accessible by pressing 'Z'.",
+                    "Customizable with Dyes for body livery and Stained Glass for cockpit bubble tint.",
+                    "Charges rapidly by landing on a Heli Charger placed on a Vehicle Charger Base."
+            },
+            new String[][]{
+                    {"W / S", "Forward Cruise / Pitch Back Brake"},
+                    {"A / D", "Yaw Heading & Banking Turn"},
+                    {"Space", "Ascend (Altitude Up)"},
+                    {"Shift / Down", "Descend (Altitude Down / Land)"},
+                    {"Ctrl / Sprint", "Engage 20 m/s Turbine Boost"},
+                    {"Z", "Open 27-Slot Internal Cargo Bay"},
+                    {"Shift (On Ground)", "Dismount Helicopter"}
+            },
+            new String[]{
+                    "Place a Heli Charger directly on top of a Vehicle Charger Base for automatic high-voltage docking.",
+                    "When hovering without vertical input, the onboard flight computer actively locks your altitude.",
+                    "Turbine boost consumes power faster but allows rapid traversal across hundreds of blocks in seconds."
+            }
+    ),
+
+    HELI_CHARGER(
+            "heli_charger",
+            "Heli Charger",
+            "⚡ High-Voltage Helipad",
+            () -> new ItemStack(EvecualMC.HELI_CHARGER_ITEM),
+            "Rapid inductive charging helipad designed to be placed directly on top of or adjacent to a Vehicle Charger Base.",
+            new String[]{
+                    "Place directly on top of a Vehicle Charger Base to supply high-voltage charging power.",
+                    "Automatically detects landed EV Helis and rapid-charges their battery cells at 300 EU/s.",
+                    "Emits electric charging sparks and sound effects during active power transfer."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Helipad Diagnostics & Guide"},
+                    {"Landing", "Touch down with EV Heli to initiate rapid charging"}
+            },
+            new String[]{
+                    "Place on rooftops or helipad towers connected down to battery banks and solar arrays.",
+                    "Works seamlessly with multiple Vehicle Charger Bases for massive high-speed aircraft charging."
+            }
+    ),
+
     ELECTRONIC_COMBINER(
             "electronic_combiner",
             "Electronic Combiner",

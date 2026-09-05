@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GRG",
+    "ICI",
+    "SSS"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "evecualmc:wire"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "evecualmc:heli_charger",
+    "count": 1
+  }
+}

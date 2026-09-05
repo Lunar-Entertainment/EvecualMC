@@ -11,7 +11,10 @@ import com.evecual.evecualmc.client.render.RcDroneEntityModel;
 import com.evecual.evecualmc.client.render.RcDroneEntityRenderer;
 import com.evecual.evecualmc.client.render.RcRobotEntityModel;
 import com.evecual.evecualmc.client.render.RcRobotEntityRenderer;
+import com.evecual.evecualmc.client.render.HeliEntityModel;
+import com.evecual.evecualmc.client.render.HeliEntityRenderer;
 import com.evecual.evecualmc.entity.CarEntity;
+import com.evecual.evecualmc.entity.HeliEntity;
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
 import com.evecual.evecualmc.entity.RcRobotEntity;
@@ -462,6 +465,10 @@ public class EvecualMCClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(RcRobotEntityModel.MODEL_LAYER, RcRobotEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.RC_ROBOT_ENTITY, RcRobotEntityRenderer::new);
 
+        // Register EV Heli Model and Renderer
+        EntityModelLayerRegistry.registerModelLayer(HeliEntityModel.MODEL_LAYER, HeliEntityModel::getTexturedModelData);
+        EntityRendererRegistry.register(EvecualMC.HELI_ENTITY, HeliEntityRenderer::new);
+
         // Explicitly render the Player in the world when looking through RC Camera view
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             MinecraftClient client = MinecraftClient.getInstance();
@@ -600,10 +607,16 @@ public class EvecualMCClient implements ClientModInitializer {
 
                 // Open Trunk / Cargo Key ('Z')
                 while (OPEN_TRUNK_KEY.wasPressed()) {
-                    // 1. If inside car
+                    // 1. If inside car or heli
                     if (client.player.getVehicle() instanceof CarEntity car) {
                         PacketByteBuf buf = PacketByteBufs.create();
                         buf.writeInt(car.getId());
+                        ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        continue;
+                    }
+                    if (client.player.getVehicle() instanceof HeliEntity heli) {
+                        PacketByteBuf buf = PacketByteBufs.create();
+                        buf.writeInt(heli.getId());
                         ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
                         continue;
                     }
@@ -638,7 +651,7 @@ public class EvecualMCClient implements ClientModInitializer {
                     // 5. When NOT controlling: Check if aiming directly at an entity with crosshair
                     if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit && hit.getEntity() != null) {
                         Entity e = hit.getEntity();
-                        if (e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity) {
+                        if (e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity || e instanceof HeliEntity) {
                             PacketByteBuf buf = PacketByteBufs.create();
                             buf.writeInt(e.getId());
                             ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
@@ -650,7 +663,7 @@ public class EvecualMCClient implements ClientModInitializer {
                     if (client.world != null) {
                         net.minecraft.util.math.Box searchBox = client.player.getBoundingBox().expand(6.0);
                         java.util.List<Entity> nearEntities = client.world.getOtherEntities(client.player, searchBox,
-                                e -> e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity);
+                                e -> e instanceof RcRobotEntity || e instanceof RcDroneEntity || e instanceof RcCarEntity || e instanceof CarEntity || e instanceof HeliEntity);
                         if (!nearEntities.isEmpty()) {
                             nearEntities.sort(java.util.Comparator.comparingDouble(e -> e.squaredDistanceTo(client.player)));
                             Entity closest = nearEntities.get(0);
@@ -707,6 +720,29 @@ public class EvecualMCClient implements ClientModInitializer {
                     buf.writeBoolean(right);
                     buf.writeBoolean(sprint);
                     ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
+                }
+
+                // EV Helicopter flight inputs
+                if (client.player.getVehicle() instanceof HeliEntity heli) {
+                    boolean forward = client.options.forwardKey.isPressed();
+                    boolean back = client.options.backKey.isPressed();
+                    boolean left = client.options.leftKey.isPressed();
+                    boolean right = client.options.rightKey.isPressed();
+                    boolean up = client.options.jumpKey.isPressed();
+                    boolean down = client.options.sneakKey.isPressed();
+                    boolean sprint = client.options.sprintKey.isPressed();
+
+                    heli.setInputs(forward, back, left, right, up, down, sprint);
+
+                    PacketByteBuf buf = PacketByteBufs.create();
+                    buf.writeBoolean(forward);
+                    buf.writeBoolean(back);
+                    buf.writeBoolean(left);
+                    buf.writeBoolean(right);
+                    buf.writeBoolean(up);
+                    buf.writeBoolean(down);
+                    buf.writeBoolean(sprint);
+                    ClientPlayNetworking.send(EvecualMC.HELI_INPUT_PACKET_ID, buf);
                 }
 
                 // Stationary RC Controller handling

@@ -77,6 +77,11 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "car"),
             new CarItem(new Item.Settings().maxCount(1)));
 
+    public static final Item HELI_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "ev_heli"),
+            new com.evecual.evecualmc.item.HeliItem(new Item.Settings().maxCount(1)));
+
     public static final Item RC_CAR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "rc_car"),
@@ -260,6 +265,17 @@ public class EvecualMC implements ModInitializer {
             new com.evecual.evecualmc.item.StationaryRcControllerItem(STATIONARY_RC_CONTROLLER_BLOCK,
                     new Item.Settings().maxCount(1)));
 
+    public static final Block HELI_CHARGER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "heli_charger"),
+            new com.evecual.evecualmc.block.HeliChargerBlock(
+                    FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.METAL).nonOpaque()));
+
+    public static final Item HELI_CHARGER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "heli_charger"),
+            new BlockItem(HELI_CHARGER_BLOCK, new Item.Settings()));
+
     public static final Item CHARGER_CABLE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "charger_cable"),
@@ -321,6 +337,14 @@ public class EvecualMC implements ModInitializer {
                                     STATIONARY_RC_CONTROLLER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.HeliChargerBlockEntity> HELI_CHARGER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "heli_charger"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.HeliChargerBlockEntity::new, HELI_CHARGER_BLOCK)
+                            .build());
+
     // Screen Handlers
     public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry
             .register(
@@ -371,6 +395,15 @@ public class EvecualMC implements ModInitializer {
                     .trackRangeChunks(18) // 288 blocks (> 256m)
                     .build());
 
+    public static final EntityType<com.evecual.evecualmc.entity.HeliEntity> HELI_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "ev_heli"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.HeliEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.HeliEntity::new)
+                    .dimensions(EntityDimensions.fixed(2.2f, 1.85f))
+                    .trackRangeChunks(20)
+                    .build());
+
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
@@ -386,6 +419,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(UPGRADED_ENGINE);
                 entries.add(TRUNK_UPGRADE);
                 entries.add(CAR_ITEM);
+                entries.add(HELI_ITEM);
                 entries.add(RC_CAR_ITEM);
                 entries.add(RC_DRONE_ITEM);
                 entries.add(RC_ROBOT_ITEM);
@@ -403,6 +437,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(ELECTRONIC_COMBINER_ITEM);
                 entries.add(CHARGER_ITEM);
                 entries.add(CHARGER_EXTENSION_ITEM);
+                entries.add(HELI_CHARGER_ITEM);
                 entries.add(CHARGER_CABLE);
                 entries.add(PARKING_LINES_ITEM);
                 entries.add(VANILLA_ICE_CREAM);
@@ -413,6 +448,7 @@ public class EvecualMC implements ModInitializer {
             .build();
 
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
+    public static final Identifier HELI_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_input");
     public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
     public static final Identifier RC_CAR_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_car_auto_dock");
     public static final Identifier RC_DRONE_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_drone_input");
@@ -456,6 +492,23 @@ public class EvecualMC implements ModInitializer {
                     server.execute(() -> {
                         if (player.getVehicle() instanceof CarEntity car) {
                             car.setInputs(forward, back, left, right, sprint);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean up = buf.readBoolean();
+                    boolean down = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
+
+                    server.execute(() -> {
+                        if (player.getVehicle() instanceof com.evecual.evecualmc.entity.HeliEntity heli) {
+                            heli.setInputs(forward, back, left, right, up, down, sprint);
                         }
                     });
                 });
@@ -627,6 +680,8 @@ public class EvecualMC implements ModInitializer {
                         Entity target = player.getWorld().getEntityById(entityId);
                         if (target instanceof CarEntity car && player.squaredDistanceTo(car) < 64.0) {
                             car.openTrunk(player);
+                        } else if (target instanceof com.evecual.evecualmc.entity.HeliEntity heli && player.squaredDistanceTo(heli) < 64.0) {
+                            heli.openTrunk(player);
                         } else if (target instanceof com.evecual.evecualmc.entity.RcCarEntity rc
                                 && (player.squaredDistanceTo(rc) < 64.0 || rc.getPairedPlayerUuid().equals(player.getUuidAsString()))) {
                             rc.openTrunk(player);

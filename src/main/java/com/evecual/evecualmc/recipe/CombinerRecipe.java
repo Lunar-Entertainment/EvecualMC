@@ -69,6 +69,53 @@ public enum CombinerRecipe {
         }
     },
 
+    EV_HELI(
+            Category.VEHICLES,
+            "ev_heli",
+            "EV Helicopter",
+            "High-speed drivable VTOL electric helicopter with dual rotors and 20 m/s boost.",
+            () -> new ItemStack(EvecualMC.HELI_ITEM),
+            new SlotRequirement[]{
+                    new SlotRequirement("Turbine Engine", "Electric Engine or Upgraded Engine", "Upper Turbine Core", 1, false,
+                            s -> s.isOf(EvecualMC.ENGINE) || s.isOf(EvecualMC.UPGRADED_ENGINE),
+                            () -> new ItemStack(EvecualMC.ENGINE)),
+                    new SlotRequirement("Airframe Chassis", "Steel Ingot or Iron Ingot", "Fuselage & Skid Tubing", 4, false,
+                            s -> s.isOf(EvecualMC.STEEL_INGOT) || s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(EvecualMC.STEEL_INGOT)),
+                    new SlotRequirement("Bubble Canopy", "Glass Block or Stained Glass", "Front Cockpit Bubble Canopy", 1, false,
+                            s -> isGlassItem(s.getItem()),
+                            () -> new ItemStack(Items.GLASS)),
+                    new SlotRequirement("Dual Rotors", "Iron Ingot (x4)", "Main & Tail Rotor Blades", 4, false,
+                            s -> s.isOf(Items.IRON_INGOT),
+                            () -> new ItemStack(Items.IRON_INGOT)),
+                    new SlotRequirement("Body Livery Dye", "Any Dye Color", "Outer Fuselage Skin & Tail Fin", 1, true,
+                            s -> s.getItem() instanceof DyeItem,
+                            () -> new ItemStack(Items.LIGHT_BLUE_DYE)),
+                    new SlotRequirement("High-Volt Battery", "Battery or Redstone Dust", "Lower Belly Battery Bay", 1, false,
+                            s -> s.isOf(EvecualMC.BATTERY_ITEM) || s.isOf(Items.REDSTONE),
+                            () -> new ItemStack(EvecualMC.BATTERY_ITEM))
+            }
+    ) {
+        @Override
+        public ItemStack createOutput(List<ItemStack> inputs) {
+            ItemStack engine = inputs.get(0);
+            ItemStack glass = inputs.get(2);
+            ItemStack color = inputs.get(4);
+
+            boolean isUpgradedEngine = engine.isOf(EvecualMC.UPGRADED_ENGINE);
+            int glassColor = getGlassColorFromItem(glass.getItem());
+            int heliColor = getCarColorFromDye(color);
+
+            ItemStack heli = new ItemStack(EvecualMC.HELI_ITEM, 1);
+            NbtCompound nbt = heli.getOrCreateNbt();
+            nbt.putInt("ColorVariant", heliColor);
+            nbt.putInt("GlassColor", glassColor);
+            nbt.putBoolean("UpgradedEngine", isUpgradedEngine);
+            nbt.putInt("Energy", isUpgradedEngine ? 3000 : 2000);
+            return heli;
+        }
+    },
+
     RC_CAR(
             Category.RC,
             "rc_car",
@@ -320,6 +367,14 @@ public enum CombinerRecipe {
                 {124, 34}, // 3: Leather Interior (cockpit seat)
                 {148, 22}, // 4: Body Paint Dye (outer roof)
                 {154, 42}  // 5: Trunk Upgrade (rear trunk)
+            };
+            case EV_HELI -> new int[][]{
+                {96, 22},  // 0: Turbine Engine (upper turbine core)
+                {68, 48},  // 1: Airframe Chassis (fuselage & skids)
+                {96, 36},  // 2: Bubble Canopy (cockpit canopy)
+                {34, 22},  // 3: Dual Rotors (rotor blades)
+                {136, 36}, // 4: Body Livery Dye (outer skin)
+                {136, 48}  // 5: High-Volt Battery (lower battery bay)
             };
             case RC_CAR -> new int[][]{
                 {104, 22}, // 0: RC Sender (roof antenna)

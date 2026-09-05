@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "evecualmc:block/heli_charger" },
+    "facing=south": { "model": "evecualmc:block/heli_charger", "y": 180 },
+    "facing=west":  { "model": "evecualmc:block/heli_charger", "y": 270 },
+    "facing=east":  { "model": "evecualmc:block/heli_charger", "y": 90 }
+  }
+}

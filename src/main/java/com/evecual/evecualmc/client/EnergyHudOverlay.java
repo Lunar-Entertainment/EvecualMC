@@ -8,9 +8,11 @@ import com.evecual.evecualmc.block.entity.ChargerExtensionBlockEntity;
 import com.evecual.evecualmc.block.entity.ElectronicCombinerBlockEntity;
 import com.evecual.evecualmc.block.entity.ParkingLinesBlockEntity;
 import com.evecual.evecualmc.block.entity.RcChargerBlockEntity;
+import com.evecual.evecualmc.block.entity.HeliChargerBlockEntity;
 import com.evecual.evecualmc.block.entity.SolarPanelBlockEntity;
 import com.evecual.evecualmc.block.entity.StationaryRcControllerBlockEntity;
 import com.evecual.evecualmc.entity.CarEntity;
+import com.evecual.evecualmc.entity.HeliEntity;
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
 import com.evecual.evecualmc.entity.RcRobotEntity;
@@ -48,9 +50,13 @@ public class EnergyHudOverlay implements HudRenderCallback {
 
         HitResult hit = client.crosshairTarget;
 
-        // 2. Check if riding a car
+        // 2. Check if riding a car or heli
         if (client.player.getVehicle() instanceof CarEntity car) {
             renderCarTip(drawContext, client, car);
+            return;
+        }
+        if (client.player.getVehicle() instanceof HeliEntity heli) {
+            renderHeliTip(drawContext, client, heli);
             return;
         }
 
@@ -61,6 +67,9 @@ public class EnergyHudOverlay implements HudRenderCallback {
             Entity entity = entityHit.getEntity();
             if (entity instanceof CarEntity car) {
                 renderCarTip(drawContext, client, car);
+                return;
+            } else if (entity instanceof HeliEntity heli) {
+                renderHeliTip(drawContext, client, heli);
                 return;
             } else if (entity instanceof RcCarEntity rcCar) {
                 renderRcCarTip(drawContext, client, rcCar);
@@ -93,6 +102,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderChargerExtensionTip(drawContext, client, extension);
             } else if (be instanceof RcChargerBlockEntity rcCharger) {
                 renderRcChargerTip(drawContext, client, rcCharger);
+            } else if (be instanceof HeliChargerBlockEntity heliCharger) {
+                renderHeliChargerTip(drawContext, client, heliCharger);
             } else if (state.isOf(EvecualMC.WIRE_BLOCK)) {
                 renderWireTip(drawContext, client, state);
             } else if (state.isOf(EvecualMC.PARKING_LINES_BLOCK)) {
@@ -366,6 +377,31 @@ public class EnergyHudOverlay implements HudRenderCallback {
         renderUnifiedHud(context, client, "🚗", "Electric Car", 0xFFF87171,
                 energy + " / " + maxEnergy + " E", 0xFFFFFFFF, status, color,
                 (double) energy / Math.max(1, maxEnergy), 0xFFEF4444);
+    }
+
+    private void renderHeliTip(DrawContext context, MinecraftClient client, HeliEntity heli) {
+        int energy = heli.getEnergy();
+        int maxEnergy = heli.getMaxEnergy();
+        int pct = energy * 100 / Math.max(1, maxEnergy);
+        double speedBps = heli.getCurrentSpeed() * 20.0;
+        String speedStr = String.format("%.1f m/s", speedBps);
+        boolean boost = client.options.sprintKey.isPressed();
+        String flightStatus = heli.isCharging() ? "⚡ CHARGING ON HELI PAD" :
+                (heli.isInFlight() ? (boost ? "💨 BOOST: " + speedStr : "🚁 FLYING: " + speedStr) : "🅿️ LANDED | Battery: " + pct + "%");
+        int color = heli.isCharging() ? 0xFF86EFAC : (energy > 200 ? 0xFF38BDF8 : 0xFFF87171);
+
+        renderUnifiedHud(context, client, "🚁", "EV Helicopter", 0xFF38BDF8,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, flightStatus, color,
+                (double) energy / Math.max(1, maxEnergy), 0xFF0284C7);
+    }
+
+    private void renderHeliChargerTip(DrawContext context, MinecraftClient client, HeliChargerBlockEntity heliCharger) {
+        int energy = heliCharger.getStoredEnergy();
+        int max = heliCharger.getMaxEnergy();
+        String status = "🚁 Rapid Inductive Helipad (Place on Vehicle Charger Base to power)";
+        renderUnifiedHud(context, client, "⚡", "Heli Charger", 0xFF38BDF8,
+                energy + " / " + max + " EU", 0xFFFFFFFF, status, 0xFF67E8F9,
+                (double) energy / Math.max(1, max), 0xFF0284C7);
     }
 
     private void renderRcCarTip(DrawContext context, MinecraftClient client, RcCarEntity rcCar) {
