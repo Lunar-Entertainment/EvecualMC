@@ -45,7 +45,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
     private int energy = 0;
     private int progress = 0;
-    private int selectedRecipeIndex = 0;
+    private int selectedRecipeIndex = 1;
 
     protected final PropertyDelegate propertyDelegate = new PropertyDelegate() {
         @Override
@@ -217,7 +217,7 @@ public class ElectronicCombinerBlockEntity extends BlockEntity implements SidedI
         Inventories.readNbt(nbt, this.inventory);
         this.energy = nbt.getInt("Energy");
         this.progress = nbt.getInt("Progress");
-        this.selectedRecipeIndex = nbt.getInt("SelectedRecipe");
+        this.selectedRecipeIndex = nbt.contains("SelectedRecipe") ? Math.max(1, nbt.getInt("SelectedRecipe")) : 1;
     }
 
     @Nullable
