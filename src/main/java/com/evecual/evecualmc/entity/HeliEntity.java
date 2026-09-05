@@ -78,6 +78,7 @@ public class HeliEntity extends Entity {
     private BlockPos targetHelipadPos = null;
     private int autoReturnStage = 0;
     private int autoReturnTicks = 0;
+    private int autoParkGraceTicks = 0;
     private double cruiseAltitude = 0.0;
 
     private double currentSpeed = 0.0;
@@ -462,42 +463,67 @@ public class HeliEntity extends Entity {
         return this.targetHelipadPos;
     }
 
+    public void startAutoPark(BlockPos center) {
+        this.targetHelipadPos = center;
+        this.dataTracker.set(AUTO_RETURNING, true);
+        this.autoReturnStage = 0;
+        this.autoReturnTicks = 0;
+        this.autoParkGraceTicks = 20; // 1 second grace period to prevent residual key presses from cancelling auto-park
+        this.inputForward = false;
+        this.inputBack = false;
+        this.inputLeft = false;
+        this.inputRight = false;
+        this.inputUp = false;
+        this.inputDown = false;
+        this.cruiseAltitude = Math.max(this.getY() + 8.0, center.getY() + 8.0);
+    }
+
     public void toggleAutoPark(PlayerEntity player) {
         if (isAutoReturning()) {
             cancelAutoPark(player);
             return;
         }
 
-        // Search for nearest 3x3 Heli Charger Helipad within 128 blocks
+        // Fast & comprehensive search for nearest 3x3 Heli Charger Helipad within 64 blocks
         BlockPos heliPos = this.getBlockPos();
         BlockPos bestSpot = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        int radius = 128;
-        for (BlockPos p : BlockPos.iterateOutwards(heliPos, radius, 32, radius)) {
-            BlockState state = this.getWorld().getBlockState(p);
-            if (state.isOf(EvecualMC.HELI_CHARGER_BLOCK)) {
-                HeliChargerPart part = state.get(HeliChargerBlock.PART);
-                BlockPos center = HeliChargerBlock.getCenterPos(p, part);
-                double distSq = heliPos.getSquaredDistance(center);
-                if (distSq < bestDistSq) {
-                    bestDistSq = distSq;
-                    bestSpot = center;
+        int radH = 64;
+        int radV = 24;
+        for (int x = -radH; x <= radH; x += 2) {
+            for (int y = -radV; y <= radV; y++) {
+                for (int z = -radH; z <= radH; z += 2) {
+                    BlockPos p = heliPos.add(x, y, z);
+                    BlockState state = this.getWorld().getBlockState(p);
+                    if (state.isOf(EvecualMC.HELI_CHARGER_BLOCK)) {
+                        HeliChargerPart part = state.get(HeliChargerBlock.PART);
+                        BlockPos center = HeliChargerBlock.getCenterPos(p, part);
+                        double distSq = heliPos.getSquaredDistance(center);
+                        if (distSq < bestDistSq) {
+                            bestDistSq = distSq;
+                            bestSpot = center;
+                        }
+                    }
                 }
             }
         }
 
         if (bestSpot != null) {
-            this.targetHelipadPos = bestSpot;
-            this.dataTracker.set(AUTO_RETURNING, true);
-            this.autoReturnStage = 0;
-            this.autoReturnTicks = 0;
-            this.cruiseAltitude = Math.max(this.getY() + 8.0, bestSpot.getY() + 8.0);
+            startAutoPark(bestSpot);
+            if (player instanceof net.minecraft.server.network.ServerPlayerEntity sp) {
+                net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                buf.writeInt(this.getId());
+                buf.writeInt(bestSpot.getX());
+                buf.writeInt(bestSpot.getY());
+                buf.writeInt(bestSpot.getZ());
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, EvecualMC.START_HELI_AUTO_PARK_S2C_PACKET_ID, buf);
+            }
             player.sendMessage(Text.literal("§a🚁 Helipad Autopilot engaged! Navigating to 3x3 Helipad..."), true);
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                     SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 1.0F, 1.5F);
         } else {
-            player.sendMessage(Text.literal("§c❌ No 3x3 Helipad found within 128 blocks!"), true);
+            player.sendMessage(Text.literal("§c❌ No 3x3 Helipad found within 64 blocks!"), true);
         }
     }
 
@@ -506,8 +532,12 @@ public class HeliEntity extends Entity {
             this.dataTracker.set(AUTO_RETURNING, false);
             this.targetHelipadPos = null;
             this.autoReturnStage = 0;
-            if (player instanceof PlayerEntity p) {
-                p.sendMessage(Text.literal("§e⚠️ Helipad Autopilot cancelled by pilot."), true);
+            this.autoParkGraceTicks = 0;
+            if (player instanceof net.minecraft.server.network.ServerPlayerEntity sp) {
+                net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                buf.writeInt(this.getId());
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, EvecualMC.CANCEL_HELI_AUTO_PARK_S2C_PACKET_ID, buf);
+                sp.sendMessage(Text.literal("§e⚠️ Helipad Autopilot cancelled by pilot."), true);
             }
         }
     }
@@ -521,6 +551,10 @@ public class HeliEntity extends Entity {
         int energy = getEnergy();
         boolean hasPower = energy > 0;
         boolean hasPilot = passenger instanceof PlayerEntity;
+
+        if (this.autoParkGraceTicks > 0) {
+            this.autoParkGraceTicks--;
+        }
 
         // 1. Rotor Speed & Spool-up calculation
         float targetRotorSpeed = 0.0F;
@@ -550,7 +584,7 @@ public class HeliEntity extends Entity {
 
         // --- Auto-Park Navigation to 3x3 Helipad ---
         if (isAutoReturning() && this.targetHelipadPos != null && hasPower) {
-            boolean hasManualMove = (inputForward || inputBack || inputLeft || inputRight || inputUp || inputDown);
+            boolean hasManualMove = (this.autoParkGraceTicks == 0) && (inputForward || inputBack || inputLeft || inputRight || inputUp || inputDown);
             if (hasManualMove) {
                 cancelAutoPark(passenger);
             } else {
@@ -569,7 +603,7 @@ public class HeliEntity extends Entity {
                     // Stage 0: Ascend to safe cruising altitude
                     if (this.autoReturnStage == 0) {
                         if (this.getY() < this.cruiseAltitude - 0.5) {
-                            targetVy = 0.40; // climb
+                            targetVy = 0.45; // climb
                             targetHozSpeed = 0.0;
                             targetPitch = 0.0F;
                         } else {
@@ -580,14 +614,14 @@ public class HeliEntity extends Entity {
                     else if (this.autoReturnStage == 1) {
                         float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                         float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                        targetYawDelta = MathHelper.clamp(yawDiff * 0.25F, -5.0F, 5.0F);
+                        targetYawDelta = MathHelper.clamp(yawDiff * 0.25F, -6.0F, 6.0F);
 
                         targetPitch = -14.0F; // nose down forward cruise
                         targetRoll = MathHelper.clamp(-yawDiff * 0.5F, -18.0F, 18.0F);
                         targetHozSpeed = NORMAL_CRUISE_SPEED; // 12 blocks/sec
                         targetVy = 0.0; // altitude hold
 
-                        if (horizDist < 1.0) {
+                        if (horizDist < 1.2) {
                             this.autoReturnStage = 2; // Arrived above pad: begin vertical touchdown
                         }
                     }
@@ -598,9 +632,10 @@ public class HeliEntity extends Entity {
                         targetRoll = 0.0F;
                         targetVy = -0.22; // gentle landing descent
 
-                        if (this.isOnGround() || this.getY() <= targetY + 0.15) {
+                        if (this.isOnGround() || this.getY() <= targetY + 0.2) {
                             this.dataTracker.set(AUTO_RETURNING, false);
                             this.targetHelipadPos = null;
+                            this.autoReturnStage = 0;
                             this.setVelocity(0, 0, 0);
                             setCharging(true);
                             if (passenger instanceof PlayerEntity p) {

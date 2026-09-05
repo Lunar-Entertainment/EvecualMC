@@ -373,11 +373,11 @@ public enum TipTopic {
                     {"W / S", "Forward Cruise / Pitch Back Brake"},
                     {"A / D", "Yaw Heading & Banking Turn"},
                     {"Space", "Ascend (Altitude Up)"},
-                    {"Shift / Down", "Descend (Altitude Down / Land)"},
+                    {"Shift", "Descend (Altitude Down / Land)"},
                     {"Ctrl / Sprint", "Engage 20 m/s Turbine Boost"},
                     {"C", "Helipad Autopilot return & vertical landing"},
-                    {"Z", "Open 27-Slot Internal Cargo Bay"},
-                    {"Shift (On Ground)", "Dismount Helicopter"}
+                    {"F", "Exit / Dismount Helicopter"},
+                    {"Z", "Open 27-Slot Internal Cargo Bay"}
             },
             new String[]{
                     "Place a Heli Charger directly on top of a Vehicle Charger Base for automatic high-voltage docking.",

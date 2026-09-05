@@ -385,10 +385,11 @@ public class EnergyHudOverlay implements HudRenderCallback {
         int pct = energy * 100 / Math.max(1, maxEnergy);
         double speedBps = heli.getCurrentSpeed() * 20.0;
         String speedStr = String.format("%.1f m/s", speedBps);
-        boolean boost = client.options.sprintKey.isPressed();
-        String flightStatus = heli.isCharging() ? "⚡ CHARGING ON HELI PAD" :
-                (heli.isInFlight() ? (boost ? "💨 BOOST: " + speedStr : "🚁 FLYING: " + speedStr) : "🅿️ LANDED | Battery: " + pct + "%");
-        int color = heli.isCharging() ? 0xFF86EFAC : (energy > 200 ? 0xFF38BDF8 : 0xFFF87171);
+        boolean boost = client.options.sprintKey.isPressed() || net.minecraft.client.util.InputUtil.isKeyPressed(client.getWindow().getHandle(), org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL);
+        String flightStatus = heli.isCharging() ? "⚡ CHARGING ON 3x3 HELIPAD" :
+                (heli.isAutoReturning() ? "🚁 AUTOPILOT -> HELIPAD (" + speedStr + ")" :
+                (heli.isInFlight() ? (boost ? "💨 BOOST: " + speedStr : "🚁 FLYING: " + speedStr) : "🅿️ LANDED | Battery: " + pct + "%"));
+        int color = heli.isCharging() ? 0xFF86EFAC : (heli.isAutoReturning() ? 0xFFFBBF24 : (energy > 200 ? 0xFF38BDF8 : 0xFFF87171));
 
         renderUnifiedHud(context, client, "🚁", "EV Helicopter", 0xFF38BDF8,
                 energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, flightStatus, color,

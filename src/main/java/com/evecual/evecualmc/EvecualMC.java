@@ -468,6 +468,9 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier SELECT_COMBINER_RECIPE_PACKET_ID = new Identifier(MOD_ID, "select_combiner_recipe");
     public static final Identifier ENTER_RC_STATION_PACKET_ID = new Identifier(MOD_ID, "enter_rc_station");
     public static final Identifier EXIT_RC_STATION_PACKET_ID = new Identifier(MOD_ID, "exit_rc_station");
+    public static final Identifier DISMOUNT_HELI_PACKET_ID = new Identifier(MOD_ID, "dismount_heli");
+    public static final Identifier START_HELI_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "start_heli_auto_park_s2c");
+    public static final Identifier CANCEL_HELI_AUTO_PARK_S2C_PACKET_ID = new Identifier(MOD_ID, "cancel_heli_auto_park_s2c");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -956,6 +959,18 @@ public class EvecualMC implements ModInitializer {
                                     }
                                 }
                             }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(DISMOUNT_HELI_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        if (player.getVehicle() instanceof HeliEntity heli) {
+                            player.stopRiding();
+                            net.minecraft.util.math.Vec3d dismountPos = heli.updatePassengerForDismount(player);
+                            player.requestTeleport(dismountPos.x, dismountPos.y, dismountPos.z);
+                            player.sendMessage(Text.literal("§e🚁 Exited Helicopter."), true);
                         }
                     });
                 });

@@ -536,6 +536,28 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register EV Heli Auto-Park S2C sync
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.START_HELI_AUTO_PARK_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            int heliId = buf.readInt();
+            int hx = buf.readInt();
+            int hy = buf.readInt();
+            int hz = buf.readInt();
+            client.execute(() -> {
+                if (client.world != null && client.world.getEntityById(heliId) instanceof HeliEntity heli) {
+                    heli.startAutoPark(new net.minecraft.util.math.BlockPos(hx, hy, hz));
+                }
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CANCEL_HELI_AUTO_PARK_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            int heliId = buf.readInt();
+            client.execute(() -> {
+                if (client.world != null && client.world.getEntityById(heliId) instanceof HeliEntity heli) {
+                    heli.cancelAutoPark(null);
+                }
+            });
+        });
+
         // Register Open Tip Menu / Field Guide packet receiver
         ClientPlayNetworking.registerGlobalReceiver(EvecualMC.OPEN_TIP_SCREEN_PACKET_ID, (client, handler, buf, responseSender) -> {
             String topicId = buf.readString();
@@ -692,9 +714,13 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
-                // RC Camera Toggle Key ('F')
+                // RC Camera Toggle Key ('F') / Heli Dismount Key
                 while (RC_CAMERA_KEY.wasPressed()) {
-                    toggleRcCamera(client);
+                    if (client.player.getVehicle() instanceof HeliEntity) {
+                        ClientPlayNetworking.send(EvecualMC.DISMOUNT_HELI_PACKET_ID, PacketByteBufs.empty());
+                    } else {
+                        toggleRcCamera(client);
+                    }
                 }
 
                 // RC Vehicle Light Toggle Key ('L')
@@ -726,15 +752,20 @@ public class EvecualMCClient implements ClientModInitializer {
                     ClientPlayNetworking.send(EvecualMC.CAR_INPUT_PACKET_ID, buf);
                 }
 
-                // EV Helicopter flight inputs
+                // EV Helicopter flight inputs & sneak dismount suppression
                 if (client.player.getVehicle() instanceof HeliEntity heli) {
+                    // Suppress vanilla sneak dismount so Shift ONLY acts as vertical descent (Go Down)
+                    if (client.player.input != null) {
+                        client.player.input.sneaking = false;
+                    }
+
                     boolean forward = client.options.forwardKey.isPressed();
                     boolean back = client.options.backKey.isPressed();
                     boolean left = client.options.leftKey.isPressed();
                     boolean right = client.options.rightKey.isPressed();
                     boolean up = client.options.jumpKey.isPressed();
-                    boolean down = client.options.sneakKey.isPressed() || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_V) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_DOWN);
-                    boolean sprint = client.options.sprintKey.isPressed() || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL);
+                    boolean down = client.options.sneakKey.isPressed();
+                    boolean sprint = client.options.sprintKey.isPressed() || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_CONTROL);
 
                     heli.setInputs(forward, back, left, right, up, down, sprint);
 
