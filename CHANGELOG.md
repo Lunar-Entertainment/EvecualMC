@@ -1,5 +1,14 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.10] - 2026-09-05
+### Fixed & Improved
+- **RC Robot Auto-Docking Pathfinding & Camera Fix**:
+  - Fixed client-server heading conflict where looking through the RC camera in first-person (FPV) or third-person view sent camera mouse packets that fought with and overrode the robot's navigation yaw.
+  - Upgraded RC Robot obstacle climbing with 1.25m step height and automatic jump-climbing over ledges, dirt steps, and uneven slopes.
+  - Added smart unstick routine: if obstructed for more than 14 ticks, the robot backs up and turns away to navigate cleanly around walls and obstacles.
+  - Reduced energy consumption during auto-return to ensure robots low on battery make it safely back to the parking pad.
+  - Synchronized auto-return state on client and server to guarantee butter-smooth driving and docking into Robot Parking Spots.
+
 ## [1.3.9] - 2026-09-04
 ### Added & Improved
 - **RC Parking & Unparking Forward Advance**:

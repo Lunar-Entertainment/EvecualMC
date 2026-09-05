@@ -84,6 +84,7 @@ public class RcRobotEntity extends Entity {
     private BlockPos targetChargerPos = null;
     private int autoReturnTicks = 0;
     private int stuckTicks = 0;
+    private int reverseTicks = 0;
     private boolean explicitlyPairedInSpot = false;
     private boolean wasInParkingSpot = false;
 
@@ -258,10 +259,21 @@ public class RcRobotEntity extends Entity {
     private float remoteYaw = Float.NaN;
 
     public void setRemoteYaw(float yaw) {
+        if (this.autoReturning) return;
         this.remoteYaw = yaw;
     }
 
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean sprint, boolean jump) {
+        if (this.autoReturning) {
+            if (forward || back || left || right) {
+                this.autoReturning = false;
+                this.targetChargerPos = null;
+                this.stuckTicks = 0;
+                this.reverseTicks = 0;
+            } else {
+                return;
+            }
+        }
         this.inputForward = forward;
         this.inputBack = back;
         this.inputLeft = left;
@@ -357,7 +369,10 @@ public class RcRobotEntity extends Entity {
         boolean hasEnergy = getEnergy() > 0;
         float yaw = this.getYaw();
 
-        if (hasEnergy && (inputLeft || inputRight)) {
+        if (this.autoReturning) {
+            // Yaw is precisely controlled by tickAutoReturn()
+            this.remoteYaw = Float.NaN;
+        } else if (hasEnergy && (inputLeft || inputRight)) {
             float turnSpeed = 4.5F;
             if (inputLeft) yaw -= turnSpeed;
             if (inputRight) yaw += turnSpeed;
@@ -369,13 +384,13 @@ public class RcRobotEntity extends Entity {
             this.remoteYaw = Float.NaN;
         }
 
-        double maxSpeed = inputSprint ? 0.28 : 0.18;
+        double maxSpeed = inputSprint ? 0.28 : (this.autoReturning ? 0.22 : 0.18);
         double accel = 0.035;
         double decel = 0.025;
 
         if (hasEnergy && inputForward) {
             currentSpeed = Math.min(currentSpeed + accel, maxSpeed);
-            if (this.age % 4 == 0) {
+            if (this.age % (this.autoReturning ? 8 : 4) == 0) {
                 setEnergy(getEnergy() - 1);
             }
         } else if (hasEnergy && inputBack) {
@@ -431,8 +446,8 @@ public class RcRobotEntity extends Entity {
             vy = 0.35;
         }
 
-        // Allow robot to step up blocks cleanly
-        this.setStepHeight(1.0F);
+        // Allow robot to step up blocks and terrain effortlessly
+        this.setStepHeight(1.25F);
 
         this.setVelocity(forwardX, vy, forwardZ);
         this.move(MovementType.SELF, this.getVelocity());
@@ -871,35 +886,101 @@ public class RcRobotEntity extends Entity {
         }
 
         autoReturnTicks++;
-        if (autoReturnTicks > 1200) {
+        if (autoReturnTicks > 1200) { // 60s timeout
             autoReturning = false;
             return;
         }
 
         double tx = targetChargerPos.getX() + 0.5;
+        double ty = targetChargerPos.getY() + 0.0625;
         double tz = targetChargerPos.getZ() + 0.5;
-        double distSq = this.squaredDistanceTo(tx, this.getY(), tz);
+        double dx = tx - this.getX();
+        double dz = tz - this.getZ();
+        double distSq = dx * dx + dz * dz;
 
-        if (distSq < 0.09) {
-            this.setPosition(tx, this.getY(), tz);
+        // Dock when squarely centered on top of the parking pad (within 0.35m of center)
+        if (distSq <= 0.12 && Math.abs(this.getY() - ty) <= 0.6) {
+            this.setPosition(tx, ty, tz);
             onReachedCharger();
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);
             return;
         }
 
-        double dx = tx - this.getX();
-        double dz = tz - this.getZ();
-        float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-
-        if (yawDiff > 5.0f) {
-            this.setYaw(this.getYaw() + 4.5f);
-        } else if (yawDiff < -5.0f) {
-            this.setYaw(this.getYaw() - 4.5f);
+        // Obstacle & elevation detection
+        if (this.horizontalCollision && Math.abs(this.getVelocity().x) < 0.03 && Math.abs(this.getVelocity().z) < 0.03) {
+            this.stuckTicks++;
+            // Try jumping up if hitting a ledge or step
+            if (this.isOnGround() && this.stuckTicks >= 3 && this.stuckTicks <= 8) {
+                this.setVelocity(this.getVelocity().x, 0.42, this.getVelocity().z);
+            }
+            if (this.stuckTicks > 14) {
+                this.reverseTicks = 14;
+                this.stuckTicks = 0;
+            }
+        } else {
+            if (this.stuckTicks > 0) this.stuckTicks--;
         }
 
-        this.inputForward = true;
-        this.inputBack = false;
+        if (this.reverseTicks > 0) {
+            this.reverseTicks--;
+            this.inputForward = false;
+            this.inputBack = true;
+            this.inputLeft = true;
+            this.inputRight = false;
+            float unstickYaw = MathHelper.wrapDegrees(this.getYaw() + 6.5f);
+            this.setYaw(unstickYaw);
+            this.setBodyYaw(unstickYaw);
+            this.setHeadYaw(unstickYaw);
+        } else {
+            float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+            float currentYaw = this.getYaw();
+            float yawDiff = MathHelper.wrapDegrees(desiredYaw - currentYaw);
+
+            // Smooth caterpillar steering
+            if (Math.abs(yawDiff) > 60.0f) {
+                // Turn in place
+                if (yawDiff > 0) {
+                    currentYaw += 8.0f;
+                    this.inputLeft = false;
+                    this.inputRight = true;
+                } else {
+                    currentYaw -= 8.0f;
+                    this.inputLeft = true;
+                    this.inputRight = false;
+                }
+                this.inputForward = false;
+                this.inputBack = false;
+            } else if (Math.abs(yawDiff) > 5.0f) {
+                // Curved driving turn
+                if (yawDiff > 0) {
+                    currentYaw += 4.5f;
+                    this.inputLeft = false;
+                    this.inputRight = true;
+                } else {
+                    currentYaw -= 4.5f;
+                    this.inputLeft = true;
+                    this.inputRight = false;
+                }
+                this.inputForward = true;
+                this.inputBack = false;
+            } else {
+                currentYaw = desiredYaw;
+                this.inputLeft = false;
+                this.inputRight = false;
+                this.inputForward = true;
+                this.inputBack = false;
+            }
+
+            this.setYaw(currentYaw);
+            this.setBodyYaw(currentYaw);
+            this.setHeadYaw(currentYaw);
+            this.prevYaw = currentYaw;
+
+            // Jump up if target is higher or climbing steep steps
+            if (ty > this.getY() + 0.3 && this.isOnGround() && this.horizontalCollision) {
+                this.setVelocity(this.getVelocity().x, 0.42, this.getVelocity().z);
+            }
+        }
     }
 
     public ItemStack asItemStack() {

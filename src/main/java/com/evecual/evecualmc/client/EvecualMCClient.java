@@ -208,6 +208,12 @@ public class EvecualMCClient implements ClientModInitializer {
             float yawDelta = (float) (cursorDeltaX * 0.15);
 
             if (cam instanceof RcDroneEntity drone) {
+                if (drone.isAutoReturning()) {
+                    targetRcCameraYaw = 0.0F;
+                    smoothRcCameraYaw = 0.0F;
+                    targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                    return;
+                }
                 float newYaw = MathHelper.wrapDegrees(drone.getYaw() + yawDelta);
                 drone.setYaw(newYaw);
                 drone.prevYaw += yawDelta;
@@ -218,6 +224,13 @@ public class EvecualMCClient implements ClientModInitializer {
                 targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
                 return;
             } else if (cam instanceof RcRobotEntity robot) {
+                if (robot.isAutoReturning()) {
+                    targetRcCameraYaw = 0.0F;
+                    smoothRcCameraYaw = 0.0F;
+                    targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                    robot.setHeadPitch(targetRcCameraPitch);
+                    return;
+                }
                 float newYaw = MathHelper.wrapDegrees(robot.getYaw() + yawDelta);
                 robot.setYaw(newYaw);
                 robot.prevYaw += yawDelta;
@@ -229,6 +242,12 @@ public class EvecualMCClient implements ClientModInitializer {
                 robot.setHeadPitch(targetRcCameraPitch);
                 return;
             } else if (cam instanceof RcCarEntity car) {
+                if (car.isAutoReturning()) {
+                    targetRcCameraYaw = 0.0F;
+                    smoothRcCameraYaw = 0.0F;
+                    targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                    return;
+                }
                 float newYaw = MathHelper.wrapDegrees(car.getYaw() + yawDelta);
                 car.setYaw(newYaw);
                 car.prevYaw += yawDelta;
@@ -757,18 +776,22 @@ public class EvecualMCClient implements ClientModInitializer {
                             boolean rcSprint = client.options.sprintKey.isPressed();
                             boolean rcJump = client.options.jumpKey.isPressed();
 
-                            targetRobot.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+                            boolean hasManualMove = rcFwd || rcBack || rcLeft || rcRight || rcJump;
 
-                            PacketByteBuf robotBuf = PacketByteBufs.create();
-                            robotBuf.writeUuid(pairedUuid);
-                            robotBuf.writeBoolean(rcFwd);
-                            robotBuf.writeBoolean(rcBack);
-                            robotBuf.writeBoolean(rcLeft);
-                            robotBuf.writeBoolean(rcRight);
-                            robotBuf.writeBoolean(rcSprint);
-                            robotBuf.writeBoolean(rcJump);
-                            robotBuf.writeFloat(targetRobot.getYaw());
-                            ClientPlayNetworking.send(EvecualMC.RC_ROBOT_INPUT_PACKET_ID, robotBuf);
+                            if (!targetRobot.isAutoReturning() || hasManualMove) {
+                                targetRobot.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+
+                                PacketByteBuf robotBuf = PacketByteBufs.create();
+                                robotBuf.writeUuid(pairedUuid);
+                                robotBuf.writeBoolean(rcFwd);
+                                robotBuf.writeBoolean(rcBack);
+                                robotBuf.writeBoolean(rcLeft);
+                                robotBuf.writeBoolean(rcRight);
+                                robotBuf.writeBoolean(rcSprint);
+                                robotBuf.writeBoolean(rcJump);
+                                robotBuf.writeFloat(targetRobot.getYaw());
+                                ClientPlayNetworking.send(EvecualMC.RC_ROBOT_INPUT_PACKET_ID, robotBuf);
+                            }
 
                             // LMB: Tool Action (holding LMB repeatedly swings & strikes every 4 ticks)
                             boolean isAttackDown = client.options.attackKey.isPressed();
@@ -813,18 +836,22 @@ public class EvecualMCClient implements ClientModInitializer {
                             boolean rcSprint = client.options.sprintKey.isPressed();
                             boolean rcJump = client.options.jumpKey.isPressed();
 
-                            targetRc.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+                            boolean hasManualMove = rcFwd || rcBack || rcLeft || rcRight || rcJump;
 
-                            PacketByteBuf rcBuf = PacketByteBufs.create();
-                            rcBuf.writeUuid(pairedUuid);
-                            rcBuf.writeBoolean(rcFwd);
-                            rcBuf.writeBoolean(rcBack);
-                            rcBuf.writeBoolean(rcLeft);
-                            rcBuf.writeBoolean(rcRight);
-                            rcBuf.writeBoolean(rcSprint);
-                            rcBuf.writeBoolean(rcJump);
-                            rcBuf.writeFloat(targetRc.getYaw());
-                            ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
+                            if (!targetRc.isAutoReturning() || hasManualMove) {
+                                targetRc.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcSprint, rcJump);
+
+                                PacketByteBuf rcBuf = PacketByteBufs.create();
+                                rcBuf.writeUuid(pairedUuid);
+                                rcBuf.writeBoolean(rcFwd);
+                                rcBuf.writeBoolean(rcBack);
+                                rcBuf.writeBoolean(rcLeft);
+                                rcBuf.writeBoolean(rcRight);
+                                rcBuf.writeBoolean(rcSprint);
+                                rcBuf.writeBoolean(rcJump);
+                                rcBuf.writeFloat(targetRc.getYaw());
+                                ClientPlayNetworking.send(EvecualMC.RC_CAR_INPUT_PACKET_ID, rcBuf);
+                            }
 
                         }
                     }
@@ -852,20 +879,24 @@ public class EvecualMCClient implements ClientModInitializer {
                             boolean rcSprint = client.options.sprintKey.isPressed();
                             boolean isDroneInFp = client.getCameraEntity() == targetDrone && client.options.getPerspective().isFirstPerson();
 
-                            targetDrone.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint, isDroneInFp);
+                            boolean hasManualMove = rcFwd || rcBack || rcLeft || rcRight || rcUp || rcDown;
 
-                            PacketByteBuf droneBuf = PacketByteBufs.create();
-                            droneBuf.writeUuid(pairedUuid);
-                            droneBuf.writeBoolean(rcFwd);
-                            droneBuf.writeBoolean(rcBack);
-                            droneBuf.writeBoolean(rcLeft);
-                            droneBuf.writeBoolean(rcRight);
-                            droneBuf.writeBoolean(rcUp);
-                            droneBuf.writeBoolean(rcDown);
-                            droneBuf.writeBoolean(rcSprint);
-                            droneBuf.writeFloat(targetDrone.getYaw());
-                            droneBuf.writeBoolean(isDroneInFp);
-                            ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
+                            if (!targetDrone.isAutoReturning() || hasManualMove) {
+                                targetDrone.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint, isDroneInFp);
+
+                                PacketByteBuf droneBuf = PacketByteBufs.create();
+                                droneBuf.writeUuid(pairedUuid);
+                                droneBuf.writeBoolean(rcFwd);
+                                droneBuf.writeBoolean(rcBack);
+                                droneBuf.writeBoolean(rcLeft);
+                                droneBuf.writeBoolean(rcRight);
+                                droneBuf.writeBoolean(rcUp);
+                                droneBuf.writeBoolean(rcDown);
+                                droneBuf.writeBoolean(rcSprint);
+                                droneBuf.writeFloat(targetDrone.getYaw());
+                                droneBuf.writeBoolean(isDroneInFp);
+                                ClientPlayNetworking.send(EvecualMC.RC_DRONE_INPUT_PACKET_ID, droneBuf);
+                            }
 
                         }
                     }
