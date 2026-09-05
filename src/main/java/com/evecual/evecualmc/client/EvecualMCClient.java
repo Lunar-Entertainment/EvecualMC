@@ -729,8 +729,8 @@ public class EvecualMCClient implements ClientModInitializer {
                     boolean left = client.options.leftKey.isPressed();
                     boolean right = client.options.rightKey.isPressed();
                     boolean up = client.options.jumpKey.isPressed();
-                    boolean down = client.options.sneakKey.isPressed();
-                    boolean sprint = client.options.sprintKey.isPressed();
+                    boolean down = client.options.sneakKey.isPressed() || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_V) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_DOWN);
+                    boolean sprint = client.options.sprintKey.isPressed() || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL);
 
                     heli.setInputs(forward, back, left, right, up, down, sprint);
 

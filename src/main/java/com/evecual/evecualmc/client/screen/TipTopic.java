@@ -730,12 +730,14 @@ public enum TipTopic {
         if (block == EvecualMC.ROBOT_PARKING_SPOT_BLOCK) return ROBOT_PARKING_SPOT;
         if (block == EvecualMC.ELECTRONIC_COMBINER_BLOCK) return ELECTRONIC_COMBINER;
         if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
+        if (block == EvecualMC.HELI_CHARGER_BLOCK) return HELI_CHARGER;
         return null;
     }
 
     public static TipTopic fromItem(net.minecraft.item.Item item) {
         if (item == null) return null;
         if (item == EvecualMC.CAR_ITEM) return CAR;
+        if (item == EvecualMC.HELI_ITEM) return EV_HELI;
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
@@ -751,6 +753,7 @@ public enum TipTopic {
         if (item == EvecualMC.CHARGER_CABLE) return CHARGER_CABLE;
         if (item == EvecualMC.PARKING_LINES_ITEM) return PARKING_LINES;
         if (item == EvecualMC.RC_CHARGER_ITEM) return RC_CHARGER;
+        if (item == EvecualMC.HELI_CHARGER_ITEM) return HELI_CHARGER;
         if (item == EvecualMC.RC_PARKING_SPOT_ITEM) return RC_PARKING_SPOT;
         if (item == EvecualMC.DRONE_PARKING_SPOT_ITEM) return DRONE_PARKING_SPOT;
         if (item == EvecualMC.ROBOT_PARKING_SPOT_ITEM) return ROBOT_PARKING_SPOT;

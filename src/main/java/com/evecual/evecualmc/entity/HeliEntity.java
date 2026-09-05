@@ -34,7 +34,9 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -368,17 +370,49 @@ public class HeliEntity extends Entity {
         return true;
     }
 
+    protected void clampPassengerYaw(Entity passenger) {
+        passenger.setBodyYaw(this.getYaw());
+        float f = MathHelper.wrapDegrees(passenger.getYaw() - this.getYaw());
+        float g = MathHelper.clamp(f, -120.0F, 120.0F);
+        passenger.prevYaw += g - f;
+        passenger.setYaw(passenger.getYaw() + g - f);
+        passenger.setHeadYaw(passenger.getYaw());
+    }
+
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
             // Position pilot comfortably inside cockpit seat
             double rad = Math.toRadians(this.getYaw());
-            double forwardOffset = 0.35; // slightly forward in cockpit
+            double forwardOffset = 0.40; // in front cockpit seat
+            double heightOffset = 0.45;
             double px = this.getX() - Math.sin(rad) * forwardOffset;
-            double py = this.getY() + 0.55;
+            double py = this.getY() + heightOffset;
             double pz = this.getZ() + Math.cos(rad) * forwardOffset;
             positionUpdater.accept(passenger, px, py, pz);
+
+            float deltaYaw = this.getYaw() - this.prevYaw;
+            passenger.setYaw(passenger.getYaw() + deltaYaw);
+            clampPassengerYaw(passenger);
         }
+    }
+
+    @Override
+    public Vec3d updatePassengerForDismount(LivingEntity passenger) {
+        Direction dir = this.getHorizontalFacing().rotateYClockwise();
+        return new Vec3d(this.getX() + dir.getOffsetX() * 2.2, this.getY() + 0.1, this.getZ() + dir.getOffsetZ() * 2.2);
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        this.inputForward = false;
+        this.inputBack = false;
+        this.inputLeft = false;
+        this.inputRight = false;
+        this.inputUp = false;
+        this.inputDown = false;
+        this.inputSprint = false;
     }
 
     @Nullable
@@ -386,6 +420,19 @@ public class HeliEntity extends Entity {
     public LivingEntity getControllingPassenger() {
         Entity passenger = this.getFirstPassenger();
         return passenger instanceof LivingEntity living ? living : null;
+    }
+
+    @Override
+    public Box calculateBoundingBox() {
+        double rad = Math.toRadians(this.getYaw());
+        double halfLen = 2.2; // 4.4 blocks length
+        double halfWid = 1.4; // 2.8 blocks width
+        double extX = Math.abs(Math.cos(rad)) * halfWid + Math.abs(Math.sin(rad)) * halfLen;
+        double extZ = Math.abs(Math.sin(rad)) * halfWid + Math.abs(Math.cos(rad)) * halfLen;
+        return new Box(
+                this.getX() - extX, this.getY(), this.getZ() - extZ,
+                this.getX() + extX, this.getY() + 2.6, this.getZ() + extZ
+        );
     }
 
     @Override
@@ -398,125 +445,131 @@ public class HeliEntity extends Entity {
         boolean hasPower = energy > 0;
         boolean hasPilot = passenger instanceof PlayerEntity;
 
-        // 1. Target Rotor Speed & Aerodynamic state
+        // 1. Rotor Speed & Spool-up calculation
         float targetRotorSpeed = 0.0F;
         if (hasPower && hasPilot) {
-            targetRotorSpeed = inputSprint ? 1.4F : 1.0F;
+            targetRotorSpeed = inputSprint ? 1.5F : 1.0F;
         } else if (hasPower && !this.isOnGround()) {
             targetRotorSpeed = 0.6F; // emergency auto-rotation descent
         }
 
         float currentRotorSpeed = this.dataTracker.get(ROTOR_SPEED);
-        currentRotorSpeed = MathHelper.stepTowards(currentRotorSpeed, targetRotorSpeed, 0.05F);
+        currentRotorSpeed = MathHelper.stepTowards(currentRotorSpeed, targetRotorSpeed, 0.12F);
         this.dataTracker.set(ROTOR_SPEED, currentRotorSpeed);
 
         // Update Rotor Angles for client animations
-        this.rotorAngle += currentRotorSpeed * 45.0F;
-        this.tailRotorAngle += currentRotorSpeed * 65.0F;
+        this.rotorAngle += currentRotorSpeed * 50.0F;
+        this.tailRotorAngle += currentRotorSpeed * 70.0F;
 
-        boolean flying = currentRotorSpeed > 0.4F && !this.isOnGround();
+        boolean flying = currentRotorSpeed > 0.3F && !this.isOnGround();
         this.dataTracker.set(IN_FLIGHT, flying);
 
-        // 2. Flight Dynamics & Speed Control
-        if (!this.getWorld().isClient) {
-            double targetHozSpeed = 0.0;
-            double targetVy = 0.0;
-            float targetYawDelta = 0.0F;
-            float targetPitch = 0.0F;
-            float targetRoll = 0.0F;
+        // 2. Flight Dynamics & Speed Control (Runs on both client and server for zero lag!)
+        double targetHozSpeed = 0.0;
+        double targetVy = 0.0;
+        float targetYawDelta = 0.0F;
+        float targetPitch = 0.0F;
+        float targetRoll = 0.0F;
 
-            if (hasPilot && hasPower && currentRotorSpeed >= 0.7F) {
-                // Horizontal Cruise Speed: 12 blocks/s normal (0.60), 20 blocks/s boost (1.00)
-                double maxCruise = inputSprint ? BOOST_CRUISE_SPEED : NORMAL_CRUISE_SPEED;
+        if (hasPilot && hasPower) {
+            // Horizontal Cruise Speed: 12 blocks/s normal (0.60), 20 blocks/s boost (1.00)
+            double maxCruise = inputSprint ? BOOST_CRUISE_SPEED : NORMAL_CRUISE_SPEED;
 
-                if (inputForward) {
-                    targetHozSpeed = maxCruise;
-                    targetPitch = inputSprint ? 16.0F : 10.0F; // tilt nose down forward
-                } else if (inputBack) {
-                    targetHozSpeed = -0.35;
-                    targetPitch = -8.0F; // tilt nose up backward
-                }
+            if (inputForward) {
+                targetHozSpeed = maxCruise;
+                targetPitch = inputSprint ? 18.0F : 12.0F; // tilt nose down forward
+            } else if (inputBack) {
+                targetHozSpeed = -0.35;
+                targetPitch = -10.0F; // tilt nose up backward
+            }
 
-                // Yaw Steering
-                if (inputLeft) {
-                    targetYawDelta = -3.8F;
-                    targetRoll = -14.0F; // bank left
-                } else if (inputRight) {
-                    targetYawDelta = 3.8F;
-                    targetRoll = 14.0F; // bank right
-                }
+            // Yaw Steering
+            if (inputLeft) {
+                targetYawDelta = -4.2F;
+                targetRoll = -16.0F; // bank left
+            } else if (inputRight) {
+                targetYawDelta = 4.2F;
+                targetRoll = 16.0F; // bank right
+            }
 
-                // Vertical Flight (Up: Space, Down: Shift/Down)
-                if (inputUp) {
-                    targetVy = 0.42; // ~8.4 blocks/sec climb
-                } else if (inputDown) {
-                    targetVy = -0.38; // ~7.6 blocks/sec descent
-                } else {
-                    // Hover stability: active altitude hold
+            // Vertical Flight (Up: Space, Down: Shift/Down)
+            if (inputUp) {
+                targetVy = 0.45; // 9.0 blocks/sec climb
+            } else if (inputDown) {
+                targetVy = -0.40; // 8.0 blocks/sec descent
+            } else {
+                // Hover stability: active altitude lock
+                if (this.isOnGround()) {
                     targetVy = 0.0;
+                } else {
+                    targetVy = 0.0; // lock elevation
                 }
+            }
 
-                // Power consumption
+            // Power consumption & effects (server authoritative)
+            if (!this.getWorld().isClient) {
                 int drainInterval = inputSprint ? 6 : (inputForward || inputUp ? 12 : 20);
                 if (this.age % drainInterval == 0) {
                     setEnergy(Math.max(0, energy - 1));
                 }
 
-                // Boost particles
+                // Boost exhaust particles
                 if (inputSprint && this.age % 2 == 0 && this.getWorld() instanceof ServerWorld serverWorld) {
                     double radHeading = Math.toRadians(this.getYaw());
-                    double rearX = this.getX() + Math.sin(radHeading) * 1.8;
-                    double rearY = this.getY() + 1.2;
-                    double rearZ = this.getZ() - Math.cos(radHeading) * 1.8;
-                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, rearX, rearY, rearZ, 2, 0.1, 0.05, 0.1, 0.02);
+                    double rearX = this.getX() + Math.sin(radHeading) * 2.2;
+                    double rearY = this.getY() + 1.4;
+                    double rearZ = this.getZ() - Math.cos(radHeading) * 2.2;
+                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, rearX, rearY, rearZ, 3, 0.1, 0.05, 0.1, 0.03);
                 }
 
-                // Ambient turbine whoosh sound
-                if (this.age % 15 == 0) {
+                // Ambient turbine sound
+                if (this.age % 12 == 0) {
                     this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                             SoundEvents.ENTITY_PHANTOM_FLAP, SoundCategory.PLAYERS,
-                            0.6F, 1.2F + currentRotorSpeed * 0.4F);
+                            0.7F, 1.1F + currentRotorSpeed * 0.4F);
                 }
+            }
+        } else {
+            // Gravity & Auto-rotation descent when unpowered or no pilot
+            if (this.isOnGround()) {
+                targetVy = 0.0;
             } else {
-                // Gravity & Landing descent when unpowered or no pilot
-                if (this.isOnGround()) {
-                    targetVy = 0.0;
-                } else {
-                    targetVy = -0.12; // gentle descent
-                }
-            }
-
-            // Smooth Acceleration & Deceleration
-            double accel = (targetHozSpeed > currentSpeed) ? 0.045 : 0.08;
-            currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) targetHozSpeed, (float) accel);
-
-            // Apply Yaw Rotation
-            if (Math.abs(targetYawDelta) > 0.01F) {
-                this.setYaw(this.getYaw() + targetYawDelta);
-            }
-
-            // Smooth Pitch & Roll Tracking
-            float curPitch = this.dataTracker.get(PITCH_TILT);
-            float curRoll = this.dataTracker.get(ROLL_TILT);
-            curPitch = MathHelper.lerp(0.15F, curPitch, targetPitch);
-            curRoll = MathHelper.lerp(0.15F, curRoll, targetRoll);
-            this.dataTracker.set(PITCH_TILT, curPitch);
-            this.dataTracker.set(ROLL_TILT, curRoll);
-
-            // Compute 3D Velocity Vector
-            double radYaw = Math.toRadians(this.getYaw());
-            double vx = -Math.sin(radYaw) * currentSpeed;
-            double vz = Math.cos(radYaw) * currentSpeed;
-            double vy = MathHelper.stepTowards((float) this.getVelocity().y, (float) targetVy, 0.06F);
-
-            this.setVelocity(vx, vy, vz);
-            this.move(MovementType.SELF, this.getVelocity());
-
-            // Ground collision check
-            if (this.isOnGround() && this.getVelocity().y < 0) {
-                this.setVelocity(this.getVelocity().x, 0.0, this.getVelocity().z);
+                targetVy = -0.15; // gentle descent
             }
         }
+
+        // Smooth Acceleration & Deceleration
+        double accel = (targetHozSpeed > currentSpeed) ? 0.055 : 0.09;
+        currentSpeed = MathHelper.stepTowards((float) currentSpeed, (float) targetHozSpeed, (float) accel);
+
+        // Apply Yaw Rotation
+        this.prevYaw = this.getYaw();
+        if (Math.abs(targetYawDelta) > 0.01F) {
+            this.setYaw(this.getYaw() + targetYawDelta);
+        }
+
+        // Smooth Pitch & Roll Tracking
+        float curPitch = this.dataTracker.get(PITCH_TILT);
+        float curRoll = this.dataTracker.get(ROLL_TILT);
+        curPitch = MathHelper.lerp(0.20F, curPitch, targetPitch);
+        curRoll = MathHelper.lerp(0.20F, curRoll, targetRoll);
+        this.dataTracker.set(PITCH_TILT, curPitch);
+        this.dataTracker.set(ROLL_TILT, curRoll);
+
+        // Compute 3D Velocity Vector
+        double radYaw = Math.toRadians(this.getYaw());
+        double vx = -Math.sin(radYaw) * currentSpeed;
+        double vz = Math.cos(radYaw) * currentSpeed;
+        double vy = MathHelper.stepTowards((float) this.getVelocity().y, (float) targetVy, 0.08F);
+
+        this.setVelocity(vx, vy, vz);
+        this.move(MovementType.SELF, this.getVelocity());
+
+        // Ground collision check
+        if (this.isOnGround() && this.getVelocity().y < 0) {
+            this.setVelocity(this.getVelocity().x, 0.0, this.getVelocity().z);
+        }
+        this.setBoundingBox(this.calculateBoundingBox());
     }
 
     @Override

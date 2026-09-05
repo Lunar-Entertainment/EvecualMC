@@ -26,7 +26,7 @@ public class HeliEntityRenderer extends EntityRenderer<HeliEntity> {
 
     public HeliEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
-        this.shadowRadius = 1.2F;
+        this.shadowRadius = 1.8F;
         this.model = new HeliEntityModel(context.getPart(HeliEntityModel.MODEL_LAYER));
     }
 
@@ -48,8 +48,8 @@ public class HeliEntityRenderer extends EntityRenderer<HeliEntity> {
             matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-roll));
         }
 
-        // Invert Y axis for Minecraft entity model orientation
-        matrices.scale(-1.0F, -1.0F, 1.0F);
+        // Full-scale helicopter scaling and alignment
+        matrices.scale(-1.25F, -1.25F, 1.25F);
         matrices.translate(0.0, -1.5, 0.0);
 
         // Update rotor rotation angles
@@ -60,14 +60,14 @@ public class HeliEntityRenderer extends EntityRenderer<HeliEntity> {
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(texture));
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
 
-        // 4. Render Transparent Colored Glass Bubble Cockpit Canopy!
+        // 4. Render Transparent Colored Glass Bubble Cockpit Canopy
         float[] glassRgba = CarEntityRenderer.getGlassColorRgba(heli.getGlassColor());
         VertexConsumer glassConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
         this.model.renderGlass(matrices, glassConsumer, light, OverlayTexture.DEFAULT_UV, glassRgba[0], glassRgba[1], glassRgba[2], glassRgba[3]);
 
-        // 5. Main Rotor Motion Blur when spooling up / flying
+        // 5. Main Rotor Motion Blur when spinning
         float rotorSpeed = heli.getRotorSpeed();
-        if (rotorSpeed > 0.3F) {
+        if (rotorSpeed > 0.25F) {
             VertexConsumer blurConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
             this.model.renderRotorMotionBlur(matrices, blurConsumer, light, OverlayTexture.DEFAULT_UV, rotorSpeed);
         }
