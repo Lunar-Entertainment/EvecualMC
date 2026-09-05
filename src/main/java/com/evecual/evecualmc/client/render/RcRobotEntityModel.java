@@ -165,26 +165,26 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
         this.leftArm.pitch = 0.15F;
         this.leftArm.yaw = 0.0F;
 
-        // Tank tread wheels rotation and moving band cleats
+        // Tank tread wheels rotation and moving band cleats (inverted to roll forward in sync with motion)
         float tickDelta = animationProgress - (int)animationProgress;
         float leftRoll = robot.getLeftTreadRoll(tickDelta);
         float rightRoll = robot.getRightTreadRoll(tickDelta);
 
         for (int i = 0; i < 4; i++) {
-            this.leftWheels[i].pitch = leftRoll;
-            this.rightWheels[i].pitch = rightRoll;
+            this.leftWheels[i].pitch = -leftRoll;
+            this.rightWheels[i].pitch = -rightRoll;
         }
 
         float trackLength = 12.0F;
         float spacing = trackLength / 6.0F;
         for (int i = 0; i < 6; i++) {
-            float leftTopZ = -5.8F + floorMod(i * spacing + leftRoll * 0.45F, trackLength);
-            float leftBotZ = 5.8F - floorMod(i * spacing + leftRoll * 0.45F, trackLength);
+            float leftTopZ = 5.8F - floorMod(i * spacing + leftRoll * 0.45F, trackLength);
+            float leftBotZ = -5.8F + floorMod(i * spacing + leftRoll * 0.45F, trackLength);
             this.leftCleatsTop[i].pivotZ = leftTopZ;
             this.leftCleatsBottom[i].pivotZ = leftBotZ;
 
-            float rightTopZ = -5.8F + floorMod(i * spacing + rightRoll * 0.45F, trackLength);
-            float rightBotZ = 5.8F - floorMod(i * spacing + rightRoll * 0.45F, trackLength);
+            float rightTopZ = 5.8F - floorMod(i * spacing + rightRoll * 0.45F, trackLength);
+            float rightBotZ = -5.8F + floorMod(i * spacing + rightRoll * 0.45F, trackLength);
             this.rightCleatsTop[i].pivotZ = rightTopZ;
             this.rightCleatsBottom[i].pivotZ = rightBotZ;
         }

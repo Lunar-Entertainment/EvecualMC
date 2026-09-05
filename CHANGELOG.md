@@ -1,5 +1,11 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.12] - 2026-09-05
+### Fixed & Improved
+- **RC Robot Trackband (Tread) Rotation Direction Fix**:
+  - Inverted the road wheel rotation pitch and tread cleat translation vector in `RcRobotEntityModel`.
+  - The top track cleats now roll forward from rear to front and bottom cleats roll backward in true physical contact with the terrain when moving forward, and reverse direction cleanly when driving backward or spinning on the spot.
+
 ## [1.3.11] - 2026-09-05
 ### Added & Improved
 - **RC Drone Helipad Autopilot Overhaul**:
