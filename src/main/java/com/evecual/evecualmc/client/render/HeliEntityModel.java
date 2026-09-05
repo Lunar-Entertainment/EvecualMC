@@ -19,7 +19,8 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
     private final ModelPart root;
     private final ModelPart fuselage_lower;
-    private final ModelPart fuselage_upper;
+    private final ModelPart fuselage_rear;
+    private final ModelPart cockpit_roof;
     private final ModelPart interior;
     private final ModelPart skids;
     private final ModelPart tail_boom;
@@ -30,7 +31,8 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
     public HeliEntityModel(ModelPart root) {
         this.root = root;
         this.fuselage_lower = root.getChild("fuselage_lower");
-        this.fuselage_upper = root.getChild("fuselage_upper");
+        this.fuselage_rear = root.getChild("fuselage_rear");
+        this.cockpit_roof = root.getChild("cockpit_roof");
         this.interior = root.getChild("interior");
         this.skids = root.getChild("skids");
         this.tail_boom = root.getChild("tail_boom");
@@ -64,26 +66,35 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("fuselage_lower", fuselageLower, ModelTransform.NONE);
 
-        // 2. Upper Fuselage, Roof & Turbines (Renders in 3rd Person only so it never blocks 1st-person view!)
-        ModelPartBuilder fuselageUpper = ModelPartBuilder.create()
-                // Upper Roof Cowling: X: -11 to 11, Y: -6 to -3, Z: -16 to 10
-                .uv(0, 0).cuboid(-11.0F, -6.0F, -16.0F, 22.0F, 3.0F, 26.0F)
-                // Rear Bulkhead Wall: X: -13 to 13, Y: -3 to 13, Z: 9 to 11
+        // 2. Rear Fuselage, Aft Bulkhead & Engine Deck (Renders in BOTH 1st Person & 3rd Person so the back is never invisible!)
+        ModelPartBuilder fuselageRear = ModelPartBuilder.create()
+                // Rear Bulkhead Wall behind seats: X: -13 to 13, Y: -3 to 13, Z: 9 to 11
                 .uv(0, 0).cuboid(-13.0F, -3.0F, 9.0F, 26.0F, 16.0F, 2.0F)
-                // Left Turbine Pod (Carbon): X: -14 to -10, Y: -7 to -3, Z: -10 to 10
-                .uv(128, 0).cuboid(-14.0F, -7.0F, -10.0F, 4.0F, 4.0F, 20.0F)
-                // Right Turbine Pod (Carbon): X: 10 to 14, Y: -7 to -3, Z: -10 to 10
-                .uv(128, 0).cuboid(10.0F, -7.0F, -10.0F, 4.0F, 4.0F, 20.0F)
-                // Left Air Scoop (Carbon)
-                .uv(128, 0).cuboid(-13.5F, -6.5F, -13.0F, 3.0F, 3.0F, 3.0F)
-                // Right Air Scoop (Carbon)
-                .uv(128, 0).cuboid(10.5F, -6.5F, -13.0F, 3.0F, 3.0F, 3.0F)
-                // Left Titanium Exhaust (Carbon)
+                // Aft Engine Roof Deck: X: -11 to 11, Y: -6 to -3, Z: 0 to 10
+                .uv(0, 0).cuboid(-11.0F, -6.0F, 0.0F, 22.0F, 3.0F, 10.0F)
+                // Left Aft Turbine Pod (Carbon): X: -14 to -10, Y: -7 to -3, Z: -6 to 10
+                .uv(128, 0).cuboid(-14.0F, -7.0F, -6.0F, 4.0F, 4.0F, 16.0F)
+                // Right Aft Turbine Pod (Carbon): X: 10 to 14, Y: -7 to -3, Z: -6 to 10
+                .uv(128, 0).cuboid(10.0F, -7.0F, -6.0F, 4.0F, 4.0F, 16.0F)
+                // Left Titanium Exhaust (Carbon): X: -13 to -10, Y: -6 to -3, Z: 10 to 15
                 .uv(128, 0).cuboid(-13.0F, -6.0F, 10.0F, 3.0F, 3.0F, 5.0F)
-                // Right Titanium Exhaust (Carbon)
+                // Right Titanium Exhaust (Carbon): X: 10 to 13, Y: -6 to -3, Z: 10 to 15
                 .uv(128, 0).cuboid(10.0F, -6.0F, 10.0F, 3.0F, 3.0F, 5.0F);
 
-        root.addChild("fuselage_upper", fuselageUpper, ModelTransform.NONE);
+        root.addChild("fuselage_rear", fuselageRear, ModelTransform.NONE);
+
+        // 3. Cockpit Roof & Forward Turbine Scoops (3rd Person only so it doesn't block pilot forward view)
+        ModelPartBuilder cockpitRoof = ModelPartBuilder.create()
+                // Forward Upper Roof Cowling: X: -11 to 11, Y: -6 to -3, Z: -16 to 0
+                .uv(0, 0).cuboid(-11.0F, -6.0F, -16.0F, 22.0F, 3.0F, 16.0F)
+                // Left Forward Turbine Cowling & Scoop
+                .uv(128, 0).cuboid(-14.0F, -7.0F, -10.0F, 4.0F, 4.0F, 4.0F)
+                .uv(128, 0).cuboid(-13.5F, -6.5F, -13.0F, 3.0F, 3.0F, 3.0F)
+                // Right Forward Turbine Cowling & Scoop
+                .uv(128, 0).cuboid(10.0F, -7.0F, -10.0F, 4.0F, 4.0F, 4.0F)
+                .uv(128, 0).cuboid(10.5F, -6.5F, -13.0F, 3.0F, 3.0F, 3.0F);
+
+        root.addChild("cockpit_roof", cockpitRoof, ModelTransform.NONE);
 
         // 3. Cockpit Interior (Low-profile Console & Pilot Bucket Seat, uv: 128, 0)
         ModelPartBuilder interior = ModelPartBuilder.create()
@@ -201,7 +212,8 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
         this.fuselage_lower.render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        this.fuselage_upper.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.fuselage_rear.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.cockpit_roof.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.interior.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.tail_boom.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.skids.render(matrices, vertices, light, overlay, red, green, blue, alpha);
@@ -211,7 +223,10 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
     public void renderFirstPersonCockpit(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
         this.fuselage_lower.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.fuselage_rear.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.interior.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.tail_boom.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.tail_rotor.render(matrices, vertices, light, overlay, red, green, blue, alpha);
         this.skids.render(matrices, vertices, light, overlay, red, green, blue, alpha);
     }
 
