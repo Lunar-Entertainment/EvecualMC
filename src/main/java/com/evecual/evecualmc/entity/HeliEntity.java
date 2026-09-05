@@ -382,13 +382,17 @@ public class HeliEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
-            // Position pilot comfortably inside cockpit seat
+            // Position pilot comfortably inside left cockpit captain seat with panoramic forward line-of-sight
             double rad = Math.toRadians(this.getYaw());
-            double forwardOffset = 0.40; // in front cockpit seat
-            double heightOffset = 0.45;
-            double px = this.getX() - Math.sin(rad) * forwardOffset;
+            double cos = Math.cos(rad);
+            double sin = Math.sin(rad);
+            double forwardOffset = 0.20; // aligned with front cockpit
+            double sideOffset = -0.35;    // left captain seat
+            double heightOffset = 0.55;   // eyes level with windshield center
+
+            double px = this.getX() - sin * forwardOffset + cos * sideOffset;
             double py = this.getY() + heightOffset;
-            double pz = this.getZ() + Math.cos(rad) * forwardOffset;
+            double pz = this.getZ() + cos * forwardOffset + sin * sideOffset;
             positionUpdater.accept(passenger, px, py, pz);
 
             float deltaYaw = this.getYaw() - this.prevYaw;

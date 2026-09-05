@@ -33,132 +33,157 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         ModelData modelData = new ModelData();
         ModelPartData root = modelData.getRoot();
 
-        // 1. Fuselage & Main Airframe (Primary Paint, uv: 0, 0 in 256x256)
+        // 1. Aerodynamic Fuselage & Airframe (Primary Body Paint, uv: 0, 0 in 256x256)
         ModelPartBuilder fuselage = ModelPartBuilder.create()
-                // Cabin Floor: 32 wide, 3 tall, 48 long (X: -16 to 16, Y: 13 to 16, Z: -24 to 24)
-                .uv(0, 0).cuboid(-16.0F, 13.0F, -24.0F, 32.0F, 3.0F, 48.0F)
-                // Lower Belly / High-Volt Battery Bay (carbon): 26 wide, 4 tall, 38 long (Y: 16 to 20)
-                .uv(128, 0).cuboid(-13.0F, 16.0F, -18.0F, 26.0F, 4.0F, 38.0F)
-                // Left Lower Side Wall: X: -17 to -15, Y: 4 to 14, Z: -22 to 24
-                .uv(0, 0).cuboid(-17.0F, 4.0F, -22.0F, 2.0F, 10.0F, 46.0F)
-                // Right Lower Side Wall: X: 15 to 17, Y: 4 to 14, Z: -22 to 24
-                .uv(0, 0).cuboid(15.0F, 4.0F, -22.0F, 2.0F, 10.0F, 46.0F)
-                // Front Lower Nose Cone: X: -14 to 14, Y: 7 to 14, Z: -30 to -24
-                .uv(0, 0).cuboid(-14.0F, 7.0F, -30.0F, 28.0F, 7.0F, 6.0F)
-                // Nose Tip Aerodynamic Wedge (carbon): X: -11 to 11, Y: 9 to 14, Z: -36 to -30
-                .uv(128, 0).cuboid(-11.0F, 9.0F, -36.0F, 22.0F, 5.0F, 6.0F)
-                // Upper Roof & Engine Cowling: X: -13 to 13, Y: -4 to 2, Z: -14 to 22
-                .uv(0, 0).cuboid(-13.0F, -4.0F, -14.0F, 26.0F, 6.0F, 36.0F)
-                // Rear Bulkhead / Cargo Door: X: -15 to 15, Y: 0 to 14, Z: 22 to 25
-                .uv(0, 0).cuboid(-15.0F, 0.0F, 22.0F, 30.0F, 14.0F, 3.0F)
-                // Left Turbine Intake Pod (carbon)
-                .uv(128, 0).cuboid(-16.0F, -3.0F, -8.0F, 3.0F, 5.0F, 16.0F)
-                // Right Turbine Intake Pod (carbon)
-                .uv(128, 0).cuboid(13.0F, -3.0F, -8.0F, 3.0F, 5.0F, 16.0F)
-                // Left Turbine Exhaust Nozzle (carbon)
-                .uv(128, 0).cuboid(-10.0F, -2.0F, 22.0F, 6.0F, 4.0F, 5.0F)
-                // Right Turbine Exhaust Nozzle (carbon)
-                .uv(128, 0).cuboid(4.0F, -2.0F, 22.0F, 6.0F, 4.0F, 5.0F);
+                // Cabin Floor: 28 wide, 2 tall, 38 long (X: -14 to 14, Y: 13 to 15, Z: -16 to 22)
+                .uv(0, 0).cuboid(-14.0F, 13.0F, -16.0F, 28.0F, 2.0F, 38.0F)
+                // Lower Battery Belly (Carbon, uv: 128, 0): 24 wide, 3 tall, 34 long (Y: 15 to 18)
+                .uv(128, 0).cuboid(-12.0F, 15.0F, -15.0F, 24.0F, 3.0F, 34.0F)
+                // Front Lower Aerodynamic Chin Wedge: X: -12 to 12, Y: 11 to 14, Z: -26 to -16
+                .uv(0, 0).cuboid(-12.0F, 11.0F, -26.0F, 24.0F, 3.0F, 10.0F)
+                // Aerodynamic Nose Tip (Carbon): X: -8 to 8, Y: 10 to 13, Z: -31 to -26
+                .uv(128, 0).cuboid(-8.0F, 10.0F, -31.0F, 16.0F, 3.0F, 5.0F)
+                // Left Lower Side Sill: X: -15.5 to -13.5, Y: 8 to 14, Z: -15 to 22
+                .uv(0, 0).cuboid(-15.5F, 8.0F, -15.0F, 2.0F, 6.0F, 37.0F)
+                // Right Lower Side Sill: X: 13.5 to 15.5, Y: 8 to 14, Z: -15 to 22
+                .uv(0, 0).cuboid(13.5F, 8.0F, -15.0F, 2.0F, 6.0F, 37.0F)
+                // Main Upper Roof Cowling: X: -12 to 12, Y: -6 to -3, Z: -10 to 22
+                .uv(0, 0).cuboid(-12.0F, -6.0F, -10.0F, 24.0F, 3.0F, 32.0F)
+                // Front Roof Taper Fairing: X: -10 to 10, Y: -5 to -3, Z: -16 to -10
+                .uv(0, 0).cuboid(-10.0F, -5.0F, -16.0F, 20.0F, 2.0F, 6.0F)
+                // Rear Bulkhead Wall: X: -14 to 14, Y: -3 to 13, Z: 22 to 24
+                .uv(0, 0).cuboid(-14.0F, -3.0F, 22.0F, 28.0F, 16.0F, 2.0F)
+                // Left A-Pillar (Frame): X: -14 to -12.5, Y: -5 to 11, Z: -17 to -15.5
+                .uv(0, 0).cuboid(-14.0F, -5.0F, -17.0F, 1.5F, 16.0F, 1.5F)
+                // Right A-Pillar (Frame): X: 12.5 to 14, Y: -5 to 11, Z: -17 to -15.5
+                .uv(0, 0).cuboid(12.5F, -5.0F, -17.0F, 1.5F, 16.0F, 1.5F)
+                // Left Turbine Pod (Carbon): X: -15 to -11, Y: -7 to -3, Z: -4 to 18
+                .uv(128, 0).cuboid(-15.0F, -7.0F, -4.0F, 4.0F, 4.0F, 22.0F)
+                // Right Turbine Pod (Carbon): X: 11 to 15, Y: -7 to -3, Z: -4 to 18
+                .uv(128, 0).cuboid(11.0F, -7.0F, -4.0F, 4.0F, 4.0F, 22.0F)
+                // Left Turbine Air Scoop (Carbon)
+                .uv(128, 0).cuboid(-14.5F, -6.5F, -7.0F, 3.0F, 3.0F, 3.0F)
+                // Right Turbine Air Scoop (Carbon)
+                .uv(128, 0).cuboid(11.5F, -6.5F, -7.0F, 3.0F, 3.0F, 3.0F)
+                // Left Titanium Exhaust Nozzle (Carbon)
+                .uv(128, 0).cuboid(-14.0F, -6.0F, 18.0F, 3.0F, 3.0F, 5.0F)
+                // Right Titanium Exhaust Nozzle (Carbon)
+                .uv(128, 0).cuboid(11.0F, -6.0F, 18.0F, 3.0F, 3.0F, 5.0F);
 
         root.addChild("fuselage", fuselage, ModelTransform.NONE);
 
-        // 2. Cockpit Interior & Ergonomic Pilot Seat (uv: 128, 0)
+        // 2. Cockpit Interior (Low-profile Console & Ergonomic Seats, uv: 128, 0)
         ModelPartBuilder interior = ModelPartBuilder.create()
-                // Avionics Dashboard Console
-                .uv(128, 0).cuboid(-12.0F, 6.0F, -24.0F, 24.0F, 8.0F, 4.0F)
-                // Dual Flight Control Sticks (Cyclics)
-                .uv(128, 0).cuboid(-6.0F, 8.0F, -16.0F, 2.0F, 6.0F, 2.0F)
-                .uv(128, 0).cuboid(4.0F, 8.0F, -16.0F, 2.0F, 6.0F, 2.0F)
-                // Pilot Captain Seat (Center-Left)
-                .uv(128, 0).cuboid(-9.0F, 10.0F, -10.0F, 8.0F, 3.0F, 12.0F)
-                .uv(128, 0).cuboid(-9.0F, 0.0F, 2.0F, 8.0F, 11.0F, 2.0F)
-                // Co-Pilot / Passenger Seat (Center-Right)
-                .uv(128, 0).cuboid(1.0F, 10.0F, -10.0F, 8.0F, 3.0F, 12.0F)
-                .uv(128, 0).cuboid(1.0F, 0.0F, 2.0F, 8.0F, 11.0F, 2.0F)
-                // Rear Cargo Deck Floor Liner
-                .uv(128, 0).cuboid(-13.0F, 12.5F, 5.0F, 26.0F, 1.0F, 16.0F);
+                // Low-profile Avionics Instrument Dashboard (Unobstructed forward horizon!)
+                .uv(128, 0).cuboid(-11.0F, 7.0F, -17.0F, 22.0F, 4.0F, 3.0F)
+                // Center Flight Display Screen
+                .uv(128, 0).cuboid(-4.0F, 4.5F, -16.5F, 8.0F, 3.0F, 1.0F)
+                // Left Pilot Cyclic Stick
+                .uv(128, 0).cuboid(-6.0F, 7.0F, -10.0F, 1.5F, 5.0F, 1.5F)
+                // Right Co-Pilot Cyclic Stick
+                .uv(128, 0).cuboid(4.5F, 7.0F, -10.0F, 1.5F, 5.0F, 1.5F)
+                // Left Captain Pilot Seat
+                .uv(128, 0).cuboid(-10.0F, 11.0F, -6.0F, 8.0F, 2.0F, 9.0F)
+                .uv(128, 0).cuboid(-10.0F, 2.0F, 3.0F, 8.0F, 9.0F, 2.0F)
+                // Right Co-Pilot Seat
+                .uv(128, 0).cuboid(2.0F, 11.0F, -6.0F, 8.0F, 2.0F, 9.0F)
+                .uv(128, 0).cuboid(2.0F, 2.0F, 3.0F, 8.0F, 9.0F, 2.0F)
+                // Rear Cargo Deck Floor
+                .uv(128, 0).cuboid(-13.0F, 12.0F, 6.0F, 26.0F, 1.0F, 15.0F);
 
         root.addChild("interior", interior, ModelTransform.NONE);
 
-        // 3. Tail Boom, Tall Vertical Fin & Stabilizer Wings
+        // 3. Tail Boom, Tail Fin & Horizontal Stabilizer Wings
         ModelPartBuilder tailBoom = ModelPartBuilder.create()
-                // Tapered Tail Boom: X: -4 to 4, Y: 2 to 9, Z: 24 to 74
-                .uv(0, 0).cuboid(-4.0F, 2.0F, 24.0F, 8.0F, 7.0F, 50.0F)
-                // Vertical Tail Fin: X: -1.5 to 1.5, Y: -16 to 10, Z: 66 to 78
-                .uv(0, 0).cuboid(-1.5F, -16.0F, 66.0F, 3.0F, 26.0F, 12.0F)
-                // Left Horizontal Stabilizer Wing: X: -18 to -4, Y: 3.5 to 5.0, Z: 50 to 60
-                .uv(128, 0).cuboid(-18.0F, 3.5F, 50.0F, 14.0F, 1.5F, 10.0F)
-                // Right Horizontal Stabilizer Wing: X: 4 to 18, Y: 3.5 to 5.0, Z: 50 to 60
-                .uv(128, 0).cuboid(4.0F, 3.5F, 50.0F, 14.0F, 1.5F, 10.0F)
-                // Top Fin Navigation Strobe Light (LED, uv: 0, 128)
-                .uv(0, 128).cuboid(-1.5F, -18.0F, 72.0F, 3.0F, 2.0F, 3.0F);
+                // Tapered Forward Boom (Body Paint): X: -4.5 to 4.5, Y: -1 to 7, Z: 24 to 48
+                .uv(0, 0).cuboid(-4.5F, -1.0F, 24.0F, 9.0F, 8.0F, 24.0F)
+                // Tapered Aft Boom: X: -3 to 3, Y: 0 to 6, Z: 48 to 76
+                .uv(0, 0).cuboid(-3.0F, 0.0F, 48.0F, 6.0F, 6.0F, 28.0F)
+                // Tall Swept Vertical Tail Fin: X: -1.5 to 1.5, Y: -20 to 6, Z: 66 to 78
+                .uv(0, 0).cuboid(-1.5F, -20.0F, 66.0F, 3.0F, 26.0F, 12.0F)
+                // Tail Strobe Navigation Light (LED, uv: 0, 128)
+                .uv(0, 128).cuboid(-1.5F, -22.0F, 72.0F, 3.0F, 2.0F, 3.0F)
+                // Left Horizontal Stabilizer Wing (Carbon): X: -18 to -3, Y: 1.5 to 3.0, Z: 52 to 62
+                .uv(128, 0).cuboid(-18.0F, 1.5F, 52.0F, 15.0F, 1.5F, 10.0F)
+                // Left Winglet Endplate (Carbon)
+                .uv(128, 0).cuboid(-18.5F, -1.5F, 52.0F, 1.5F, 6.0F, 10.0F)
+                // Right Horizontal Stabilizer Wing (Carbon): X: 3 to 18, Y: 1.5 to 3.0, Z: 52 to 62
+                .uv(128, 0).cuboid(3.0F, 1.5F, 52.0F, 15.0F, 1.5F, 10.0F)
+                // Right Winglet Endplate (Carbon)
+                .uv(128, 0).cuboid(17.0F, -1.5F, 52.0F, 1.5F, 6.0F, 10.0F);
 
         root.addChild("tail_boom", tailBoom, ModelTransform.NONE);
 
-        // 4. Heavy Tubular Landing Skids (Carbon / Titanium, uv: 128, 0)
+        // 4. Heavy Tubular Landing Skids & Induction Charging Plates
         ModelPartBuilder skids = ModelPartBuilder.create()
-                // Left Heavy Tubular Skid: X: -18 to -15, Y: 22 to 25, Z: -32 to 26
-                .uv(128, 0).cuboid(-18.0F, 22.0F, -32.0F, 3.0F, 3.0F, 58.0F)
+                // Left Tubular Skid: X: -17 to -14, Y: 20 to 23, Z: -30 to 26
+                .uv(128, 0).cuboid(-17.0F, 20.0F, -30.0F, 3.0F, 3.0F, 56.0F)
                 // Left Curved Front Tip
-                .uv(128, 0).cuboid(-18.0F, 18.0F, -36.0F, 3.0F, 4.0F, 4.0F)
-                // Right Heavy Tubular Skid: X: 15 to 18, Y: 22 to 25, Z: -32 to 26
-                .uv(128, 0).cuboid(15.0F, 22.0F, -32.0F, 3.0F, 3.0F, 58.0F)
+                .uv(128, 0).cuboid(-17.0F, 16.0F, -34.0F, 3.0F, 4.0F, 4.0F)
+                // Right Tubular Skid: X: 14 to 17, Y: 20 to 23, Z: -30 to 26
+                .uv(128, 0).cuboid(14.0F, 20.0F, -30.0F, 3.0F, 3.0F, 56.0F)
                 // Right Curved Front Tip
-                .uv(128, 0).cuboid(15.0F, 18.0F, -36.0F, 3.0F, 4.0F, 4.0F)
+                .uv(128, 0).cuboid(14.0F, 16.0F, -34.0F, 3.0F, 4.0F, 4.0F)
                 // Front Left Strut
-                .uv(128, 0).cuboid(-17.0F, 16.0F, -14.0F, 2.0F, 6.0F, 3.0F)
+                .uv(128, 0).cuboid(-16.0F, 14.0F, -12.0F, 2.0F, 6.0F, 3.0F)
                 // Front Right Strut
-                .uv(128, 0).cuboid(15.0F, 16.0F, -14.0F, 2.0F, 6.0F, 3.0F)
+                .uv(128, 0).cuboid(14.0F, 14.0F, -12.0F, 2.0F, 6.0F, 3.0F)
                 // Rear Left Strut
-                .uv(128, 0).cuboid(-17.0F, 16.0F, 14.0F, 2.0F, 6.0F, 3.0F)
+                .uv(128, 0).cuboid(-16.0F, 14.0F, 12.0F, 2.0F, 6.0F, 3.0F)
                 // Rear Right Strut
-                .uv(128, 0).cuboid(15.0F, 16.0F, 14.0F, 2.0F, 6.0F, 3.0F)
-                // Heavy Charging Induction Contact Plates (Gold, uv: 0, 128)
-                .uv(0, 128).cuboid(-18.5F, 24.5F, -6.0F, 4.0F, 1.0F, 12.0F)
-                .uv(0, 128).cuboid(14.5F, 24.5F, -6.0F, 4.0F, 1.0F, 12.0F);
+                .uv(128, 0).cuboid(14.0F, 14.0F, 12.0F, 2.0F, 6.0F, 3.0F)
+                // High-Voltage Induction Charge Contact Shoes (Gold, uv: 0, 128)
+                .uv(0, 128).cuboid(-17.5F, 22.5F, -6.0F, 4.0F, 1.0F, 12.0F)
+                .uv(0, 128).cuboid(13.5F, 22.5F, -6.0F, 4.0F, 1.0F, 12.0F);
 
         root.addChild("skids", skids, ModelTransform.NONE);
 
-        // 5. Giant Main Rotor Assembly (7.5 Block Blade Span!)
+        // 5. High-Lift 4-Blade Main Rotor Assembly (Span: 120 units = 7.5 blocks)
         ModelPartBuilder mainRotor = ModelPartBuilder.create()
                 // Rotor Mast Column
-                .uv(128, 0).cuboid(-3.0F, -9.0F, -3.0F, 6.0F, 6.0F, 6.0F)
+                .uv(128, 0).cuboid(-2.5F, -7.0F, -2.5F, 5.0F, 7.0F, 5.0F)
                 // Central Rotor Swashplate Hub
-                .uv(128, 0).cuboid(-6.0F, -11.0F, -6.0F, 12.0F, 3.0F, 12.0F)
-                // Blade 1 (Forward / North): 5 wide, 1 tall, 54 long
-                .uv(128, 0).cuboid(-2.5F, -10.5F, -60.0F, 5.0F, 1.0F, 54.0F)
-                // Blade 2 (Aft / South): 5 wide, 1 tall, 54 long
-                .uv(128, 0).cuboid(-2.5F, -10.5F, 6.0F, 5.0F, 1.0F, 54.0F)
-                // Blade 3 (Left / West): 54 wide, 1 tall, 5 long
-                .uv(128, 0).cuboid(-60.0F, -10.5F, -2.5F, 54.0F, 1.0F, 5.0F)
-                // Blade 4 (Right / East): 54 wide, 1 tall, 5 long
-                .uv(128, 0).cuboid(6.0F, -10.5F, -2.5F, 54.0F, 1.0F, 5.0F);
+                .uv(128, 0).cuboid(-5.0F, -9.0F, -5.0F, 10.0F, 3.0F, 10.0F)
+                // Blade 1 (Forward): 5 wide, 1 tall, 52 long
+                .uv(128, 0).cuboid(-2.5F, -8.5F, -56.0F, 5.0F, 1.0F, 51.0F)
+                // Blade 2 (Aft): 5 wide, 1 tall, 52 long
+                .uv(128, 0).cuboid(-2.5F, -8.5F, 5.0F, 5.0F, 1.0F, 51.0F)
+                // Blade 3 (Left): 52 wide, 1 tall, 5 long
+                .uv(128, 0).cuboid(-56.0F, -8.5F, -2.5F, 51.0F, 1.0F, 5.0F)
+                // Blade 4 (Right): 52 wide, 1 tall, 5 long
+                .uv(128, 0).cuboid(5.0F, -8.5F, -2.5F, 51.0F, 1.0F, 5.0F);
 
-        root.addChild("main_rotor", mainRotor, ModelTransform.pivot(0.0F, -3.0F, 2.0F));
+        root.addChild("main_rotor", mainRotor, ModelTransform.pivot(0.0F, -5.0F, 4.0F));
 
         // 6. Tail Anti-Torque Rotor Assembly
         ModelPartBuilder tailRotor = ModelPartBuilder.create()
                 // Tail Rotor Hub
                 .uv(128, 0).cuboid(-1.5F, -1.5F, -1.5F, 3.0F, 3.0F, 3.0F)
-                // Blade 1 (Upper)
+                // Upper Blade
                 .uv(128, 0).cuboid(-1.0F, -14.0F, -1.5F, 2.0F, 13.0F, 3.0F)
-                // Blade 2 (Lower)
+                // Lower Blade
                 .uv(128, 0).cuboid(-1.0F, 1.5F, -1.5F, 2.0F, 13.0F, 3.0F);
 
-        root.addChild("tail_rotor", tailRotor, ModelTransform.pivot(2.5F, -4.0F, 74.0F));
+        root.addChild("tail_rotor", tailRotor, ModelTransform.pivot(2.5F, -10.0F, 74.0F));
 
-        // 7. Glass Cockpit Bubble Canopy (Translucent Tinted Glass, uv: 128, 128)
+        // 7. Crystal-Clear Panoramic Glass Canopy (Thin 0.5-1.0 unit panes, uv: 128, 128)
         ModelPartBuilder glass = ModelPartBuilder.create()
-                // Front Panoramic Windshield: X: -14 to 14, Y: -2 to 10, Z: -28 to -14
-                .uv(128, 128).cuboid(-14.0F, -2.0F, -28.0F, 28.0F, 11.0F, 14.0F)
-                // Lower Sloped Nose Glass: X: -13 to 13, Y: 6 to 11, Z: -31 to -27
-                .uv(128, 128).cuboid(-13.0F, 6.0F, -31.0F, 26.0F, 5.0F, 4.0F)
-                // Left Cockpit Side Windows: X: -16.5 to -15.5, Y: -1 to 8, Z: -20 to 12
-                .uv(128, 128).cuboid(-16.5F, -1.0F, -20.0F, 1.0F, 9.0F, 32.0F)
-                // Right Cockpit Side Windows: X: 15.5 to 16.5, Y: -1 to 8, Z: -20 to 12
-                .uv(128, 128).cuboid(15.5F, -1.0F, -20.0F, 1.0F, 9.0F, 32.0F)
-                // Skylight Overhead Glass Roof
-                .uv(128, 128).cuboid(-11.0F, -4.2F, -20.0F, 22.0F, 1.0F, 12.0F);
+                // 1) Front Upper Windshield: Thin 1-unit pane
+                .uv(128, 128).cuboid(-12.5F, -4.5F, -16.5F, 25.0F, 11.5F, 1.0F)
+                // 2) Lower Chin Bubble Glass: Thin 1-unit pane (view down to landing pad!)
+                .uv(128, 128).cuboid(-11.0F, 7.0F, -25.5F, 22.0F, 4.0F, 1.0F)
+                // 3) Nose Slope Transition Glass: Thin 0.8-unit pane
+                .uv(128, 128).cuboid(-11.5F, 6.0F, -24.5F, 23.0F, 1.0F, 8.5F)
+                // 4) Left Cockpit Door Glass: Thin 0.5-unit pane
+                .uv(128, 128).cuboid(-14.2F, -3.0F, -15.0F, 0.5F, 11.0F, 17.0F)
+                // 5) Right Cockpit Door Glass: Thin 0.5-unit pane
+                .uv(128, 128).cuboid(13.7F, -3.0F, -15.0F, 0.5F, 11.0F, 17.0F)
+                // 6) Left Aft Passenger Window: Thin 0.5-unit pane
+                .uv(128, 128).cuboid(-14.2F, -2.0F, 3.0F, 0.5F, 9.0F, 18.0F)
+                // 7) Right Aft Passenger Window: Thin 0.5-unit pane
+                .uv(128, 128).cuboid(13.7F, -2.0F, 3.0F, 0.5F, 9.0F, 18.0F)
+                // 8) Overhead Skylight: Thin 0.5-unit pane
+                .uv(128, 128).cuboid(-9.5F, -5.8F, -14.0F, 19.0F, 0.5F, 14.0F);
 
         root.addChild("glass", glass, ModelTransform.NONE);
 
