@@ -572,7 +572,7 @@ public class HeliEntity extends Entity {
         this.rotorAngle += currentRotorSpeed * 50.0F;
         this.tailRotorAngle += currentRotorSpeed * 70.0F;
 
-        boolean flying = currentRotorSpeed > 0.3F && !this.isOnGround();
+        boolean flying = currentRotorSpeed > 0.3F && !this.isOnGround() && !isCharging();
         this.dataTracker.set(IN_FLIGHT, flying);
 
         // 2. Flight Dynamics & Speed Control (Runs on both client and server for zero lag!)
@@ -621,22 +621,36 @@ public class HeliEntity extends Entity {
                         targetHozSpeed = NORMAL_CRUISE_SPEED; // 12 blocks/sec
                         targetVy = 0.0; // altitude hold
 
-                        if (horizDist < 1.2) {
+                        if (horizDist < 1.0) {
                             this.autoReturnStage = 2; // Arrived above pad: begin vertical touchdown
                         }
                     }
-                    // Stage 2: Vertical touchdown on helipad center
+                    // Stage 2: Vertical touchdown on helipad center with active centering guidance
                     else if (this.autoReturnStage == 2) {
-                        targetHozSpeed = 0.0;
+                        double corrX = MathHelper.clamp(targetX - this.getX(), -0.25, 0.25);
+                        double corrZ = MathHelper.clamp(targetZ - this.getZ(), -0.25, 0.25);
+                        double corrDist = Math.sqrt(corrX * corrX + corrZ * corrZ);
+
+                        targetHozSpeed = Math.min(corrDist * 0.4, 0.20);
+                        if (corrDist > 0.05) {
+                            float centerYaw = (float) Math.toDegrees(Math.atan2(-corrX, corrZ));
+                            float yawDiff = MathHelper.wrapDegrees(centerYaw - this.getYaw());
+                            targetYawDelta = MathHelper.clamp(yawDiff * 0.2F, -4.0F, 4.0F);
+                        } else {
+                            targetYawDelta = 0.0F;
+                        }
+
                         targetPitch = 0.0F;
                         targetRoll = 0.0F;
-                        targetVy = -0.22; // gentle landing descent
+                        targetVy = -0.18; // gentle landing descent
 
-                        if (this.isOnGround() || this.getY() <= targetY + 0.2) {
+                        if (this.isOnGround() || this.getY() <= targetY + 0.15) {
                             this.dataTracker.set(AUTO_RETURNING, false);
                             this.targetHelipadPos = null;
                             this.autoReturnStage = 0;
+                            this.setPosition(targetX, Math.max(this.getY(), targetY), targetZ);
                             this.setVelocity(0, 0, 0);
+                            this.setOnGround(true);
                             setCharging(true);
                             if (passenger instanceof PlayerEntity p) {
                                 p.sendMessage(Text.literal("§a⚡ Touchdown Complete! Recharging on 3x3 Helipad..."), true);
