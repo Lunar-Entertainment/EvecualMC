@@ -547,7 +547,7 @@ public class EvecualMC implements ModInitializer {
                                     if (started) {
                                         player.sendMessage(Text.literal("§a⚡ RC Drone returning to Helipad..."), true);
                                     } else {
-                                        player.sendMessage(Text.literal("§c⚡ No Drone Helipad found within 64 blocks!"),
+                                        player.sendMessage(Text.literal("§c⚡ No Drone Helipad found within 128 blocks! Place a Drone Parking Spot nearby."),
                                                 true);
                                     }
                                 }

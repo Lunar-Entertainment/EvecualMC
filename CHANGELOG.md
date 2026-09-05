@@ -1,5 +1,25 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.11] - 2026-09-05
+### Added & Improved
+- **RC Drone Helipad Autopilot Overhaul**:
+  - **Home Helipad Memory**: The RC Drone now records and persists its home helipad (`homeHelipadPos`) across chunk unloads and world restarts via NBT serialization.
+  - **Expanded 128m Search Radius & Full World Height**: Expanded autonomous search from 32m to 128m horizontal radius. Rebuilt the scan algorithm using palette chunk section acceleration (`section.hasAny(...)`) across the full vertical build height (-64 to +320), eliminating the bug where high-altitude flight missed ground-level helipads.
+  - **Client-Server Autopilot Synchronization**: Registered `AUTO_RETURNING` tracked data with Minecraft's DataTracker so the client knows when autopilot is active. Camera mouse look and remote client heading packets no longer fight or hijack drone heading while returning home.
+  - **Precision Approach & Docking**: Smooth cruise altitude tracking (`Math.max(getY() + 3.0, helipadY + 7.5)`), yaw alignment, horizontal glide deceleration, and vertical descent landing cleanly center and align the drone on its helipad.
+- **Electronic Combiner Wide Interface & CAD Blueprints**:
+  - **Wider 240px GUI**: Expanded the Electronic Combiner interface from 176px to 240px width with custom slate-900 CAD blueprint area (`22, 19` to `200, 71`), centered player inventory slots, and real-time status display.
+  - **Side-View Blueprint Visuals**: Added high-detail technical side-view vector illustrations for all 8 craftable machines:
+    - *Electric Car*: Sleek coupe silhouette with alloy wheels, chassis frame, raked windshield, tinted canopy, LED headlights, and taillights.
+    - *RC Car*: Off-road buggy silhouette with knobby tires, front bullbar, roll cage, high-downforce rear spoiler wing, and whip antenna.
+    - *RC Drone*: Quadcopter airframe with central avionics pod, top antenna dome, underslung battery pack, dual rotor booms, and spinning propeller blur disks.
+    - *RC Robot*: Tracked utility droid with caterpillar tank treads, armored torso, glowing cyan sensor visor, excavator boom arm, and rear cargo hopper.
+    - *RC Controller*: Handheld transmitter contour with ergonomic grip wings, central color telemetry LCD, and top broadcast antenna mast.
+    - *Stationary RC Controller*: Standing terminal console with heavy floor pedestal, support pillar, angled keyboard desk, display monitor, and high-gain dish.
+    - *RC Sender & RC Receiver*: Technical green & cyber-navy PCB substrates with logic IC chips, quartz crystal oscillators, induction coils, and pin headers.
+  - **Physical Machine Socket Positioning**: Crafting slots dynamically move to their exact physical mounting positions on each machine silhouette (e.g. engine in front hood, wheels on rear axle, props on rotors, sensor on robot head).
+  - **Accepted Item Names & Component Diagnostics**: Slot info and hover tooltips now clearly display the exact item name accepted by each slot (e.g. `Electric Engine or Upgraded Engine`, `Glass Block or Stained Glass`, `RC Sender`), required quantity, socket location on the machine, and current mount status.
+
 ## [1.3.10] - 2026-09-05
 ### Fixed & Improved
 - **RC Robot Auto-Docking Pathfinding & Camera Fix**:

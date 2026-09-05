@@ -13,10 +13,40 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 
+import com.evecual.evecualmc.mixin.SlotAccessor;
+
 public class ElectronicCombinerScreenHandler extends ScreenHandler {
     public static final int INVENTORY_SIZE = 7;
     private final Inventory inventory;
     private final PropertyDelegate propertyDelegate;
+
+    public static void setSlotPos(Slot slot, int x, int y) {
+        if (slot instanceof SlotAccessor sa) {
+            sa.setX(x);
+            sa.setY(y);
+        }
+    }
+
+    public void updateSlotPositions(int recipeIndex) {
+        CombinerRecipe recipe = CombinerRecipe.getRecipeByIndex(recipeIndex);
+        if (recipe == null) {
+            for (int i = 0; i < 6; i++) {
+                setSlotPos(this.slots.get(i), -999, -999);
+            }
+            setSlotPos(this.slots.get(6), -999, -999);
+            return;
+        }
+        int[][] coords = recipe.getSlotCoordinates();
+        for (int i = 0; i < 6; i++) {
+            if (i < coords.length && coords[i] != null) {
+                setSlotPos(this.slots.get(i), coords[i][0], coords[i][1]);
+            } else {
+                setSlotPos(this.slots.get(i), -999, -999);
+            }
+        }
+        // Output slot (Slot 6) on the right
+        setSlotPos(this.slots.get(6), 210, 37);
+    }
 
     public ElectronicCombinerScreenHandler(int syncId, PlayerInventory playerInventory) {
         this(syncId, playerInventory, new SimpleInventory(INVENTORY_SIZE), new ArrayPropertyDelegate(5));
@@ -30,13 +60,10 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
         inventory.onOpen(playerInventory.player);
         this.addProperties(delegate);
 
-        // 6 Input Slots: Row 1 (y=21), Row 2 (y=43)
-        // Strictly filtered per selected recipe
+        // 6 Input Slots: Dynamically positioned on the machine per blueprint
         for (int i = 0; i < 6; i++) {
             final int slotIndex = i;
-            int slotX = 24 + (i % 3) * 20;
-            int slotY = 21 + (i / 3) * 22;
-            this.addSlot(new Slot(inventory, i, slotX, slotY) {
+            this.addSlot(new Slot(inventory, i, 40 + (i % 3) * 20, 25 + (i / 3) * 22) {
                 @Override
                 public boolean canInsert(ItemStack stack) {
                     CombinerRecipe recipe = getSelectedRecipe();
@@ -52,7 +79,7 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
         }
 
         // Output Slot (Slot 6)
-        this.addSlot(new Slot(inventory, 6, 129, 34) {
+        this.addSlot(new Slot(inventory, 6, 210, 37) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return false;
@@ -64,17 +91,20 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
             }
         });
 
-        // Player Inventory
+        // Player Inventory: Centered horizontally in 240px wide GUI (offset 39px)
         for (int m = 0; m < 3; ++m) {
             for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + m * 9 + 9, 8 + l * 18, 84 + m * 18));
+                this.addSlot(new Slot(playerInventory, l + m * 9 + 9, 39 + l * 18, 86 + m * 18));
             }
         }
 
-        // Player Hotbar
+        // Player Hotbar: Centered horizontally in 240px wide GUI (offset 39px)
         for (int m = 0; m < 9; ++m) {
-            this.addSlot(new Slot(playerInventory, m, 8 + m * 18, 142));
+            this.addSlot(new Slot(playerInventory, m, 39 + m * 18, 146));
         }
+
+        // Initialize slots according to selected recipe
+        updateSlotPositions(getSelectedRecipeIndex());
     }
 
     public int getProgress() {
@@ -111,6 +141,7 @@ public class ElectronicCombinerScreenHandler extends ScreenHandler {
         } else {
             this.propertyDelegate.set(4, recipeIndex);
         }
+        updateSlotPositions(recipeIndex);
 
         CombinerRecipe newRecipe = CombinerRecipe.getRecipeByIndex(recipeIndex);
         // Refund any items that do not match the new recipe to player inventory

@@ -287,7 +287,7 @@ public enum TipTopic {
             },
             new String[]{
                     "In First-Person FPV mode, mouse steers heading while A and D strafe laterally with realistic bank.",
-                    "Autopilot (C) ascends to safe cruising height, flies across mountains, and lands automatically.",
+                    "Autopilot (C) locks onto the home helipad (or searches within 128m), ascends to cruise height, and lands vertically.",
                     "High-powered spotlight cuts through deep fog, night skies, and underwater depths."
             }
     ),
@@ -361,20 +361,21 @@ public enum TipTopic {
             "Electronic Combiner",
             "⚙️ Advanced Fabricator",
             () -> new ItemStack(EvecualMC.ELECTRONIC_COMBINER_ITEM),
-            "High-precision computerized assembly workstation powered by electric energy.",
+            "High-precision computerized assembly workstation featuring a wide CAD blueprint display with machine side-views.",
             new String[]{
-                    "Fabricates complete vehicles, RC units, and high-tech components from raw ingredients.",
-                    "Requires continuous power supply via adjacent Batteries, Wires, or Solar Panels.",
-                    "Features intuitive slot blueprint indicators for Engine, Hull, Glass, Leather, and Dye."
+                    "Fabricates complete vehicles, RC units, and high-tech components from raw materials.",
+                    "Wide CAD blueprint renders technical side-profile silhouettes of each craftable machine.",
+                    "Crafting slots are positioned directly onto their corresponding physical mounting points on the machine.",
+                    "Requires continuous power supply via adjacent Batteries, Wires, or Solar Panels."
             },
             new String[][]{
-                    {"Right-Click", "Open Combiner Crafting Interface"},
-                    {"Shift + Click", "Quick-transfer crafting ingredients"}
+                    {"Right-Click", "Open Wide CAD Blueprint Interface"},
+                    {"Shift + Click", "Quick-transfer items into corresponding machine sockets"}
             },
             new String[]{
-                    "Keep supplied with at least 500 EU in its internal buffer before starting an assembly cycle.",
-                    "Add any dye into the color slot to customize the factory coat paint of the finished vehicle.",
-                    "Can fabricate Electric Cars, RC Cars, RC Drones, RC Robots, and Turbo Engine upgrades."
+                    "Hover over any machine socket to view the component name, accepted item, and required count.",
+                    "Add any dye into the color socket to customize the factory coat paint of the finished vehicle.",
+                    "Can fabricate Electric Cars, RC Cars, RC Drones, RC Robots, Controllers, Senders, and Receivers."
             }
     ),
 

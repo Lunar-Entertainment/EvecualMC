@@ -4,7 +4,8 @@
   "package": "com.evecual.evecualmc.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ExampleMixin"
+    "ExampleMixin",
+    "SlotAccessor"
   ],
   "client": [
     "KeyboardInputMixin",

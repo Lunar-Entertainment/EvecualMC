@@ -47,6 +47,7 @@ public class RcDroneEntity extends Entity {
     private static final TrackedData<Float> ROLL_TILT = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> FLYING = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> LIGHT_ON = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> AUTO_RETURNING = DataTracker.registerData(RcDroneEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private final SimpleInventory trunk = new SimpleInventory(9); // 9-slot compact drone cargo bay
 
@@ -65,6 +66,7 @@ public class RcDroneEntity extends Entity {
 
     private boolean autoReturning = false;
     private BlockPos targetChargerPos = null;
+    private BlockPos homeHelipadPos = null;
     private int autoReturnTicks = 0;
     private int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
     private double cruiseAltitude = 0.0;
@@ -87,6 +89,7 @@ public class RcDroneEntity extends Entity {
         this.dataTracker.startTracking(ROLL_TILT, 0.0F);
         this.dataTracker.startTracking(FLYING, false);
         this.dataTracker.startTracking(LIGHT_ON, false);
+        this.dataTracker.startTracking(AUTO_RETURNING, false);
     }
 
     private BlockPos currentLightPos = null;
@@ -226,25 +229,27 @@ public class RcDroneEntity extends Entity {
     }
 
     public boolean isAutoReturning() {
-        return this.autoReturning;
+        return this.dataTracker.get(AUTO_RETURNING);
     }
 
     public BlockPos getParkingSpotPos() {
         BlockPos pos = this.getBlockPos();
         if (this.getWorld().getBlockState(pos).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) return pos;
         if (this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) return pos.down();
+        if (this.getWorld().getBlockState(pos.up()).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) return pos.up();
         return null;
     }
 
     public boolean isInParkingSpot() {
-        if (this.autoReturning) return false;
+        if (isAutoReturning()) return false;
         BlockPos spotPos = getParkingSpotPos();
         if (spotPos == null) return false;
+        this.homeHelipadPos = spotPos;
         double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
         double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
         double dy = Math.abs(this.getY() - (spotPos.getY() + 0.05));
         // Must be squarely centered horizontally and resting on or close to the pad
-        return dx <= 0.35 && dz <= 0.35 && (dy <= 0.35 || this.isOnGround());
+        return dx <= 0.40 && dz <= 0.40 && (dy <= 0.45 || this.isOnGround());
     }
 
     public void setExplicitlyPairedInSpot(boolean val) {
@@ -258,6 +263,7 @@ public class RcDroneEntity extends Entity {
         BlockPos spotPos = getParkingSpotPos();
         float yaw = this.getYaw();
         if (spotPos != null) {
+            this.homeHelipadPos = spotPos;
             BlockState bs = this.getWorld().getBlockState(spotPos);
             if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
                 yaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
@@ -294,15 +300,22 @@ public class RcDroneEntity extends Entity {
     }
 
     public void cancelAutoReturn() {
-        if (this.autoReturning) {
+        if (this.autoReturning || isAutoReturning()) {
             this.autoReturning = false;
+            if (!this.getWorld().isClient) {
+                this.dataTracker.set(AUTO_RETURNING, false);
+            }
             this.targetChargerPos = null;
             this.autoReturnStage = 0;
+            this.autoReturnTicks = 0;
         }
     }
 
     public void onReachedCharger() {
         this.autoReturning = false;
+        if (!this.getWorld().isClient) {
+            this.dataTracker.set(AUTO_RETURNING, false);
+        }
         this.targetChargerPos = null;
         this.autoReturnStage = 0;
         this.setVelocity(Vec3d.ZERO);
@@ -312,6 +325,7 @@ public class RcDroneEntity extends Entity {
 
         BlockPos spotPos = getParkingSpotPos();
         if (spotPos != null) {
+            this.homeHelipadPos = spotPos;
             BlockState bs = this.getWorld().getBlockState(spotPos);
             if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
                 float targetYaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
@@ -343,45 +357,63 @@ public class RcDroneEntity extends Entity {
         BlockPos bestCharger = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        int minChunkX = (dronePos.getX() - 64) >> 4;
-        int maxChunkX = (dronePos.getX() + 64) >> 4;
-        int minChunkZ = (dronePos.getZ() - 64) >> 4;
-        int maxChunkZ = (dronePos.getZ() + 64) >> 4;
+        // 1. Fast path: check known home helipad first
+        if (this.homeHelipadPos != null) {
+            int cx = this.homeHelipadPos.getX() >> 4;
+            int cz = this.homeHelipadPos.getZ() >> 4;
+            if (this.getWorld().isChunkLoaded(cx, cz)) {
+                BlockState bs = this.getWorld().getBlockState(this.homeHelipadPos);
+                if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+                    bestCharger = this.homeHelipadPos;
+                    bestDistSq = this.homeHelipadPos.getSquaredDistance(dronePos);
+                }
+            }
+        }
 
-        int minY = Math.max(this.getWorld().getBottomY(), dronePos.getY() - 32);
-        int maxY = Math.min(this.getWorld().getTopY(), dronePos.getY() + 32);
+        // 2. Search loaded chunks within 128 blocks horizontal radius and full world height
+        if (bestCharger == null) {
+            int searchRadius = 128;
+            int minChunkX = (dronePos.getX() - searchRadius) >> 4;
+            int maxChunkX = (dronePos.getX() + searchRadius) >> 4;
+            int minChunkZ = (dronePos.getZ() - searchRadius) >> 4;
+            int maxChunkZ = (dronePos.getZ() + searchRadius) >> 4;
 
-        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
-            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                if (!this.getWorld().isChunkLoaded(cx, cz)) continue;
-                net.minecraft.world.chunk.Chunk chunk = this.getWorld().getChunk(cx, cz);
-                if (chunk == null) continue;
+            int minY = Math.max(this.getWorld().getBottomY(), dronePos.getY() - 128);
+            int maxY = Math.min(this.getWorld().getTopY(), dronePos.getY() + 64);
 
-                int minSec = Math.max(0, (minY - chunk.getBottomY()) >> 4);
-                int maxSec = Math.min(chunk.getSectionArray().length - 1, (maxY - chunk.getBottomY()) >> 4);
+            for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+                for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                    if (!this.getWorld().isChunkLoaded(cx, cz)) continue;
+                    net.minecraft.world.chunk.Chunk chunk = this.getWorld().getChunk(cx, cz);
+                    if (chunk == null) continue;
 
-                for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
-                    net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
-                    if (section == null || section.isEmpty()) continue;
+                    int minSec = Math.max(0, (minY - chunk.getBottomY()) >> 4);
+                    int maxSec = Math.min(chunk.getSectionArray().length - 1, (maxY - chunk.getBottomY()) >> 4);
 
-                    int secY = chunk.sectionIndexToCoord(secIdx) << 4;
-                    for (int lx = 0; lx < 16; lx++) {
-                        int wx = (cx << 4) + lx;
-                        if (Math.abs(wx - dronePos.getX()) > 64) continue;
-                        for (int lz = 0; lz < 16; lz++) {
-                            int wz = (cz << 4) + lz;
-                            if (Math.abs(wz - dronePos.getZ()) > 64) continue;
-                            for (int ly = 0; ly < 16; ly++) {
-                                int wy = secY + ly;
-                                if (wy < minY || wy > maxY) continue;
+                    for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
+                        net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
+                        if (section == null || section.isEmpty()) continue;
+                        if (!section.hasAny(bs -> bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK))) continue;
 
-                                BlockState bs = section.getBlockState(lx, ly, lz);
-                                if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
-                                    BlockPos p = new BlockPos(wx, wy, wz);
-                                    double dSq = p.getSquaredDistance(dronePos);
-                                    if (dSq < bestDistSq) {
-                                        bestDistSq = dSq;
-                                        bestCharger = p;
+                        int secY = chunk.sectionIndexToCoord(secIdx) << 4;
+                        for (int lx = 0; lx < 16; lx++) {
+                            int wx = (cx << 4) + lx;
+                            if (Math.abs(wx - dronePos.getX()) > searchRadius) continue;
+                            for (int lz = 0; lz < 16; lz++) {
+                                int wz = (cz << 4) + lz;
+                                if (Math.abs(wz - dronePos.getZ()) > searchRadius) continue;
+                                for (int ly = 0; ly < 16; ly++) {
+                                    int wy = secY + ly;
+                                    if (wy < minY || wy > maxY) continue;
+
+                                    BlockState bs = section.getBlockState(lx, ly, lz);
+                                    if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+                                        BlockPos p = new BlockPos(wx, wy, wz);
+                                        double dSq = p.getSquaredDistance(dronePos);
+                                        if (dSq < bestDistSq) {
+                                            bestDistSq = dSq;
+                                            bestCharger = p;
+                                        }
                                     }
                                 }
                             }
@@ -394,10 +426,14 @@ public class RcDroneEntity extends Entity {
         if (bestCharger != null) {
             this.autoReturning = true;
             this.targetChargerPos = bestCharger;
+            this.homeHelipadPos = bestCharger;
             this.autoReturnTicks = 0;
             this.autoReturnStage = 0;
-            this.cruiseAltitude = Math.max(this.getY() + 2.5, bestCharger.getY() + 5.5);
+            this.cruiseAltitude = Math.max(this.getY() + 3.0, bestCharger.getY() + 7.5);
             setFlying(true);
+            if (!this.getWorld().isClient) {
+                this.dataTracker.set(AUTO_RETURNING, true);
+            }
             return true;
         }
         return false;
@@ -407,7 +443,9 @@ public class RcDroneEntity extends Entity {
     private boolean strafeMode = false;
 
     public void setRemoteYaw(float yaw) {
-        this.remoteYaw = yaw;
+        if (!isAutoReturning()) {
+            this.remoteYaw = yaw;
+        }
     }
 
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint) {
@@ -415,8 +453,17 @@ public class RcDroneEntity extends Entity {
     }
 
     public void setRemoteInputs(boolean forward, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean strafe) {
-        if (this.autoReturning && (forward || back || left || right || up || down)) {
+        if (isAutoReturning() && (forward || back || left || right || up || down)) {
             cancelAutoReturn();
+            String pUuid = getPairedPlayerUuid();
+            if (pUuid != null && !pUuid.isEmpty()) {
+                try {
+                    PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
+                    if (player != null) {
+                        player.sendMessage(Text.literal("§e⚠️ RC Drone autopilot cancelled by manual override."), true);
+                    }
+                } catch (Exception ignored) {}
+            }
         }
         this.inputForward = forward;
         this.inputBack = back;
@@ -536,13 +583,13 @@ public class RcDroneEntity extends Entity {
         this.propAngle += this.propSpeed;
 
         // Auto-navigation autopilot return to charger
-        if (this.autoReturning && this.targetChargerPos != null && hasPower) {
+        if (isAutoReturning() && this.targetChargerPos != null && hasPower) {
             this.autoReturnTicks++;
-            if (this.autoReturnTicks > 1800) { // 90s timeout
+            if (this.autoReturnTicks > 2400) { // 120s timeout
                 cancelAutoReturn();
             } else {
                 double targetX = this.targetChargerPos.getX() + 0.5;
-                double targetY = this.targetChargerPos.getY() + 0.08;
+                double targetY = this.targetChargerPos.getY() + 0.0625;
                 double targetZ = this.targetChargerPos.getZ() + 0.5;
 
                 double dx = targetX - this.getX();
@@ -561,9 +608,11 @@ public class RcDroneEntity extends Entity {
                 else if (this.autoReturnStage == 1) {
                     float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                     float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() + MathHelper.clamp(yawDiff * 0.3F, -8.0F, 8.0F)));
+                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() + MathHelper.clamp(yawDiff * 0.35F, -10.0F, 10.0F)));
+                    this.setBodyYaw(this.getYaw());
+                    this.setHeadYaw(this.getYaw());
 
-                    double speed = MathHelper.clamp(horizDist * 0.2, 0.25, 0.65);
+                    double speed = MathHelper.clamp(horizDist * 0.22, 0.15, 0.65);
                     Vec3d dir = new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed);
 
                     // Maintain cruise altitude
@@ -571,20 +620,20 @@ public class RcDroneEntity extends Entity {
                     double yVel = MathHelper.clamp(dy * 0.25, -0.25, 0.25);
                     vel = new Vec3d(dir.x, yVel, dir.z);
 
-                    if (horizDist < 0.45) {
+                    if (horizDist < 0.65) {
                         this.autoReturnStage = 2;
                     }
                 }
                 // Stage 2: Vertical descent and dock squarely onto pad
                 else if (this.autoReturnStage == 2) {
-                    double speed = MathHelper.clamp(horizDist * 0.4, 0.02, 0.15);
-                    Vec3d align = horizDist > 0.03 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
+                    double speed = MathHelper.clamp(horizDist * 0.35, 0.02, 0.18);
+                    Vec3d align = horizDist > 0.02 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
 
                     double dy = targetY - this.getY();
-                    double descSpeed = MathHelper.clamp(dy * 0.25, -0.25, 0.05);
+                    double descSpeed = MathHelper.clamp(dy * 0.25, -0.25, 0.08);
                     vel = new Vec3d(align.x, descSpeed, align.z);
 
-                    if (horizDist <= 0.30 && (Math.abs(dy) <= 0.25 || this.isOnGround())) {
+                    if (horizDist <= 0.35 && (Math.abs(dy) <= 0.30 || this.isOnGround())) {
                         this.setPosition(targetX, targetY, targetZ);
                         onReachedCharger();
                         this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
@@ -849,6 +898,9 @@ public class RcDroneEntity extends Entity {
         if (nbt.contains("PairedPlayer")) setPairedPlayerUuid(nbt.getString("PairedPlayer"));
         if (nbt.contains("Flying")) setFlying(nbt.getBoolean("Flying"));
         if (nbt.contains("LightOn")) setLightOn(nbt.getBoolean("LightOn"));
+        if (nbt.contains("HomePadX") && nbt.contains("HomePadY") && nbt.contains("HomePadZ")) {
+            this.homeHelipadPos = new BlockPos(nbt.getInt("HomePadX"), nbt.getInt("HomePadY"), nbt.getInt("HomePadZ"));
+        }
         if (nbt.contains("TrunkItems")) {
             DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
             Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
@@ -865,6 +917,11 @@ public class RcDroneEntity extends Entity {
         nbt.putString("PairedPlayer", getPairedPlayerUuid());
         nbt.putBoolean("Flying", isFlying());
         nbt.putBoolean("LightOn", isLightOn());
+        if (this.homeHelipadPos != null) {
+            nbt.putInt("HomePadX", this.homeHelipadPos.getX());
+            nbt.putInt("HomePadY", this.homeHelipadPos.getY());
+            nbt.putInt("HomePadZ", this.homeHelipadPos.getZ());
+        }
 
         DefaultedList<ItemStack> list = DefaultedList.ofSize(this.trunk.size(), ItemStack.EMPTY);
         for (int i = 0; i < this.trunk.size(); ++i) {
