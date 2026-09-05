@@ -23,8 +23,10 @@ import java.util.List;
 
 public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerScreenHandler> {
     private static final Identifier TEXTURE = new Identifier("evecualmc", "textures/gui/container/electronic_combiner.png");
+    private static final int RECIPES_PER_PAGE = 7;
 
     private int lastRecipeIndex = -1;
+    private int recipePage = 0;
 
     public ElectronicCombinerScreen(ElectronicCombinerScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
@@ -37,6 +39,8 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
     @Override
     protected void init() {
         super.init();
+        int currentIndex = Math.max(1, handler.getSelectedRecipeIndex());
+        this.recipePage = (currentIndex - 1) / RECIPES_PER_PAGE;
         rebuildScreenWidgets();
     }
 
@@ -47,13 +51,32 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
 
         CombinerRecipe[] allRecipes = CombinerRecipe.values();
         int currentIndex = Math.max(1, handler.getSelectedRecipeIndex());
+        int totalPages = Math.max(1, (allRecipes.length + RECIPES_PER_PAGE - 1) / RECIPES_PER_PAGE);
+        if (recipePage >= totalPages) recipePage = totalPages - 1;
+        if (recipePage < 0) recipePage = 0;
 
-        // 8 Blueprint Direct-Select Tab Buttons across the top bar (x + 22 to x + 198)
-        for (int i = 0; i < allRecipes.length; i++) {
-            CombinerRecipe r = allRecipes[i];
-            final int recipeIdx = i + 1;
+        // Previous Page Arrow [ ◀ ] at x + 22
+        this.addDrawableChild(ButtonWidget.builder(
+                Text.literal("◀"),
+                btn -> {
+                    if (recipePage > 0) {
+                        recipePage--;
+                    } else {
+                        recipePage = totalPages - 1; // Cycle to last page
+                    }
+                    rebuildScreenWidgets();
+                }
+        ).dimensions(x + 22, y + 4, 12, 14).tooltip(Tooltip.of(Text.literal("◀ Previous Page (" + (recipePage + 1) + "/" + totalPages + ")"))).build());
+
+        // 7 Blueprint Tab Buttons for current page (from x + 36 to x + 188)
+        int startIdx = recipePage * RECIPES_PER_PAGE;
+        int endIdx = Math.min(allRecipes.length, startIdx + RECIPES_PER_PAGE);
+
+        for (int i = 0; i < (endIdx - startIdx); i++) {
+            int recipeIdx = startIdx + i + 1;
+            CombinerRecipe r = allRecipes[startIdx + i];
             boolean isSelected = recipeIdx == currentIndex;
-            int btnX = x + 22 + i * 22;
+            int btnX = x + 36 + i * 22;
             int btnY = y + 4;
 
             String tooltipText = (isSelected ? "§e[Active Blueprint] §f" : "§bSelect Blueprint: §f") + r.getDisplayName();
@@ -67,6 +90,19 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                     }
             ).dimensions(btnX, btnY, 21, 14).tooltip(Tooltip.of(Text.literal(tooltipText))).build());
         }
+
+        // Next Page Arrow [ ▶ ] at x + 192
+        this.addDrawableChild(ButtonWidget.builder(
+                Text.literal("▶"),
+                btn -> {
+                    if (recipePage < totalPages - 1) {
+                        recipePage++;
+                    } else {
+                        recipePage = 0; // Cycle to first page
+                    }
+                    rebuildScreenWidgets();
+                }
+        ).dimensions(x + 192, y + 4, 12, 14).tooltip(Tooltip.of(Text.literal("▶ Next Page (" + (recipePage + 1) + "/" + totalPages + ")"))).build());
 
         // Tips Button [ 💡 ]
         this.addDrawableChild(ButtonWidget.builder(
@@ -110,18 +146,26 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         // Sync check
         if (selectedRecipeIndex != lastRecipeIndex) {
             lastRecipeIndex = selectedRecipeIndex;
+            int targetPage = (selectedRecipeIndex - 1) / RECIPES_PER_PAGE;
+            if (targetPage != recipePage) {
+                recipePage = targetPage;
+            }
             handler.updateSlotPositions(selectedRecipeIndex);
             rebuildScreenWidgets();
         }
 
-        // Render Blueprint Icons on Top Tabs and Highlight Active Selection
+        // Render Blueprint Icons on Top Tabs and Highlight Active Selection for current page
         CombinerRecipe[] allRecipes = CombinerRecipe.values();
-        for (int i = 0; i < allRecipes.length; i++) {
-            CombinerRecipe r = allRecipes[i];
-            int btnX = x + 22 + i * 22;
+        int startIdx = recipePage * RECIPES_PER_PAGE;
+        int endIdx = Math.min(allRecipes.length, startIdx + RECIPES_PER_PAGE);
+
+        for (int i = 0; i < (endIdx - startIdx); i++) {
+            int recipeIdx = startIdx + i + 1;
+            CombinerRecipe r = allRecipes[startIdx + i];
+            int btnX = x + 36 + i * 22;
             int btnY = y + 4;
             context.drawItem(r.getOutputTemplate(), btnX + 3, btnY - 1);
-            if (i + 1 == selectedRecipeIndex) {
+            if (recipeIdx == selectedRecipeIndex) {
                 // Active cyan highlight underline and outline
                 context.fill(btnX, btnY + 13, btnX + 21, btnY + 15, 0xFF0EA5E9);
                 context.drawBorder(btnX, btnY, 21, 14, 0xFF38BDF8);
@@ -167,12 +211,9 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
         context.fill(bx + bw - 5, by + bh - 1, bx + bw, by + bh, 0xFF0EA5E9);
         context.fill(bx + bw - 1, by + bh - 5, bx + bw, by + bh, 0xFF0EA5E9);
 
-        // Header watermark inside canvas (compact pill badge with icon)
-        String titleStr = "§b▪ §f" + recipe.getDisplayName();
-        int titleWidth = textRenderer.getWidth(titleStr);
-        context.fill(bx + 3, by + 3, bx + 7 + titleWidth, by + 12, 0xAA0A152E);
-        context.drawBorder(bx + 3, by + 3, 5 + titleWidth, 10, 0x6638BDF8);
-        context.drawText(textRenderer, titleStr, bx + 6, by + 4, 0xFFFFFFFF, false);
+        // Faint technical CAD watermark label in top-left
+        String techWatermark = "CAD // " + recipe.getId().toUpperCase();
+        context.drawText(textRenderer, techWatermark, bx + 4, by + 3, 0x4038BDF8, false);
 
         // Render CAD Side-View Illustration
         drawMachineSideView(context, recipe, bx, by, bw, bh);
@@ -276,7 +317,7 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
             if (recipe.canCraft(currentInputs)) {
                 context.drawTextWithShadow(textRenderer, "§a✔ Components Verified — Ready to Fabricate!", bx + 4, statusY + 1, 0xFFFFFF);
             } else {
-                context.drawTextWithShadow(textRenderer, "§7Mount required items into machine sockets above", bx + 4, statusY + 1, 0xFFFFFF);
+                context.drawTextWithShadow(textRenderer, "§bBlueprint: §f" + recipe.getDisplayName() + " §7(Mount components above)", bx + 4, statusY + 1, 0xFFFFFF);
             }
         }
     }
@@ -297,6 +338,26 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                 context.fill(bx + 148, floorY - 12, bx + 154, floorY - 8, 0xFF64748B);
                 context.fill(bx + 14, floorY - 13, bx + 17, floorY - 11, 0xFF38BDF8);
                 context.fill(bx + 152, floorY - 13, bx + 155, floorY - 11, 0xFFEF4444);
+            }
+            case EV_HELI -> {
+                int floorY = by + 45;
+                // Landing Skids
+                context.fill(bx + 40, floorY - 1, bx + 120, floorY + 1, 0xFF64748B);
+                context.fill(bx + 54, floorY - 7, bx + 57, floorY - 1, 0xFF475569);
+                context.fill(bx + 104, floorY - 7, bx + 107, floorY - 1, 0xFF475569);
+                // Fuselage Body & Cockpit Bubble
+                context.fill(bx + 46, floorY - 24, bx + 116, floorY - 7, 0xFF1E293B);
+                context.drawBorder(bx + 46, floorY - 24, 70, 17, 0xFF0EA5E9);
+                context.fill(bx + 48, floorY - 22, bx + 76, floorY - 12, 0x4438BDF8);
+                // Tail Boom & Tail Fin
+                context.fill(bx + 116, floorY - 18, bx + 162, floorY - 14, 0xFF334155);
+                context.fill(bx + 158, floorY - 26, bx + 164, floorY - 14, 0xFF0EA5E9);
+                // Tail Rotor
+                context.fill(bx + 163, floorY - 28, bx + 165, floorY - 8, 0x8838BDF8);
+                // Rotor Mast & Main Rotor Blades
+                context.fill(bx + 78, floorY - 32, bx + 84, floorY - 24, 0xFF64748B);
+                context.fill(bx + 20, floorY - 33, bx + 142, floorY - 31, 0x8838BDF8);
+                context.fill(bx + 76, floorY - 34, bx + 86, floorY - 32, 0xFF0284C7);
             }
             case RC_CAR -> {
                 int floorY = by + 45;
@@ -337,7 +398,7 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                 context.fill(bx + 118, floorY - 28, bx + 148, floorY - 10, 0xFF854D0E);
                 context.drawBorder(bx + 118, floorY - 28, 30, 18, 0xFFEAB308);
             }
-            case RC_CONTROLLER -> {
+            case RC_CONTROLLER, HELI_CONTROLLER -> {
                 int cy = by + 28;
                 context.fill(bx + 46, cy - 14, bx + 138, cy + 12, 0xFF1E293B);
                 context.drawBorder(bx + 46, cy - 14, 92, 26, 0xFF38BDF8);
@@ -379,6 +440,20 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                 for (int px = bx + 82; px <= bx + 102; px += 5) {
                     context.fill(px, cy - 14, px + 2, cy - 8, 0xFFD97706);
                 }
+            }
+            case HELI_MINING_ARM -> {
+                int cy = by + 28;
+                context.fill(bx + 46, cy - 6, bx + 90, cy + 6, 0xFF1E293B);
+                context.drawBorder(bx + 46, cy - 6, 44, 12, 0xFFF59E0B);
+                context.fill(bx + 90, cy - 10, bx + 136, cy + 10, 0xFF334155);
+                context.fill(bx + 136, cy - 4, bx + 154, cy + 4, 0xFFF59E0B);
+            }
+            case HELI_WEAPON_ARM -> {
+                int cy = by + 28;
+                context.fill(bx + 46, cy - 6, bx + 90, cy + 6, 0xFF1E293B);
+                context.drawBorder(bx + 46, cy - 6, 44, 12, 0xFF0EA5E9);
+                context.fill(bx + 90, cy - 3, bx + 148, cy + 3, 0xFF0284C7);
+                context.fill(bx + 148, cy - 5, bx + 156, cy + 5, 0xFF38BDF8);
             }
         }
     }
