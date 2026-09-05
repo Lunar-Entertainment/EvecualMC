@@ -1,5 +1,19 @@
 # EvecualMC Updates & Changelog
 
+## [1.3.14] - 2026-09-05
+### Added & Improved
+- **RC Vehicle Active Chunk Loading**:
+  - RC Cars, RC Drones, and RC Robots now maintain active chunk tickets with `ServerWorld.setChunkForced(...)` on their current chunk positions while alive.
+  - Vehicles can drive, fly, excavate, and return to base autonomously across vast distances without freezing or unloading mid-flight. Tickets are cleanly released upon entity removal/despawn.
+- **3D Parking Spot Elevation & True Alignment**:
+  - Fixed an issue where RC vehicles treated the entire vertical Y column above or below a parking spot as a valid docking position.
+  - Entities now strictly verify both horizontal centering (`<= 0.35m`) and true vertical elevation (`dy <= 0.45m`) directly on top of the physical parking pad block.
+- **Untaken / Unoccupied Parking Spot Selection**:
+  - Autonomous return algorithms now check whether a candidate parking spot or helipad is already occupied by another RC vehicle (`isSpotOccupied(...)`).
+  - If a pad is occupied, the vehicle automatically skips it and navigates to the nearest available, unreserved parking spot.
+- **Buttery-Smooth Autopilot & Docking Animations**:
+  - Overhauled vehicle auto-return physics with smooth throttle ramping, proportional steering, dynamic bank/pitch aerodynamic tilt for drones, and smooth tank tread rotation for robots, completely eliminating jerky stutter.
+
 ## [1.3.13] - 2026-09-05
 ### Fixed & Improved
 - **Electronic Combiner UI Polish**:

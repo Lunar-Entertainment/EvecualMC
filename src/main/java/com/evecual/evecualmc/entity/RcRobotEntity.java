@@ -186,8 +186,40 @@ public class RcRobotEntity extends Entity {
         }
     }
 
+    private net.minecraft.util.math.ChunkPos forcedChunk = null;
+
+    private void updateChunkLoading() {
+        if (this.getWorld() instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+            net.minecraft.util.math.ChunkPos currentChunk = new net.minecraft.util.math.ChunkPos(this.getBlockPos());
+            if (this.forcedChunk == null || !this.forcedChunk.equals(currentChunk)) {
+                if (this.forcedChunk != null) {
+                    serverWorld.setChunkForced(this.forcedChunk.x, this.forcedChunk.z, false);
+                }
+                serverWorld.setChunkForced(currentChunk.x, currentChunk.z, true);
+                this.forcedChunk = currentChunk;
+            }
+        }
+    }
+
+    public void releaseChunkLoading() {
+        if (this.getWorld() instanceof net.minecraft.server.world.ServerWorld serverWorld && this.forcedChunk != null) {
+            serverWorld.setChunkForced(this.forcedChunk.x, this.forcedChunk.z, false);
+            this.forcedChunk = null;
+        }
+    }
+
+    public static boolean isSpotOccupied(World world, BlockPos pos, Entity ignoreSelf) {
+        net.minecraft.util.math.Box checkArea = new net.minecraft.util.math.Box(pos).expand(0.5);
+        java.util.List<Entity> occupants = world.getEntitiesByClass(Entity.class, checkArea, e ->
+                (e instanceof RcCarEntity || e instanceof RcDroneEntity || e instanceof RcRobotEntity)
+                        && e != ignoreSelf && e.isAlive() && !e.isRemoved()
+        );
+        return !occupants.isEmpty();
+    }
+
     @Override
     public void remove(RemovalReason reason) {
+        releaseChunkLoading();
         removeRealLight();
         super.remove(reason);
     }
@@ -288,6 +320,10 @@ public class RcRobotEntity extends Entity {
         super.tick();
 
         tickRealLight();
+
+        if (!this.getWorld().isClient()) {
+            updateChunkLoading();
+        }
 
         if (inputTimeoutTicks > 0) {
             inputTimeoutTicks--;
@@ -719,8 +755,13 @@ public class RcRobotEntity extends Entity {
 
     public BlockPos getParkingSpotPos() {
         BlockPos pos = this.getBlockPos();
-        if (this.getWorld().getBlockState(pos).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) return pos;
-        if (this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) return pos.down();
+        if (Math.abs(this.getY() - pos.getY()) <= 0.45 && this.getWorld().getBlockState(pos).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
+            return pos;
+        }
+        BlockPos down = pos.down();
+        if (Math.abs(this.getY() - (down.getY() + 1.0)) <= 0.45 && this.getWorld().getBlockState(down).isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
+            return down;
+        }
         return null;
     }
 
@@ -730,7 +771,8 @@ public class RcRobotEntity extends Entity {
         if (spotPos == null) return false;
         double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
         double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
-        return dx <= 0.32 && dz <= 0.32;
+        double dy = Math.abs(this.getY() - (spotPos.getY() + 0.0625));
+        return dx <= 0.35 && dz <= 0.35 && dy <= 0.45;
     }
 
     public void onPairFromParkingSpot() {
@@ -781,13 +823,13 @@ public class RcRobotEntity extends Entity {
         BlockPos nearest = null;
         double nearestDistSq = Double.MAX_VALUE;
 
-        int minChunkX = (center.getX() - 64) >> 4;
-        int maxChunkX = (center.getX() + 64) >> 4;
-        int minChunkZ = (center.getZ() - 64) >> 4;
-        int maxChunkZ = (center.getZ() + 64) >> 4;
+        int minChunkX = (center.getX() - 96) >> 4;
+        int maxChunkX = (center.getX() + 96) >> 4;
+        int minChunkZ = (center.getZ() - 96) >> 4;
+        int maxChunkZ = (center.getZ() + 96) >> 4;
 
-        int minY = Math.max(this.getWorld().getBottomY(), center.getY() - 16);
-        int maxY = Math.min(this.getWorld().getTopY(), center.getY() + 16);
+        int minY = Math.max(this.getWorld().getBottomY(), center.getY() - 32);
+        int maxY = Math.min(this.getWorld().getTopY(), center.getY() + 32);
 
         for (int cx = minChunkX; cx <= maxChunkX; cx++) {
             for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
@@ -801,14 +843,15 @@ public class RcRobotEntity extends Entity {
                 for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
                     net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
                     if (section == null || section.isEmpty()) continue;
+                    if (!section.hasAny(bs -> bs.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK))) continue;
 
                     int secY = chunk.sectionIndexToCoord(secIdx) << 4;
                     for (int lx = 0; lx < 16; lx++) {
                         int wx = (cx << 4) + lx;
-                        if (Math.abs(wx - center.getX()) > 64) continue;
+                        if (Math.abs(wx - center.getX()) > 96) continue;
                         for (int lz = 0; lz < 16; lz++) {
                             int wz = (cz << 4) + lz;
-                            if (Math.abs(wz - center.getZ()) > 64) continue;
+                            if (Math.abs(wz - center.getZ()) > 96) continue;
                             for (int ly = 0; ly < 16; ly++) {
                                 int wy = secY + ly;
                                 if (wy < minY || wy > maxY) continue;
@@ -816,6 +859,8 @@ public class RcRobotEntity extends Entity {
                                 BlockState bs = section.getBlockState(lx, ly, lz);
                                 if (bs.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
                                     BlockPos p = new BlockPos(wx, wy, wz);
+                                    if (isSpotOccupied(this.getWorld(), p, this)) continue;
+
                                     double dSq = p.getSquaredDistance(center);
                                     if (dSq < nearestDistSq) {
                                         nearestDistSq = dSq;
@@ -898,8 +943,8 @@ public class RcRobotEntity extends Entity {
         double dz = tz - this.getZ();
         double distSq = dx * dx + dz * dz;
 
-        // Dock when squarely centered on top of the parking pad (within 0.35m of center)
-        if (distSq <= 0.12 && Math.abs(this.getY() - ty) <= 0.6) {
+        // Dock when squarely centered on top of the parking pad horizontally and at proper elevation
+        if (distSq <= 0.12 && Math.abs(this.getY() - ty) <= 0.5) {
             this.setPosition(tx, ty, tz);
             onReachedCharger();
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);

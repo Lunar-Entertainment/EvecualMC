@@ -155,6 +155,7 @@ public class RcCarEntity extends Entity {
 
     @Override
     public void remove(RemovalReason reason) {
+        releaseChunkLoading();
         removeRealLight();
         super.remove(reason);
     }
@@ -203,10 +204,46 @@ public class RcCarEntity extends Entity {
         return this.autoReturning;
     }
 
+    private net.minecraft.util.math.ChunkPos forcedChunk = null;
+
+    private void updateChunkLoading() {
+        if (this.getWorld() instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+            net.minecraft.util.math.ChunkPos currentChunk = new net.minecraft.util.math.ChunkPos(this.getBlockPos());
+            if (this.forcedChunk == null || !this.forcedChunk.equals(currentChunk)) {
+                if (this.forcedChunk != null) {
+                    serverWorld.setChunkForced(this.forcedChunk.x, this.forcedChunk.z, false);
+                }
+                serverWorld.setChunkForced(currentChunk.x, currentChunk.z, true);
+                this.forcedChunk = currentChunk;
+            }
+        }
+    }
+
+    public void releaseChunkLoading() {
+        if (this.getWorld() instanceof net.minecraft.server.world.ServerWorld serverWorld && this.forcedChunk != null) {
+            serverWorld.setChunkForced(this.forcedChunk.x, this.forcedChunk.z, false);
+            this.forcedChunk = null;
+        }
+    }
+
+    public static boolean isSpotOccupied(World world, BlockPos pos, Entity ignoreSelf) {
+        net.minecraft.util.math.Box checkArea = new net.minecraft.util.math.Box(pos).expand(0.5);
+        java.util.List<Entity> occupants = world.getEntitiesByClass(Entity.class, checkArea, e ->
+                (e instanceof RcCarEntity || e instanceof RcDroneEntity || e instanceof RcRobotEntity)
+                        && e != ignoreSelf && e.isAlive() && !e.isRemoved()
+        );
+        return !occupants.isEmpty();
+    }
+
     public BlockPos getParkingSpotPos() {
         BlockPos pos = this.getBlockPos();
-        if (this.getWorld().getBlockState(pos).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) return pos;
-        if (this.getWorld().getBlockState(pos.down()).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) return pos.down();
+        if (Math.abs(this.getY() - pos.getY()) <= 0.45 && this.getWorld().getBlockState(pos).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+            return pos;
+        }
+        BlockPos down = pos.down();
+        if (Math.abs(this.getY() - (down.getY() + 1.0)) <= 0.45 && this.getWorld().getBlockState(down).isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
+            return down;
+        }
         return null;
     }
 
@@ -216,7 +253,8 @@ public class RcCarEntity extends Entity {
         if (spotPos == null) return false;
         double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
         double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
-        return dx <= 0.32 && dz <= 0.32;
+        double dy = Math.abs(this.getY() - (spotPos.getY() + 0.0625));
+        return dx <= 0.35 && dz <= 0.35 && dy <= 0.45;
     }
 
     public void setExplicitlyPairedInSpot(boolean val) {
@@ -319,13 +357,13 @@ public class RcCarEntity extends Entity {
         BlockPos bestCharger = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        int minChunkX = (carPos.getX() - 64) >> 4;
-        int maxChunkX = (carPos.getX() + 64) >> 4;
-        int minChunkZ = (carPos.getZ() - 64) >> 4;
-        int maxChunkZ = (carPos.getZ() + 64) >> 4;
+        int minChunkX = (carPos.getX() - 96) >> 4;
+        int maxChunkX = (carPos.getX() + 96) >> 4;
+        int minChunkZ = (carPos.getZ() - 96) >> 4;
+        int maxChunkZ = (carPos.getZ() + 96) >> 4;
 
-        int minY = Math.max(this.getWorld().getBottomY(), carPos.getY() - 16);
-        int maxY = Math.min(this.getWorld().getTopY(), carPos.getY() + 16);
+        int minY = Math.max(this.getWorld().getBottomY(), carPos.getY() - 32);
+        int maxY = Math.min(this.getWorld().getTopY(), carPos.getY() + 32);
 
         for (int cx = minChunkX; cx <= maxChunkX; cx++) {
             for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
@@ -339,14 +377,15 @@ public class RcCarEntity extends Entity {
                 for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
                     net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
                     if (section == null || section.isEmpty()) continue;
+                    if (!section.hasAny(bs -> bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK))) continue;
 
                     int secY = chunk.sectionIndexToCoord(secIdx) << 4;
                     for (int lx = 0; lx < 16; lx++) {
                         int wx = (cx << 4) + lx;
-                        if (Math.abs(wx - carPos.getX()) > 64) continue;
+                        if (Math.abs(wx - carPos.getX()) > 96) continue;
                         for (int lz = 0; lz < 16; lz++) {
                             int wz = (cz << 4) + lz;
-                            if (Math.abs(wz - carPos.getZ()) > 64) continue;
+                            if (Math.abs(wz - carPos.getZ()) > 96) continue;
                             for (int ly = 0; ly < 16; ly++) {
                                 int wy = secY + ly;
                                 if (wy < minY || wy > maxY) continue;
@@ -354,6 +393,8 @@ public class RcCarEntity extends Entity {
                                 BlockState bs = section.getBlockState(lx, ly, lz);
                                 if (bs.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
                                     BlockPos p = new BlockPos(wx, wy, wz);
+                                    if (isSpotOccupied(this.getWorld(), p, this)) continue;
+
                                     double dSq = p.getSquaredDistance(carPos);
                                     if (dSq < bestDistSq) {
                                         bestDistSq = dSq;
@@ -400,6 +441,10 @@ public class RcCarEntity extends Entity {
         super.tick();
 
         tickRealLight();
+
+        if (!this.getWorld().isClient()) {
+            updateChunkLoading();
+        }
 
         // Timeout remote inputs if transmitter signal stops
         this.inputTimeoutTicks++;
@@ -487,14 +532,15 @@ public class RcCarEntity extends Entity {
                 cancelAutoReturn();
             } else {
                 double targetX = this.targetChargerPos.getX() + 0.5;
-                double targetY = this.targetChargerPos.getY() + 0.25;
+                double targetY = this.targetChargerPos.getY() + 0.0625;
                 double targetZ = this.targetChargerPos.getZ() + 0.5;
                 double dx = targetX - this.getX();
+                double dy = targetY - this.getY();
                 double dz = targetZ - this.getZ();
                 double distSq = dx * dx + dz * dz;
 
-                // Stop only when squarely docked on top of the charging pad (within 0.30m of center)
-                if (distSq <= 0.09) {
+                // Stop only when squarely docked on top of the charging pad (within 0.35m of center and true Y elevation)
+                if (distSq <= 0.12 && Math.abs(dy) <= 0.5) {
                     this.setPosition(targetX, targetY, targetZ);
                     onReachedCharger();
                     this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 0.8f, 2.0f);
