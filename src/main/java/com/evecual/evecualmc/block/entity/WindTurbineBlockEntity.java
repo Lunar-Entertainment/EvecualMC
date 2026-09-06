@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage {
     public static final long MAX_CAPACITY = 100;
-    public static final long OUTPUT_RATE = 50; // 50 EU/tick generated out of the back
+    public static final long OUTPUT_RATE = 50; // 50 EU/t generated out into connected grid
     private long energy = 0;
 
     public WindTurbineBlockEntity(BlockPos pos, BlockState state) {
@@ -37,42 +37,37 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
         be.markDirty();
 
         if (be.energy > 0) {
-            be.outputEnergyToBack(world, pos, state);
+            be.outputEnergyToNetwork(world, pos);
         }
     }
 
-    private void outputEnergyToBack(World world, BlockPos pos, BlockState state) {
-        Direction backDir = state.get(WindTurbineBlock.FACING).getOpposite();
-        BlockPos backPos = pos.offset(backDir);
-        BlockState backState = world.getBlockState(backPos);
-
-        if (backState.isOf(EvecualMC.WIRE_BLOCK)) {
-            // Push energy through connected wire network attached to the back port
-            transferEnergyThroughWireNetwork(world, backPos);
-        } else {
-            // Direct insertion into block connected behind the turbine
-            BlockEntity backBe = world.getBlockEntity(backPos);
-            if (backBe instanceof EnergyStorage storage && backBe != this) {
-                long needed = storage.getMaxEnergy() - storage.getEnergy();
-                if (needed > 0) {
-                    long toSend = Math.min(this.energy, Math.min(needed, OUTPUT_RATE));
-                    long inserted = storage.insertEnergy(toSend, false);
-                    this.energy -= inserted;
-                    this.markDirty();
-                    this.sync();
-                }
-            }
-        }
-    }
-
-    private void transferEnergyThroughWireNetwork(World world, BlockPos wireStartPos) {
+    private void outputEnergyToNetwork(World world, BlockPos basePos) {
         Queue<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
         List<EnergyStorage> targets = new ArrayList<>();
 
-        queue.add(wireStartPos);
-        visited.add(wireStartPos);
+        // Check direct neighbors of all 4 vertical turbine blocks (Base, Shaft 1, Shaft 2, Head)
+        for (int h = 0; h <= 3; h++) {
+            BlockPos partPos = basePos.up(h);
+            visited.add(partPos);
 
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = partPos.offset(dir);
+                if (!visited.add(neighbor)) continue;
+
+                BlockState neighborState = world.getBlockState(neighbor);
+                if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
+                    queue.add(neighbor);
+                } else {
+                    BlockEntity neighborBe = world.getBlockEntity(neighbor);
+                    if (neighborBe instanceof EnergyStorage storage && neighborBe != this) {
+                        targets.add(storage);
+                    }
+                }
+            }
+        }
+
+        // BFS through connected wire network (up to 64 hops)
         int maxHops = 64;
         while (!queue.isEmpty() && visited.size() <= maxHops) {
             BlockPos current = queue.poll();
@@ -93,6 +88,7 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
             }
         }
 
+        // Distribute generated 50 EU/t to connected consumers/batteries
         if (!targets.isEmpty()) {
             for (EnergyStorage storage : targets) {
                 if (this.energy <= 0) break;

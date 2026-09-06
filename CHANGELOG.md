@@ -1,5 +1,13 @@
 # EvecualMC Updates & Changelog
 
+## [1.6.1] - 2026-09-06
+### Added & Improved
+- **4-Block High Wind Turbine Multi-Block Structure**:
+  - Overhauled **Wind Turbine** into a 4-block high vertical multi-block structure featuring a foundation base, lower & upper lattice shaft columns, and a top turbine head with 4-blade rotor fan.
+- **Universal Wire Cable Connection**:
+  - Electrical Wires (`WireBlock`) now seamlessly connect to the Wind Turbine on all sides.
+  - Power generated (50 EU/t) automatically distributes into all connected wire networks and battery banks attached to the turbine tower.
+
 ## [1.6.0] - 2026-09-06
 ### Added & Improved
 - **Wind Turbine ("Vindkraftverk")**:

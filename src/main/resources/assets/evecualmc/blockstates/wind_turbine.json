@@ -1,19 +1,23 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "evecualmc:block/wind_turbine"
-    },
-    "facing=south": {
-      "model": "evecualmc:block/wind_turbine",
-      "y": 180
-    },
-    "facing=west": {
-      "model": "evecualmc:block/wind_turbine",
-      "y": 270
-    },
-    "facing=east": {
-      "model": "evecualmc:block/wind_turbine",
-      "y": 90
-    }
+    "facing=north,segment=0": { "model": "evecualmc:block/wind_turbine_base" },
+    "facing=south,segment=0": { "model": "evecualmc:block/wind_turbine_base" },
+    "facing=west,segment=0":  { "model": "evecualmc:block/wind_turbine_base" },
+    "facing=east,segment=0":  { "model": "evecualmc:block/wind_turbine_base" },
+
+    "facing=north,segment=1": { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=south,segment=1": { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=west,segment=1":  { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=east,segment=1":  { "model": "evecualmc:block/wind_turbine_shaft" },
+
+    "facing=north,segment=2": { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=south,segment=2": { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=west,segment=2":  { "model": "evecualmc:block/wind_turbine_shaft" },
+    "facing=east,segment=2":  { "model": "evecualmc:block/wind_turbine_shaft" },
+
+    "facing=north,segment=3": { "model": "evecualmc:block/wind_turbine_head" },
+    "facing=south,segment=3": { "model": "evecualmc:block/wind_turbine_head", "y": 180 },
+    "facing=west,segment=3":  { "model": "evecualmc:block/wind_turbine_head", "y": 270 },
+    "facing=east,segment=3":  { "model": "evecualmc:block/wind_turbine_head", "y": 90 }
   }
 }
