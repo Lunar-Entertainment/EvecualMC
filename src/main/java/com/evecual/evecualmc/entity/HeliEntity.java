@@ -467,18 +467,18 @@ public class HeliEntity extends Entity {
     private void fireWeaponPlasma(PlayerEntity player, Vec3d startPos, Vec3d dir) {
         if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
 
-        double maxDist = 32.0;
+        double maxDist = 48.0;
         Vec3d endPos = startPos.add(dir.multiply(maxDist));
 
         // Raycast entities
-        Box searchBox = new Box(startPos, endPos).expand(1.5);
+        Box searchBox = new Box(startPos, endPos).expand(1.8);
         List<Entity> targets = serverWorld.getOtherEntities(this, searchBox, e -> e instanceof LivingEntity && e != player && e.isAlive());
 
         LivingEntity hitEntity = null;
         double closestDistSq = Double.MAX_VALUE;
 
         for (Entity e : targets) {
-            Box bbox = e.getBoundingBox().expand(0.3);
+            Box bbox = e.getBoundingBox().expand(0.4);
             if (bbox.raycast(startPos, endPos).isPresent()) {
                 double dSq = startPos.squaredDistanceTo(e.getPos());
                 if (dSq < closestDistSq) {
@@ -490,19 +490,26 @@ public class HeliEntity extends Entity {
 
         double impactDist = hitEntity != null ? Math.sqrt(closestDistSq) : maxDist;
 
-        // Plasma beam effect
-        for (double d = 0.5; d < impactDist; d += 0.6) {
+        // Rotary minigun muzzle flash particles & rocket blast trail
+        serverWorld.spawnParticles(ParticleTypes.FIREWORK, startPos.x, startPos.y, startPos.z, 4, 0.08, 0.08, 0.08, 0.05);
+        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, startPos.x, startPos.y, startPos.z, 6, 0.1, 0.1, 0.1, 0.08);
+
+        // High-speed kinetic plasma tracer beam
+        for (double d = 0.4; d < impactDist; d += 0.5) {
             Vec3d p = startPos.add(dir.multiply(d));
             serverWorld.spawnParticles(ParticleTypes.SONIC_BOOM, p.x, p.y, p.z, 1, 0, 0, 0, 0);
-            serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 2, 0.05, 0.05, 0.05, 0.02);
+            serverWorld.spawnParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 1, 0.03, 0.03, 0.03, 0.02);
         }
 
-        serverWorld.playSound(null, startPos.x, startPos.y, startPos.z, SoundEvents.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.6F, 2.0F);
+        // Heavy Vulcan Minigun assault audio
+        serverWorld.playSound(null, startPos.x, startPos.y, startPos.z, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.5F, 1.85F);
+        serverWorld.playSound(null, startPos.x, startPos.y, startPos.z, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, SoundCategory.PLAYERS, 0.7F, 1.6F);
 
         if (hitEntity != null) {
             DamageSource ds = serverWorld.getDamageSources().playerAttack(player);
-            hitEntity.damage(ds, 10.0F);
-            serverWorld.spawnParticles(ParticleTypes.EXPLOSION, hitEntity.getX(), hitEntity.getY() + 0.5, hitEntity.getZ(), 1, 0, 0, 0, 0);
+            hitEntity.damage(ds, 14.0F);
+            serverWorld.spawnParticles(ParticleTypes.EXPLOSION_EMITTER, hitEntity.getX(), hitEntity.getY() + 0.5, hitEntity.getZ(), 1, 0, 0, 0, 0);
+            serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, hitEntity.getX(), hitEntity.getY() + 0.5, hitEntity.getZ(), 10, 0.2, 0.2, 0.2, 0.1);
         }
     }
 
@@ -888,51 +895,63 @@ public class HeliEntity extends Entity {
                     double dz = targetZ - this.getZ();
                     double horizDist = Math.sqrt(dx * dx + dz * dz);
 
-                    // Stage 0: Ascend to safe cruising altitude
+                    // Stage 0: Ascend to safe cruising altitude while aligning initial heading
                     if (this.autoReturnStage == 0) {
-                        if (this.getY() < this.cruiseAltitude - 0.5) {
-                            targetVy = 0.45; // climb
-                            targetHozSpeed = 0.0;
-                            targetPitch = 0.0F;
-                        } else {
-                            this.autoReturnStage = 1;
-                        }
-                    }
-                    // Stage 1: Fly horizontally toward target X/Z with smooth heading alignment and pitch
-                    else if (this.autoReturnStage == 1) {
                         float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                         float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
                         targetYawDelta = MathHelper.clamp(yawDiff * 0.25F, -6.0F, 6.0F);
 
-                        targetPitch = -14.0F; // nose down forward cruise
-                        targetRoll = MathHelper.clamp(-yawDiff * 0.5F, -18.0F, 18.0F);
-                        targetHozSpeed = NORMAL_CRUISE_SPEED; // 12 blocks/sec
-                        targetVy = 0.0; // altitude hold
-
-                        if (horizDist < 1.0) {
-                            this.autoReturnStage = 2; // Arrived above pad: begin vertical touchdown
+                        if (this.getY() < this.cruiseAltitude - 0.5) {
+                            targetVy = 0.40; // climb
+                            targetHozSpeed = 0.0;
+                            targetPitch = 0.0F;
+                            targetRoll = 0.0F;
+                        } else {
+                            this.autoReturnStage = 1;
                         }
                     }
-                    // Stage 2: Vertical touchdown on helipad center with active centering guidance
-                    else if (this.autoReturnStage == 2) {
-                        double corrX = MathHelper.clamp(targetX - this.getX(), -0.25, 0.25);
-                        double corrZ = MathHelper.clamp(targetZ - this.getZ(), -0.25, 0.25);
-                        double corrDist = Math.sqrt(corrX * corrX + corrZ * corrZ);
+                    // Stage 1: Proportional navigation & course heading alignment
+                    else if (this.autoReturnStage == 1) {
+                        float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                        float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                        targetYawDelta = MathHelper.clamp(yawDiff * 0.30F, -7.0F, 7.0F);
 
-                        targetHozSpeed = Math.min(corrDist * 0.4, 0.20);
-                        if (corrDist > 0.05) {
-                            float centerYaw = (float) Math.toDegrees(Math.atan2(-corrX, corrZ));
-                            float yawDiff = MathHelper.wrapDegrees(centerYaw - this.getYaw());
-                            targetYawDelta = MathHelper.clamp(yawDiff * 0.2F, -4.0F, 4.0F);
-                        } else {
-                            targetYawDelta = 0.0F;
+                        // Throttle scales with heading alignment & remaining distance
+                        double alignment = Math.max(0.1, Math.cos(Math.toRadians(yawDiff)));
+                        double speedCap = Math.min(NORMAL_CRUISE_SPEED, horizDist * 0.35);
+
+                        targetHozSpeed = speedCap * alignment;
+                        targetPitch = (float) (-15.0 * alignment);
+                        targetRoll = MathHelper.clamp(-yawDiff * 0.6F, -20.0F, 20.0F);
+                        targetVy = 0.0; // altitude hold
+
+                        if (horizDist < 1.5) {
+                            this.autoReturnStage = 2; // Arrived above pad: transition to precision hover
                         }
-
+                    }
+                    // Stage 2: Precision hover & centering directly over Helipad
+                    else if (this.autoReturnStage == 2) {
+                        targetHozSpeed = Math.min(horizDist * 0.3, 0.15);
+                        float alignYawDiff = MathHelper.wrapDegrees(0.0F - this.getYaw()); // Align North / pad orientation
+                        targetYawDelta = MathHelper.clamp(alignYawDiff * 0.25F, -5.0F, 5.0F);
                         targetPitch = 0.0F;
                         targetRoll = 0.0F;
-                        targetVy = -0.18; // gentle landing descent
+                        targetVy = 0.0;
 
-                        if (this.isOnGround() || this.getY() <= targetY + 0.15) {
+                        if (horizDist < 0.30 && Math.abs(alignYawDiff) < 6.0F) {
+                            this.autoReturnStage = 3; // Position locked: begin vertical touchdown
+                        }
+                    }
+                    // Stage 3: Controlled vertical touchdown & docking
+                    else if (this.autoReturnStage == 3) {
+                        this.setPosition(MathHelper.lerp(0.35, this.getX(), targetX), this.getY(), MathHelper.lerp(0.35, this.getZ(), targetZ));
+                        targetHozSpeed = 0.0;
+                        targetYawDelta = 0.0F;
+                        targetPitch = 0.0F;
+                        targetRoll = 0.0F;
+                        targetVy = -0.22; // smooth touchdown descent
+
+                        if (this.isOnGround() || this.getY() <= targetY + 0.12) {
                             this.dataTracker.set(AUTO_RETURNING, false);
                             this.targetHelipadPos = null;
                             this.autoReturnStage = 0;
@@ -941,7 +960,7 @@ public class HeliEntity extends Entity {
                             this.setOnGround(true);
                             setCharging(true);
                             if (passenger instanceof PlayerEntity p) {
-                                p.sendMessage(Text.literal("§a⚡ Touchdown Complete! Recharging on 3x3 Helipad..."), true);
+                                p.sendMessage(Text.literal("§a⚡ Precision Touchdown Complete! Recharging on 3x3 Helipad..."), true);
                             }
                             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                                      SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.2F);

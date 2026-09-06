@@ -562,8 +562,13 @@ public class CarEntity extends Entity {
             }
 
             angularVelocity = MathHelper.stepTowards((float) angularVelocity, (float) targetAngular, 1.4F);
-            this.prevYaw = this.getYaw();
-            this.setYaw((float) (this.getYaw() + angularVelocity));
+            float candidateYaw = (float) (this.getYaw() + angularVelocity);
+            if (canRotateTo(candidateYaw)) {
+                this.prevYaw = this.getYaw();
+                this.setYaw(candidateYaw);
+            } else {
+                angularVelocity = 0.0;
+            }
 
             // 6. Smooth steering wheel angle up to 45 degrees (0.785 rad)
             float targetSteer = 0.0F;
@@ -574,10 +579,18 @@ public class CarEntity extends Entity {
         } else {
             currentSpeed = MathHelper.stepTowards((float) currentSpeed, 0.0F, 0.08F);
             angularVelocity = MathHelper.stepTowards((float) angularVelocity, 0.0F, 0.8F);
-            this.prevYaw = this.getYaw();
-            this.setYaw((float) (this.getYaw() + angularVelocity));
+            float candidateYaw = (float) (this.getYaw() + angularVelocity);
+            if (canRotateTo(candidateYaw)) {
+                this.prevYaw = this.getYaw();
+                this.setYaw(candidateYaw);
+            } else {
+                angularVelocity = 0.0;
+            }
             this.dataTracker.set(STEERING_ANGLE, MathHelper.stepTowards(getSteeringAngle(), 0.0F, 0.1F));
         }
+
+        // Always update bounding box BEFORE move!
+        this.setBoundingBox(this.calculateBoundingBox());
 
         // 7. Apply velocity smoothly along vehicle heading
         double rad = Math.toRadians(this.getYaw());
@@ -593,7 +606,20 @@ public class CarEntity extends Entity {
         }
 
         this.move(MovementType.SELF, this.getVelocity());
-        this.setBoundingBox(this.calculateBoundingBox());
+        if (this.horizontalCollision) {
+            this.currentSpeed = 0.0;
+        }
+    }
+
+    private boolean canRotateTo(float candidateYaw) {
+        float oldYaw = this.getYaw();
+        Box oldBox = this.getBoundingBox();
+        this.setYaw(candidateYaw);
+        Box newBox = this.calculateBoundingBox();
+        boolean spaceEmpty = this.getWorld().isSpaceEmpty(this, newBox);
+        this.setYaw(oldYaw);
+        this.setBoundingBox(oldBox);
+        return spaceEmpty;
     }
 
     @Override

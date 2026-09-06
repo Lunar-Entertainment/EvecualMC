@@ -213,10 +213,25 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         root.addChild("left_arm_mining", leftArmMining, ModelTransform.NONE);
 
         ModelPartBuilder leftArmWeapon = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(-17.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
-                .uv(128, 0).cuboid(-19.0F, 7.5F, -16.0F, 4.0F, 5.0F, 8.0F) // Capacitor Pod
-                .uv(0, 128).cuboid(-18.5F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F) // Upper Blaster Barrel
-                .uv(0, 128).cuboid(-16.5F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F); // Lower Blaster Barrel
+                .uv(128, 0).cuboid(-18.0F, 8.5F, -15.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
+                .uv(128, 0).cuboid(-20.5F, 7.0F, -18.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
+                .uv(128, 0).cuboid(-20.0F, 7.5F, -24.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
+                // 6 Hexagonal Rotary Vulcan Minigun Barrels
+                .uv(0, 128).cuboid(-19.2F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.8F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.8F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.2F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.2F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.8F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.5F, 8.0F, -31.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
+                // Quad-Cell Guided Plasma Missile Pod
+                .uv(128, 0).cuboid(-20.0F, 12.0F, -20.0F, 4.0F, 4.0F, 12.0F)
+                .uv(0, 128).cuboid(-19.5F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-17.7F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-19.5F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-17.7F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                // FLIR Gimbal Targeting Pod
+                .uv(0, 128).cuboid(-19.5F, 12.5F, -14.0F, 3.0F, 3.0F, 4.0F);
         root.addChild("left_arm_weapon", leftArmWeapon, ModelTransform.NONE);
 
         // 10. Right Wing Hardpoint Arms
@@ -227,10 +242,25 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
         root.addChild("right_arm_mining", rightArmMining, ModelTransform.NONE);
 
         ModelPartBuilder rightArmWeapon = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(14.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
-                .uv(128, 0).cuboid(15.0F, 7.5F, -16.0F, 4.0F, 5.0F, 8.0F) // Capacitor Pod
-                .uv(0, 128).cuboid(15.0F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F) // Upper Blaster Barrel
-                .uv(0, 128).cuboid(17.0F, 8.5F, -26.0F, 1.5F, 1.5F, 12.0F); // Lower Blaster Barrel
+                .uv(128, 0).cuboid(14.0F, 8.5F, -15.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
+                .uv(128, 0).cuboid(15.5F, 7.0F, -18.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
+                .uv(128, 0).cuboid(16.0F, 7.5F, -24.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
+                // 6 Hexagonal Rotary Vulcan Minigun Barrels
+                .uv(0, 128).cuboid(16.6F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.0F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.0F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.6F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.6F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.0F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.5F, 8.0F, -31.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
+                // Quad-Cell Guided Plasma Missile Pod
+                .uv(128, 0).cuboid(16.0F, 12.0F, -20.0F, 4.0F, 4.0F, 12.0F)
+                .uv(0, 128).cuboid(16.5F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(18.3F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(16.5F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(18.3F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                // FLIR Gimbal Targeting Pod
+                .uv(0, 128).cuboid(16.5F, 12.5F, -14.0F, 3.0F, 3.0F, 4.0F);
         root.addChild("right_arm_weapon", rightArmWeapon, ModelTransform.NONE);
 
         return TexturedModelData.of(modelData, 256, 256);

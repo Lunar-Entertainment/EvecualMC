@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.6.3] - 2026-09-06
+### Fixed & Improved
+- **Car Collision & Wall Phasing Fix**:
+  - Re-ordered bounding box calculation (`calculateBoundingBox()`) to execute **BEFORE** `move(MovementType.SELF, velocity)` in `CarEntity.java`.
+  - Added rotation collision validation (`canRotateTo`) so turning near walls checks for block space availability, preventing AABB embedding inside solid walls.
+  - Zeroes horizontal speed on wall collision (`horizontalCollision`), preventing cars from phasing or sliding through walls while rotating or driving.
+- **EV Helicopter Autopilot Overhaul**:
+  - Re-engineered the 4-stage Helipad Autopilot system:
+    - *Stage 0 (Climb)*: Smooth vertical climb to safe cruising altitude with course alignment.
+    - *Stage 1 (Proportional Navigation)*: Calculates course heading, smoothly turns towards the target helipad, Banks realistically (-20° to +20° roll), and throttles speed proportionally with alignment and distance.
+    - *Stage 2 (Precision Hover & Centering)*: Arrives above pad, levels pitch/roll, damps speed, and aligns heading squarely with North / pad facing.
+    - *Stage 3 (Vertical Touchdown)*: Performs controlled vertical descent, seats squarely on pad center, cuts engines, and begins rapid charging.
+- **Remade Helicopter Weapon Arm (Rotary Minigun & Rocket Pod Pods)**:
+  - Redesigned 3D weapon hardpoint models in `HeliEntityModel.java`: feature heavy carbon wing pylon stubs, 6-barrel Rotary Vulcan Minigun Pods with vented heat shrouds and muzzle flash rings, Quad-Cell Guided Plasma Rocket Pods with glowing red warhead tips, and FLIR Gimbal Targeting pods.
+  - Upgraded weapon firing mechanics (`fireWeaponPlasma`): dual kinetic plasma stream with fireworks muzzle flash particles, sonic boom trails, rapid machine-gun audio, and 14.0 damage + explosive impact VFX.
+- **16-Block Wireless Helipad Charging**:
+  - `HeliChargerBlockEntity` now scans a 16-block radius for any active `ChargerBlockEntity` (Vehicle Charger Base).
+  - Helipads wirelessly extract power from any vehicle charger base within 16 blocks to rapid-charge landed EV Helicopters, producing animated electric arc particle beams between the base charger and the helipad pad.
+
 ## [1.6.2] - 2026-09-06
 ### Fixed & Improved
 - **Wire Cable Shader Artifact Fix**:
