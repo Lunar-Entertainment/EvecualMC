@@ -13,12 +13,14 @@ import com.evecual.evecualmc.client.render.RcRobotEntityModel;
 import com.evecual.evecualmc.client.render.RcRobotEntityRenderer;
 import com.evecual.evecualmc.client.render.HeliEntityModel;
 import com.evecual.evecualmc.client.render.HeliEntityRenderer;
+import com.evecual.evecualmc.client.render.WindTurbineBlockEntityRenderer;
 import com.evecual.evecualmc.entity.CarEntity;
 import com.evecual.evecualmc.entity.HeliEntity;
 import com.evecual.evecualmc.entity.RcCarEntity;
 import com.evecual.evecualmc.entity.RcDroneEntity;
 import com.evecual.evecualmc.entity.RcRobotEntity;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -32,6 +34,8 @@ import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
@@ -486,6 +490,10 @@ public class EvecualMCClient implements ClientModInitializer {
     public void onInitializeClient() {
         // Register HUD tip overlay for Solar Panel, Battery, Combiner, Charger, and Car
         HudRenderCallback.EVENT.register(new EnergyHudOverlay());
+
+        // Register Wire Cutout Render Layer & Wind Turbine Renderer
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
+        BlockEntityRendererFactories.register(EvecualMC.WIND_TURBINE_BLOCK_ENTITY, WindTurbineBlockEntityRenderer::new);
 
         // Register Screens
         HandledScreens.register(EvecualMC.ELECTRONIC_COMBINER_SCREEN_HANDLER, ElectronicCombinerScreen::new);

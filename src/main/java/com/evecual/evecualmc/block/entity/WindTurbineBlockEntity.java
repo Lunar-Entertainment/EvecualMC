@@ -79,6 +79,10 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
                 BlockState nextState = world.getBlockState(next);
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
                     queue.add(next);
+                    BlockEntity wireBe = world.getBlockEntity(next);
+                    if (wireBe instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) {
+                        wbe.recordEnergyTransfer(OUTPUT_RATE);
+                    }
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
                     if (nextBe instanceof EnergyStorage storage && nextBe != this) {

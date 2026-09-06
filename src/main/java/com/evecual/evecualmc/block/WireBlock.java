@@ -1,9 +1,15 @@
 package com.evecual.evecualmc.block;
 
 import com.evecual.evecualmc.EvecualMC;
+import com.evecual.evecualmc.block.entity.WireBlockEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.ShapeContext;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
@@ -13,9 +19,11 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
+import org.jetbrains.annotations.Nullable;
 
-public class WireBlock extends Block {
+public class WireBlock extends BlockWithEntity {
     public static final BooleanProperty NORTH = Properties.NORTH;
     public static final BooleanProperty SOUTH = Properties.SOUTH;
     public static final BooleanProperty EAST = Properties.EAST;
@@ -89,6 +97,33 @@ public class WireBlock extends Block {
     }
 
     @Override
+    public float getAmbientOcclusionLightLevel(BlockState state, BlockView world, BlockPos pos) {
+        return 1.0F; // Fulllight ambient occlusion: prevents shaders from casting pitch black shadows on wires
+    }
+
+    @Override
+    public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+        return true;
+    }
+
+    @Override
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new WireBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        return checkType(type, EvecualMC.WIRE_BLOCK_ENTITY, WireBlockEntity::tick);
+    }
+
+    @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         VoxelShape shape = CORE;
         if (state.get(UP)) shape = VoxelShapes.union(shape, UP_SHAPE);
@@ -101,17 +136,12 @@ public class WireBlock extends Block {
     }
 
     @Override
-    public net.minecraft.util.ActionResult onUse(BlockState state, net.minecraft.world.World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
+    public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
         if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            int connections = 0;
-            if (state.get(NORTH)) connections++;
-            if (state.get(SOUTH)) connections++;
-            if (state.get(EAST)) connections++;
-            if (state.get(WEST)) connections++;
-            if (state.get(UP)) connections++;
-            if (state.get(DOWN)) connections++;
-            String status = "🔌 Connected to " + connections + " terminal" + (connections == 1 ? "" : "s");
-            EvecualMC.sendOpenTipScreen(serverPlayer, "wire", 0, 0, status);
+            BlockEntity be = world.getBlockEntity(pos);
+            int rate = be instanceof WireBlockEntity wbe ? wbe.getTransferRate() : 0;
+            String status = rate > 0 ? "⚡ Transferring: " + rate + " EU/t" : "🔌 Standby (0 EU/t throughput)";
+            EvecualMC.sendOpenTipScreen(serverPlayer, "wire", rate, 100, status);
         }
         return net.minecraft.util.ActionResult.SUCCESS;
     }

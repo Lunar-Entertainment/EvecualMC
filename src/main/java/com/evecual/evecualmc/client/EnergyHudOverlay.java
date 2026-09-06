@@ -104,8 +104,10 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderRcChargerTip(drawContext, client, rcCharger);
             } else if (be instanceof HeliChargerBlockEntity heliCharger) {
                 renderHeliChargerTip(drawContext, client, heliCharger);
+            } else if (state.isOf(EvecualMC.WIND_TURBINE_BLOCK) || be instanceof com.evecual.evecualmc.block.entity.WindTurbineBlockEntity) {
+                renderWindTurbineTip(drawContext, client, pos, state, be);
             } else if (state.isOf(EvecualMC.WIRE_BLOCK)) {
-                renderWireTip(drawContext, client, state);
+                renderWireTip(drawContext, client, pos, state, be);
             } else if (state.isOf(EvecualMC.PARKING_LINES_BLOCK)) {
                 renderParkingLinesTip(drawContext, client, pos, state);
             } else if (state.isOf(EvecualMC.RC_PARKING_SPOT_BLOCK)) {
@@ -311,7 +313,15 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 (double) energy / Math.max(1, maxEnergy), 0xFF06B6D4);
     }
 
-    private void renderWireTip(DrawContext context, MinecraftClient client, BlockState state) {
+    private void renderWindTurbineTip(DrawContext context, MinecraftClient client, BlockPos pos, BlockState state, BlockEntity be) {
+        String rightHeader = "50 EU/t";
+        String status = "⚡ Generating: 50 EU/t (4-Block High Turbine Tower)";
+        renderUnifiedHud(context, client, "⚡", "Wind Turbine", 0xFF38BDF8,
+                rightHeader, 0xFFFFFFFF, status, 0xFF86EFAC,
+                1.0, 0xFF0284C7);
+    }
+
+    private void renderWireTip(DrawContext context, MinecraftClient client, BlockPos pos, BlockState state, BlockEntity be) {
         int conn = 0;
         if (state.get(net.minecraft.state.property.Properties.NORTH)) conn++;
         if (state.get(net.minecraft.state.property.Properties.SOUTH)) conn++;
@@ -320,9 +330,16 @@ public class EnergyHudOverlay implements HudRenderCallback {
         if (state.get(net.minecraft.state.property.Properties.UP)) conn++;
         if (state.get(net.minecraft.state.property.Properties.DOWN)) conn++;
 
-        String status = "🔌 Connected to " + conn + " terminal" + (conn == 1 ? "" : "s");
+        int rate = (be instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) ? wbe.getTransferRate() : 0;
+        String rightHeader = rate > 0 ? "⚡ " + rate + " EU/t" : "0 EU/t";
+        String status = rate > 0
+                ? "⚡ Active: Conduiting " + rate + " EU/t (" + conn + " terminals)"
+                : "🔌 Standby: Connected to " + conn + " terminal" + (conn == 1 ? "" : "s");
+        int statusColor = rate > 0 ? 0xFF86EFAC : 0xFF94A3B8;
+
         renderUnifiedHud(context, client, "🔌", "Power Wire", 0xFFFCD34D,
-                "", 0xFFFFFFFF, status, 0xFF94A3B8, null, null);
+                rightHeader, 0xFFFFFFFF, status, statusColor,
+                rate > 0 ? 1.0 : null, rate > 0 ? 0xFFF59E0B : null);
     }
 
     private void renderParkingLinesTip(DrawContext context, MinecraftClient client, BlockPos pos, BlockState state) {

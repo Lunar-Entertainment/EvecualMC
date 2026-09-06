@@ -1,5 +1,15 @@
 # EvecualMC Updates & Changelog
 
+## [1.6.2] - 2026-09-06
+### Fixed & Improved
+- **Wire Cable Shader Artifact Fix**:
+  - Disabled ambient occlusion (`ambientocclusion: false` in models and returning `1.0F` in block class) and configured cutout render layer (`RenderLayer.getCutout()`), eliminating solid black boxes on thin wire cables when shader packs are enabled.
+- **Wire Energy Throughput Infobox**:
+  - Looking at an electrical wire (`WireBlock`) now displays a live HUD overlay displaying active energy throughput (e.g. `⚡ Transferring 50 EU/t`).
+- **Wind Turbine Infobox & 3D Rotor Animation**:
+  - Looking at a Wind Turbine displays dedicated HUD telemetry (`⚡ Power Output: 50 EU/t`).
+  - Added dynamic 3D 4-blade aerodynamic rotor fan propeller renderer at the top nacelle (Segment 3) with continuous rotation animation.
+
 ## [1.6.1] - 2026-09-06
 ### Added & Improved
 - **4-Block High Wind Turbine Multi-Block Structure**:

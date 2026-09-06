@@ -318,6 +318,11 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "wind_turbine"),
             FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.WindTurbineBlockEntity::new, WIND_TURBINE_BLOCK).build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.WireBlockEntity> WIRE_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "wire"),
+            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.WireBlockEntity::new, WIRE_BLOCK).build());
+
     public static final BlockEntityType<BatteryBlockEntity> BATTERY_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "battery"),
