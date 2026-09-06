@@ -29,6 +29,29 @@ public enum TipTopic {
             }
     ),
 
+    WIND_TURBINE(
+            "wind_turbine",
+            "Wind Turbine",
+            "⚡ Power Generation",
+            () -> new ItemStack(EvecualMC.WIND_TURBINE_ITEM),
+            "Aerodynamic wind turbine generator that outputs a high continuous power supply of 50 EU/t directly out of its back port.",
+            new String[]{
+                    "Place the turbine facing your preferred direction.",
+                    "Generates 50 EU/t continuously.",
+                    "Energy outputs directly out of the BACK face of the block into wires, batteries, or chargers.",
+                    "Connect wires or battery banks directly behind the back port for instant charging."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Diagnostics & Live Output"},
+                    {"Placement", "Faces player; energy outputs out of the BACK port"}
+            },
+            new String[]{
+                    "Connect power wires directly behind the back port to distribute electricity across your base.",
+                    "Multiple Wind Turbines can feed directly into a unified multi-block battery cluster.",
+                    "Combine Wind Turbines with Solar Panels for maximum day and night energy generation."
+            }
+    ),
+
     BATTERY(
             "battery",
             "Battery",
@@ -748,6 +771,7 @@ public enum TipTopic {
     public static TipTopic fromBlock(net.minecraft.block.Block block) {
         if (block == null) return null;
         if (block == EvecualMC.SOLAR_PANEL_BLOCK) return SOLAR_PANEL;
+        if (block == EvecualMC.WIND_TURBINE_BLOCK) return WIND_TURBINE;
         if (block == EvecualMC.BATTERY_BLOCK) return BATTERY;
         if (block == EvecualMC.WIRE_BLOCK) return WIRE;
         if (block == EvecualMC.CHARGER_BLOCK) return CHARGER;
@@ -777,6 +801,7 @@ public enum TipTopic {
         if (item == EvecualMC.RC_SENDER_ITEM) return RC_SENDER;
         if (item == EvecualMC.RC_RECEIVER_ITEM) return RC_RECEIVER;
         if (item == EvecualMC.SOLAR_PANEL_ITEM) return SOLAR_PANEL;
+        if (item == EvecualMC.WIND_TURBINE_ITEM) return WIND_TURBINE;
         if (item == EvecualMC.BATTERY_ITEM) return BATTERY;
         if (item == EvecualMC.WIRE_ITEM) return WIRE;
         if (item == EvecualMC.CHARGER_ITEM) return CHARGER;

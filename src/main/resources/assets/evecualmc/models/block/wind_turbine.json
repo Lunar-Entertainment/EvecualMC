@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/wind_turbine_front",
+    "north": "evecualmc:block/wind_turbine_front",
+    "south": "evecualmc:block/wind_turbine_back",
+    "east": "evecualmc:block/wind_turbine_side",
+    "west": "evecualmc:block/wind_turbine_side",
+    "up": "evecualmc:block/wind_turbine_top",
+    "down": "evecualmc:block/wind_turbine_bottom"
+  }
+}

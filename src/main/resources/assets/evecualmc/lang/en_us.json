@@ -3,6 +3,8 @@
   "item.evecualmc.lightning": "Lightning",
   "block.evecualmc.solar_panel": "Solar Panel",
   "item.evecualmc.solar_panel": "Solar Panel",
+  "block.evecualmc.wind_turbine": "Wind Turbine",
+  "item.evecualmc.wind_turbine": "Wind Turbine",
   "block.evecualmc.battery": "Battery",
   "item.evecualmc.battery": "Battery",
   "block.evecualmc.wire": "Electrical Wire",

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SWS",
+    "SES",
+    "SWS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    }
+  },
+  "result": {
+    "item": "evecualmc:wind_turbine",
+    "count": 1
+  }
+}

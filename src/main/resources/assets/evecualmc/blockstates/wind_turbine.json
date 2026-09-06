@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "evecualmc:block/wind_turbine"
+    },
+    "facing=south": {
+      "model": "evecualmc:block/wind_turbine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "evecualmc:block/wind_turbine",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "evecualmc:block/wind_turbine",
+      "y": 90
+    }
+  }
+}

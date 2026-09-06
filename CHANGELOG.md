@@ -1,5 +1,16 @@
 # EvecualMC Updates & Changelog
 
+## [1.6.0] - 2026-09-06
+### Added & Improved
+- **Wind Turbine ("Vindkraftverk")**:
+  - Added directional **Wind Turbine** block (`WindTurbineBlock` / `WindTurbineBlockEntity`).
+  - **High Power Generation**: Generates **50 EU/tick** continuously.
+  - **Back Output Port**: Power outputs strictly out of the **BACK** face of the block (`facing.getOpposite()`), feeding directly into attached wires, batteries, or chargers.
+  - Added crafting recipe (`Steel Ingot`, `Wire`, `Electric Engine`) and Field Guide / Tip Menu documentation.
+- **Seamless Multi-Block Battery Cluster Merging**:
+  - **Visual Seamless Connection**: Adjacent Battery blocks now connect seamlessly in 6-cardinal directions (`NORTH`, `SOUTH`, `EAST`, `WEST`, `UP`, `DOWN`) with CTM connected texture support.
+  - **Unified Energy Matrix**: Contiguous Battery blocks automatically merge into a single unified battery cluster, aggregating total capacity (`N * 600 EU`) and equalizing charge levels across all blocks in the cluster.
+
 ## [1.4.0] - 2026-09-05
 ### Added & Improved
 - **EV Helicopter (EV Heli)**:

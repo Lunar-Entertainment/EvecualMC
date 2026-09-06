@@ -163,6 +163,16 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "solar_panel"),
             new BlockItem(SOLAR_PANEL_BLOCK, new Item.Settings()));
 
+    public static final Block WIND_TURBINE_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "wind_turbine"),
+            new com.evecual.evecualmc.block.WindTurbineBlock(FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL)));
+
+    public static final Item WIND_TURBINE_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "wind_turbine"),
+            new BlockItem(WIND_TURBINE_BLOCK, new Item.Settings()));
+
     public static final Block BATTERY_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "battery"),
@@ -302,6 +312,11 @@ public class EvecualMC implements ModInitializer {
             Registries.BLOCK_ENTITY_TYPE,
             new Identifier(MOD_ID, "solar_panel"),
             FabricBlockEntityTypeBuilder.create(SolarPanelBlockEntity::new, SOLAR_PANEL_BLOCK).build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.WindTurbineBlockEntity> WIND_TURBINE_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(MOD_ID, "wind_turbine"),
+            FabricBlockEntityTypeBuilder.create(com.evecual.evecualmc.block.entity.WindTurbineBlockEntity::new, WIND_TURBINE_BLOCK).build());
 
     public static final BlockEntityType<BatteryBlockEntity> BATTERY_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
@@ -458,6 +473,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(DRONE_PARKING_SPOT_ITEM);
                 entries.add(ROBOT_PARKING_SPOT_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
+                entries.add(WIND_TURBINE_ITEM);
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);
                 entries.add(ELECTRONIC_COMBINER_ITEM);

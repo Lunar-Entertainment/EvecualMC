@@ -10,10 +10,20 @@ import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
     public static final long MAX_CAPACITY = 600;
     private long energy = 0;
+
+    public record BatteryCluster(List<BatteryBlockEntity> batteries, long totalEnergy, long maxCapacity, int size) {}
 
     public BatteryBlockEntity(BlockPos pos, BlockState state) {
         super(EvecualMC.BATTERY_BLOCK_ENTITY, pos, state);
@@ -22,28 +32,96 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
     public static void tick(net.minecraft.world.World world, BlockPos pos, BlockState state, BatteryBlockEntity be) {
         if (world.isClient) return;
 
+        // Equalize cluster energy periodically (every 10 ticks) or when active
+        if (world.getTime() % 10L == 0L) {
+            be.equalizeCluster();
+        }
+
         if (be.energy > 0) {
             be.transferEnergyToConsumers(world, pos);
         }
         be.updateChargeLevel();
     }
 
+    public BatteryCluster getCluster() {
+        if (world == null) return new BatteryCluster(List.of(this), this.energy, MAX_CAPACITY, 1);
+
+        Queue<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        List<BatteryBlockEntity> clusterBatteries = new ArrayList<>();
+
+        queue.add(pos);
+        visited.add(pos);
+
+        while (!queue.isEmpty() && visited.size() <= 256) {
+            BlockPos current = queue.poll();
+            BlockEntity currentBe = world.getBlockEntity(current);
+
+            if (currentBe instanceof BatteryBlockEntity bbe) {
+                clusterBatteries.add(bbe);
+
+                for (Direction dir : Direction.values()) {
+                    BlockPos next = current.offset(dir);
+                    if (!visited.contains(next) && world.getBlockState(next).isOf(EvecualMC.BATTERY_BLOCK)) {
+                        visited.add(next);
+                        queue.add(next);
+                    }
+                }
+            }
+        }
+
+        long totalStored = 0;
+        for (BatteryBlockEntity bbe : clusterBatteries) {
+            totalStored += bbe.energy;
+        }
+
+        long totalCap = (long) clusterBatteries.size() * MAX_CAPACITY;
+        return new BatteryCluster(clusterBatteries, totalStored, totalCap, clusterBatteries.size());
+    }
+
+    public void equalizeCluster() {
+        BatteryCluster cluster = getCluster();
+        if (cluster.size() <= 1) return;
+
+        long perBattery = cluster.totalEnergy() / cluster.size();
+        long remainder = cluster.totalEnergy() % cluster.size();
+
+        for (int i = 0; i < cluster.batteries().size(); i++) {
+            BatteryBlockEntity bbe = cluster.batteries().get(i);
+            long targetEnergy = perBattery + (i < remainder ? 1 : 0);
+            if (bbe.energy != targetEnergy) {
+                bbe.energy = targetEnergy;
+                bbe.markDirty();
+                bbe.sync();
+                bbe.updateChargeLevel();
+            }
+        }
+    }
+
     private void transferEnergyToConsumers(net.minecraft.world.World world, BlockPos startPos) {
-        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
-        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
-        java.util.List<EnergyStorage> consumers = new java.util.ArrayList<>();
+        Queue<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        List<EnergyStorage> consumers = new ArrayList<>();
 
-        for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
-            BlockPos neighbor = startPos.offset(dir);
-            BlockState neighborState = world.getBlockState(neighbor);
+        // Add all battery positions in the cluster to visited so the cluster doesn't feed into itself
+        BatteryCluster cluster = getCluster();
+        for (BatteryBlockEntity bbe : cluster.batteries()) {
+            visited.add(bbe.getPos());
+        }
 
-            if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
-                queue.add(neighbor);
-                visited.add(neighbor);
-            } else {
-                BlockEntity neighborBe = world.getBlockEntity(neighbor);
-                if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity || neighborBe instanceof RcChargerBlockEntity) && neighborBe != this) {
-                    consumers.add((EnergyStorage) neighborBe);
+        for (BatteryBlockEntity bbe : cluster.batteries()) {
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = bbe.getPos().offset(dir);
+                if (!visited.add(neighbor)) continue;
+
+                BlockState neighborState = world.getBlockState(neighbor);
+                if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
+                    queue.add(neighbor);
+                } else {
+                    BlockEntity neighborBe = world.getBlockEntity(neighbor);
+                    if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity || neighborBe instanceof RcChargerBlockEntity) && neighborBe != this) {
+                        consumers.add((EnergyStorage) neighborBe);
+                    }
                 }
             }
         }
@@ -52,7 +130,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         while (!queue.isEmpty() && visited.size() <= maxHops) {
             BlockPos current = queue.poll();
 
-            for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+            for (Direction dir : Direction.values()) {
                 BlockPos next = current.offset(dir);
                 if (!visited.add(next)) continue;
 
@@ -96,24 +174,45 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
 
     @Override
     public long insertEnergy(long amount, boolean simulate) {
-        long canInsert = Math.min(amount, MAX_CAPACITY - energy);
+        BatteryCluster cluster = getCluster();
+        long roomInCluster = cluster.maxCapacity() - cluster.totalEnergy();
+        long canInsert = Math.min(amount, roomInCluster);
+
         if (!simulate && canInsert > 0) {
-            energy += canInsert;
-            markDirty();
-            sync();
-            updateChargeLevel();
+            long newTotal = cluster.totalEnergy() + canInsert;
+            int count = cluster.size();
+            long perBattery = newTotal / count;
+            long remainder = newTotal % count;
+
+            for (int i = 0; i < cluster.batteries().size(); i++) {
+                BatteryBlockEntity bbe = cluster.batteries().get(i);
+                bbe.energy = perBattery + (i < remainder ? 1 : 0);
+                bbe.markDirty();
+                bbe.sync();
+                bbe.updateChargeLevel();
+            }
         }
         return canInsert;
     }
 
     @Override
     public long extractEnergy(long amount, boolean simulate) {
-        long canExtract = Math.min(amount, energy);
+        BatteryCluster cluster = getCluster();
+        long canExtract = Math.min(amount, cluster.totalEnergy());
+
         if (!simulate && canExtract > 0) {
-            energy -= canExtract;
-            markDirty();
-            sync();
-            updateChargeLevel();
+            long newTotal = cluster.totalEnergy() - canExtract;
+            int count = cluster.size();
+            long perBattery = newTotal / count;
+            long remainder = newTotal % count;
+
+            for (int i = 0; i < cluster.batteries().size(); i++) {
+                BatteryBlockEntity bbe = cluster.batteries().get(i);
+                bbe.energy = perBattery + (i < remainder ? 1 : 0);
+                bbe.markDirty();
+                bbe.sync();
+                bbe.updateChargeLevel();
+            }
         }
         return canExtract;
     }
