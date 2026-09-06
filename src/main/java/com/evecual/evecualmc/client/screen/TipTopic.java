@@ -29,6 +29,31 @@ public enum TipTopic {
             }
     ),
 
+    ELECTRONIC_DUPER(
+            "electronic_duper",
+            "Electronic Duper",
+            "⚡ Quantum Duplication",
+            () -> new ItemStack(EvecualMC.ELECTRONIC_DUPER_ITEM),
+            "High-tech quantum duplication chamber that replicates any material, item, tool, or vehicle unit using 1500 EU over a 2-minute cycle.",
+            new String[]{
+                    "Place any item (ores, minerals, electronics, tools, cars, helis, mod items) into the Input Slot (Slot 0).",
+                    "Connect to Wires, Batteries, Wind Turbines, or Solar Panels up to 3000 EU max storage.",
+                    "Consumes 1500 EU and begins a 2-minute (2400-tick) duplication process.",
+                    "Upon completion, deposits 1 duplicate unit into the Output Slot (Slot 1) preserving all item NBT metadata!"
+            },
+            new String[][]{
+                    {"Right-Click", "Open Duplication GUI & Progress Gauge"},
+                    {"Input Slot", "Place target item to duplicate"},
+                    {"Output Slot", "Collect duplicated item units"},
+                    {"Sided Automation", "Hoppers / Pipes insert on top/sides, extract from bottom"}
+            },
+            new String[]{
+                    "Connect high-output Wind Turbines or Battery clusters to supply 1500 EU continuously.",
+                    "Duplication preserves all item NBT data, including customized cars, upgraded helis, and full inventories!",
+                    "Use Hoppers or automation pipes to continuously feed materials into the top and pull duplicates from the bottom."
+            }
+    ),
+
     WIND_TURBINE(
             "wind_turbine",
             "Wind Turbine",
@@ -782,6 +807,7 @@ public enum TipTopic {
         if (block == EvecualMC.DRONE_PARKING_SPOT_BLOCK) return DRONE_PARKING_SPOT;
         if (block == EvecualMC.ROBOT_PARKING_SPOT_BLOCK) return ROBOT_PARKING_SPOT;
         if (block == EvecualMC.ELECTRONIC_COMBINER_BLOCK) return ELECTRONIC_COMBINER;
+        if (block == EvecualMC.ELECTRONIC_DUPER_BLOCK) return ELECTRONIC_DUPER;
         if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
         if (block == EvecualMC.HELI_CHARGER_BLOCK) return HELI_CHARGER;
         return null;
@@ -814,6 +840,7 @@ public enum TipTopic {
         if (item == EvecualMC.DRONE_PARKING_SPOT_ITEM) return DRONE_PARKING_SPOT;
         if (item == EvecualMC.ROBOT_PARKING_SPOT_ITEM) return ROBOT_PARKING_SPOT;
         if (item == EvecualMC.ELECTRONIC_COMBINER_ITEM) return ELECTRONIC_COMBINER;
+        if (item == EvecualMC.ELECTRONIC_DUPER_ITEM) return ELECTRONIC_DUPER;
         if (item == EvecualMC.STEEL_INGOT) return STEEL_INGOT;
         if (item == EvecualMC.ENGINE) return ENGINE;
         if (item == EvecualMC.UPGRADED_ENGINE) return UPGRADED_ENGINE;

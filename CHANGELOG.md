@@ -1,5 +1,14 @@
 # EvecualMC Updates & Changelog
 
+## [1.7.0] - 2026-09-06
+### Added
+- **Electronic Duper Block (`electronic_duper`)**:
+  - Industrial quantum replication block that duplicates any material, item, tool, or vehicle unit (Stone, Iron Ore, Diamonds, Cars, Helis, Custom Mod Items, tools with NBT) every 2 minutes (2400 ticks / 120 seconds).
+  - Requires 1500 EU per duplication cycle with a maximum energy buffer of 3000 EU.
+  - Full automatic hopper and energy pipe integration (`SidedInventory`): top/sides for input items, bottom for output items, and wire network automatic energy transfer.
+  - Fully preserves all item NBT metadata, lore, custom names, damage states, and vehicle configurations upon duplication.
+  - Features dark glassmorphic GUI with interactive progress gauge, item slots, energy status bar, particle VFX, custom audio effects, crosshair HUD overlay, and Field Guide entry.
+
 ## [1.6.3] - 2026-09-06
 ### Fixed & Improved
 - **Car Collision & Wall Phasing Fix**:

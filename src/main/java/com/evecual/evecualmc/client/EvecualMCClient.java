@@ -497,6 +497,7 @@ public class EvecualMCClient implements ClientModInitializer {
 
         // Register Screens
         HandledScreens.register(EvecualMC.ELECTRONIC_COMBINER_SCREEN_HANDLER, ElectronicCombinerScreen::new);
+        HandledScreens.register(EvecualMC.ELECTRONIC_DUPER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.ElectronicDuperScreen::new);
         HandledScreens.register(EvecualMC.CAR_TRUNK_SCREEN_HANDLER, CarTrunkScreen::new);
         HandledScreens.register(EvecualMC.HELI_UPGRADE_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.HeliUpgradeScreen::new);
 

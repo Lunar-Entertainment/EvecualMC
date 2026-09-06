@@ -102,6 +102,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderChargerExtensionTip(drawContext, client, extension);
             } else if (be instanceof RcChargerBlockEntity rcCharger) {
                 renderRcChargerTip(drawContext, client, rcCharger);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity duper) {
+                renderDuperTip(drawContext, client, duper);
             } else if (be instanceof HeliChargerBlockEntity heliCharger) {
                 renderHeliChargerTip(drawContext, client, heliCharger);
             } else if (state.isOf(EvecualMC.WIND_TURBINE_BLOCK) || be instanceof com.evecual.evecualmc.block.entity.WindTurbineBlockEntity) {
@@ -120,6 +122,19 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderStationaryRcControllerTip(drawContext, client, station);
             }
         }
+    }
+
+    private void renderDuperTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity duper) {
+        long energy = duper.getEnergy();
+        long maxEnergy = duper.getMaxEnergy();
+        String status = duper.isDuplicating()
+                ? "🌀 Duplicating... " + (int) ((duper.getProgressTicks() / 2400.0F) * 100) + "% (" + (2400 - duper.getProgressTicks()) / 20 + "s left)"
+                : (energy >= 1500 ? "⚡ Ready - Insert Item & 1500 EU" : "⚡ Need Energy: 1500 EU (Need " + (1500 - energy) + " more)");
+        int color = duper.isDuplicating() ? 0xFF86EFAC : (energy >= 1500 ? 0xFF67E8F9 : 0xFFF87171);
+
+        renderUnifiedHud(context, client, "🌀", "Electronic Duper", 0xFF00E5FF,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
+                (double) duper.getProgressTicks() / 2400.0, 0xFF06B6D4);
     }
 
     private void renderChargerWaypoints(DrawContext context, MinecraftClient client) {

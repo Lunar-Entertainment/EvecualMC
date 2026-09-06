@@ -203,6 +203,17 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "electronic_combiner"),
             new BlockItem(ELECTRONIC_COMBINER_BLOCK, new Item.Settings()));
 
+    public static final Block ELECTRONIC_DUPER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "electronic_duper"),
+            new com.evecual.evecualmc.block.ElectronicDuperBlock(
+                    FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL)));
+
+    public static final Item ELECTRONIC_DUPER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electronic_duper"),
+            new BlockItem(ELECTRONIC_DUPER_BLOCK, new Item.Settings()));
+
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "charger"),
@@ -381,6 +392,15 @@ public class EvecualMC implements ModInitializer {
                             .create(com.evecual.evecualmc.block.entity.HeliChargerBlockEntity::new, HELI_CHARGER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity> ELECTRONIC_DUPER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "electronic_duper"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity::new,
+                                    ELECTRONIC_DUPER_BLOCK)
+                            .build());
+
     // Screen Handlers
     public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry
             .register(
@@ -400,6 +420,13 @@ public class EvecualMC implements ModInitializer {
                     Registries.SCREEN_HANDLER,
                     new Identifier(MOD_ID, "heli_upgrade"),
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.HeliUpgradeScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.ElectronicDuperScreenHandler> ELECTRONIC_DUPER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "electronic_duper"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectronicDuperScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
     // Entity Types
@@ -482,6 +509,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(BATTERY_ITEM);
                 entries.add(WIRE_ITEM);
                 entries.add(ELECTRONIC_COMBINER_ITEM);
+                entries.add(ELECTRONIC_DUPER_ITEM);
                 entries.add(CHARGER_ITEM);
                 entries.add(CHARGER_EXTENSION_ITEM);
                 entries.add(HELI_CHARGER_ITEM);
