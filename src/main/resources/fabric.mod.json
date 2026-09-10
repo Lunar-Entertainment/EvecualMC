@@ -3,9 +3,9 @@
   "id": "evecualmc",
   "version": "${version}",
   "name": "EvecualMC",
-  "description": "Base Fabric mod for Minecraft 1.20.1",
+  "description": "High-tech electric vehicles, autonomous robotics, aerospace helicopters, power systems, and advanced machinery.",
   "authors": [
-    "joars"
+    "Lunar Entertainment"
   ],
   "contact": {
     "sources": "https://github.com/evecual/evecualmc"

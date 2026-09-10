@@ -63,22 +63,27 @@ public class HeliControllerItem extends Item {
         net.minecraft.util.math.Box searchBox = user.getBoundingBox().expand(12.0);
 
         HeliEntity targetHeli = null;
-        double minDistance = Double.MAX_VALUE;
-
-        for (HeliEntity heli : world.getEntitiesByClass(HeliEntity.class, searchBox, Entity::isAlive)) {
-            net.minecraft.util.math.Vec3d toEntity = heli.getPos().add(0, 0.5, 0).subtract(eyePos).normalize();
-            double dot = lookVec.dotProduct(toEntity);
-            double dist = user.squaredDistanceTo(heli);
-            if (dot > 0.3 && dist < minDistance) {
-                minDistance = dist;
-                targetHeli = heli;
-            }
+        if (user.getVehicle() instanceof HeliEntity seatedHeli) {
+            targetHeli = seatedHeli;
         }
 
         if (targetHeli == null) {
-            for (HeliEntity heli : world.getEntitiesByClass(HeliEntity.class, user.getBoundingBox().expand(6.0), Entity::isAlive)) {
-                targetHeli = heli;
-                break;
+            double minDistance = Double.MAX_VALUE;
+            for (HeliEntity heli : world.getEntitiesByClass(HeliEntity.class, searchBox, Entity::isAlive)) {
+                net.minecraft.util.math.Vec3d toEntity = heli.getPos().add(0, 0.5, 0).subtract(eyePos).normalize();
+                double dot = lookVec.dotProduct(toEntity);
+                double dist = user.squaredDistanceTo(heli);
+                if (dot > 0.3 && dist < minDistance) {
+                    minDistance = dist;
+                    targetHeli = heli;
+                }
+            }
+
+            if (targetHeli == null) {
+                for (HeliEntity heli : world.getEntitiesByClass(HeliEntity.class, user.getBoundingBox().expand(6.0), Entity::isAlive)) {
+                    targetHeli = heli;
+                    break;
+                }
             }
         }
 

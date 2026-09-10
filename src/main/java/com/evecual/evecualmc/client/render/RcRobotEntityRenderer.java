@@ -79,7 +79,46 @@ public class RcRobotEntityRenderer extends EntityRenderer<RcRobotEntity> {
             matrices.pop();
         }
 
-        // 5. Render Work Light Beam when Light is ON
+        // 5. Render Equipped 3D Block / Item in Left Hand Gripper
+        ItemStack leftItem = robot.getEquippedLeftArm();
+        if (leftItem.isEmpty()) {
+            for (int i = 0; i < robot.getInventory().size(); i++) {
+                ItemStack s = robot.getInventory().getStack(i);
+                if (!s.isEmpty() && s.getItem() instanceof net.minecraft.item.BlockItem) {
+                    leftItem = s;
+                    break;
+                }
+            }
+        }
+        if (!leftItem.isEmpty()) {
+            matrices.push();
+
+            this.model.getBody().rotate(matrices);
+            this.model.getLeftArm().rotate(matrices);
+
+            // Center directly into left hand gripper clamp
+            matrices.translate(0.5 / 16.0, 7.0 / 16.0, -4.0 / 16.0);
+            matrices.scale(0.55F, 0.55F, 0.55F);
+
+            // Natural holding orientation
+            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-90.0F));
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F));
+
+            MinecraftClient.getInstance().getItemRenderer().renderItem(
+                    leftItem,
+                    ModelTransformationMode.THIRD_PERSON_LEFT_HAND,
+                    light,
+                    OverlayTexture.DEFAULT_UV,
+                    matrices,
+                    vertexConsumers,
+                    robot.getWorld(),
+                    robot.getId()
+            );
+
+            matrices.pop();
+        }
+
+        // 6. Render Work Light Beam when Light is ON
         if (robot.isLightOn()) {
             matrices.push();
             this.model.getBody().rotate(matrices);

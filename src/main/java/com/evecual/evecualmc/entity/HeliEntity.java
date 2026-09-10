@@ -73,6 +73,7 @@ public class HeliEntity extends Entity {
     private static final TrackedData<Boolean> AUTO_RETURNING = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> LEFT_ARM = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> RIGHT_ARM = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Float> WEAPON_ANGLE = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> STORAGE_UNLOCKED = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> MAX_ENERGY_CAP = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<String> PAIRED_PLAYER_UUID = DataTracker.registerData(HeliEntity.class, TrackedDataHandlerRegistry.STRING);
@@ -123,6 +124,7 @@ public class HeliEntity extends Entity {
         this.dataTracker.startTracking(AUTO_RETURNING, false);
         this.dataTracker.startTracking(LEFT_ARM, 0); // 0: None, 1: Mining Arm, 2: Weapon Arm
         this.dataTracker.startTracking(RIGHT_ARM, 0);
+        this.dataTracker.startTracking(WEAPON_ANGLE, 0.0F);
         this.dataTracker.startTracking(STORAGE_UNLOCKED, false);
         this.dataTracker.startTracking(MAX_ENERGY_CAP, BASE_MAX_ENERGY);
         this.dataTracker.startTracking(PAIRED_PLAYER_UUID, "");
@@ -209,8 +211,16 @@ public class HeliEntity extends Entity {
         return this.dataTracker.get(RIGHT_ARM);
     }
 
-    public void setRightArmType(int arm) {
-        this.dataTracker.set(RIGHT_ARM, arm);
+    public void setRightArmType(int type) {
+        this.dataTracker.set(RIGHT_ARM, MathHelper.clamp(type, 0, 2));
+    }
+
+    public float getWeaponAngle() {
+        return this.dataTracker.get(WEAPON_ANGLE);
+    }
+
+    public void setWeaponAngle(float angle) {
+        this.dataTracker.set(WEAPON_ANGLE, MathHelper.clamp(angle, -60.0F, 30.0F));
     }
 
     public boolean isStorageUnlocked() {
@@ -393,7 +403,7 @@ public class HeliEntity extends Entity {
             }
             setEnergy(energy - 1);
             double radYaw = Math.toRadians(this.getYaw());
-            double curPitch = this.getPitchTilt();
+            double curPitch = this.getPitchTilt() + this.getWeaponAngle();
             double radPitch = Math.toRadians(curPitch);
 
             Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
@@ -409,7 +419,7 @@ public class HeliEntity extends Entity {
             }
             setEnergy(energy - 1);
             double radYaw = Math.toRadians(this.getYaw());
-            double curPitch = this.getPitchTilt();
+            double curPitch = this.getPitchTilt() + this.getWeaponAngle();
             double radPitch = Math.toRadians(curPitch);
 
             Vec3d forwardDir = new Vec3d(-Math.sin(radYaw) * Math.cos(radPitch), -Math.sin(radPitch), Math.cos(radYaw) * Math.cos(radPitch)).normalize();
@@ -550,6 +560,9 @@ public class HeliEntity extends Entity {
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
+        if (this.hasPassenger(player)) {
+            return ActionResult.PASS;
+        }
         ItemStack held = player.getStackInHand(hand);
 
         // 1. Color Customization using Dyes
@@ -1084,6 +1097,7 @@ public class HeliEntity extends Entity {
         setUpgradedEngine(nbt.getBoolean("UpgradedEngine"));
         if (nbt.contains("LeftArm")) setLeftArmType(nbt.getInt("LeftArm"));
         if (nbt.contains("RightArm")) setRightArmType(nbt.getInt("RightArm"));
+        if (nbt.contains("WeaponAngle")) setWeaponAngle(nbt.getFloat("WeaponAngle"));
         if (nbt.contains("StorageUnlocked")) setStorageUnlocked(nbt.getBoolean("StorageUnlocked"));
         if (nbt.contains("MaxEnergyCap")) setMaxEnergyCap(nbt.getInt("MaxEnergyCap"));
         if (nbt.contains("PairedPlayerUuid")) setPairedPlayerUuid(nbt.getString("PairedPlayerUuid"));
@@ -1104,6 +1118,7 @@ public class HeliEntity extends Entity {
         nbt.putBoolean("UpgradedEngine", isUpgradedEngine());
         nbt.putInt("LeftArm", getLeftArmType());
         nbt.putInt("RightArm", getRightArmType());
+        nbt.putFloat("WeaponAngle", getWeaponAngle());
         nbt.putBoolean("StorageUnlocked", isStorageUnlocked());
         nbt.putInt("MaxEnergyCap", getMaxEnergy());
         nbt.putString("PairedPlayerUuid", getPairedPlayerUuid());

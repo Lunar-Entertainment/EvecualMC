@@ -161,9 +161,17 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
             this.rightArm.roll = 0.0F;
         }
 
-        // Left idle arm
-        this.leftArm.pitch = 0.15F;
-        this.leftArm.yaw = 0.0F;
+        // Left arm swing animation when RMB is used (Block placement)
+        float leftSwing = robot.getLeftArmSwing();
+        if (leftSwing > 0.0F) {
+            this.leftArm.pitch = -0.6F - leftSwing * 1.6F;
+            this.leftArm.yaw = 0.3F - leftSwing * 0.4F;
+            this.leftArm.roll = 0.1F;
+        } else {
+            this.leftArm.pitch = -0.25F;
+            this.leftArm.yaw = 0.0F;
+            this.leftArm.roll = 0.0F;
+        }
 
         // Tank tread wheels rotation and moving band cleats (inverted to roll forward in sync with motion)
         float tickDelta = animationProgress - (int)animationProgress;
@@ -198,6 +206,10 @@ public class RcRobotEntityModel extends EntityModel<RcRobotEntity> {
 
     public ModelPart getRightArm() {
         return rightArm;
+    }
+
+    public ModelPart getLeftArm() {
+        return leftArm;
     }
 
     public ModelPart getBody() {

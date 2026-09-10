@@ -6,5 +6,5 @@ varying vec3 skyPos;
 void main() {
     gl_Position = ftransform();
     color = gl_Color;
-    skyPos = gl_Vertex.xyz;
+    skyPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
 }

@@ -42,6 +42,9 @@ public class RcRobotItem extends Item {
                     if (nbt.contains("EquippedTool")) {
                         robot.setEquippedTool(ItemStack.fromNbt(nbt.getCompound("EquippedTool")));
                     }
+                    if (nbt.contains("EquippedLeftArm")) {
+                        robot.setEquippedLeftArm(ItemStack.fromNbt(nbt.getCompound("EquippedLeftArm")));
+                    }
                     if (nbt.contains("RobotInventory")) {
                         NbtCompound invNbt = nbt.getCompound("RobotInventory");
                         DefaultedList<ItemStack> list = DefaultedList.ofSize(robot.getInventory().size(), ItemStack.EMPTY);
@@ -79,6 +82,7 @@ public class RcRobotItem extends Item {
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         int energy = RcRobotEntity.MAX_ENERGY;
         ItemStack tool = ItemStack.EMPTY;
+        ItemStack leftArm = ItemStack.EMPTY;
         if (stack.hasNbt() && stack.getNbt() != null) {
             if (stack.getNbt().contains("Energy")) {
                 energy = stack.getNbt().getInt("Energy");
@@ -86,13 +90,21 @@ public class RcRobotItem extends Item {
             if (stack.getNbt().contains("EquippedTool")) {
                 tool = ItemStack.fromNbt(stack.getNbt().getCompound("EquippedTool"));
             }
+            if (stack.getNbt().contains("EquippedLeftArm")) {
+                leftArm = ItemStack.fromNbt(stack.getNbt().getCompound("EquippedLeftArm"));
+            }
         }
         int percent = (int) ((energy / (float) RcRobotEntity.MAX_ENERGY) * 100.0f);
         tooltip.add(Text.literal("§7Battery: §a" + energy + " §7/ §2" + RcRobotEntity.MAX_ENERGY + " EU §8(" + percent + "%)"));
         if (!tool.isEmpty()) {
-            tooltip.add(Text.literal("§7Equipped Tool: §b" + tool.getName().getString()));
+            tooltip.add(Text.literal("§7Right Arm (Weapon): §b" + tool.getName().getString() + " §7[LMB]"));
         } else {
-            tooltip.add(Text.literal("§7Equipped Tool: §8None (Right-click with tool)"));
+            tooltip.add(Text.literal("§7Right Arm (Weapon): §8None (Right-click with tool)"));
+        }
+        if (!leftArm.isEmpty()) {
+            tooltip.add(Text.literal("§7Left Arm (Place): §e" + leftArm.getName().getString() + " x" + leftArm.getCount() + " §7[RMB]"));
+        } else {
+            tooltip.add(Text.literal("§7Left Arm (Place): §8None (Right-click with block)"));
         }
         if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().contains("RobotInventory")) {
             NbtCompound invNbt = stack.getNbt().getCompound("RobotInventory");
@@ -106,7 +118,7 @@ public class RcRobotItem extends Item {
         } else {
             tooltip.add(Text.literal("§7Cargo: §8Empty (Double Chest - 54 Slots)"));
         }
-        tooltip.add(Text.literal("§8Pair with RC Controller. Press LMB to use tool, Z for cargo."));
+        tooltip.add(Text.literal("§8LMB: Weapon/Tool | RMB: Place Blocks | <: FPV"));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

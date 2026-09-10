@@ -67,10 +67,16 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
                 .uv(0, 0).cuboid(-14.5F, 8.0F, -24.0F, 2.0F, 6.0F, 34.0F)
                 // Right Lower Side Door Sill: X: 12.5 to 14.5, Y: 8 to 14, Z: -24 to 10
                 .uv(0, 0).cuboid(12.5F, 8.0F, -24.0F, 2.0F, 6.0F, 34.0F)
-                // Left Windshield A-Pillar: X: -13.5 to -12.0, Y: -5 to 11, Z: -26 to -24.5
-                .uv(0, 0).cuboid(-13.5F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F)
-                // Right Windshield A-Pillar: X: 12.0 to 13.5, Y: -5 to 11, Z: -26 to -24.5
-                .uv(0, 0).cuboid(12.0F, -5.0F, -26.0F, 1.5F, 16.0F, 1.5F);
+                // Left Windshield A-Pillar: X: -13.5 to -12.0, Y: -6 to 11, Z: -26 to -24.5
+                .uv(0, 0).cuboid(-13.5F, -6.0F, -26.0F, 1.5F, 17.0F, 1.5F)
+                // Right Windshield A-Pillar: X: 12.0 to 13.5, Y: -6 to 11, Z: -26 to -24.5
+                .uv(0, 0).cuboid(12.0F, -6.0F, -26.0F, 1.5F, 17.0F, 1.5F)
+                // Upper Windshield Header Spar / Canopy Top Frame: X: -13.5 to 13.5, Y: -6.5 to -5.0, Z: -26.0 to -24.5
+                .uv(0, 0).cuboid(-13.5F, -6.5F, -26.0F, 27.0F, 1.5F, 1.5F)
+                // Left Roof Side Rail: X: -13.5 to -12.0, Y: -6.5 to -5.0, Z: -24.5 to -15.0
+                .uv(0, 0).cuboid(-13.5F, -6.5F, -24.5F, 1.5F, 1.5F, 9.5F)
+                // Right Roof Side Rail: X: 12.0 to 13.5, Y: -6.5 to -5.0, Z: -24.5 to -15.0
+                .uv(0, 0).cuboid(12.0F, -6.5F, -24.5F, 1.5F, 1.5F, 9.5F);
 
         root.addChild("fuselage_lower", fuselageLower, ModelTransform.NONE);
 
@@ -186,82 +192,82 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         root.addChild("tail_rotor", tailRotor, ModelTransform.pivot(2.5F, -8.0F, 36.0F));
 
-        // 8. Crystal-Clear Panoramic Glass Canopy (Thin 0.5-1.0 unit panes, uv: 128, 128)
+        // 8. Crystal-Clear Panoramic Glass Canopy (Seamlessly sealed at top and sides, uv: 128, 128)
         ModelPartBuilder glass = ModelPartBuilder.create()
-                // 1) Front Upper Windshield: Thin 1-unit pane
-                .uv(128, 128).cuboid(-11.5F, -4.5F, -25.5F, 23.0F, 14.0F, 1.0F)
+                // 1) Front Upper Windshield: Seamlessly extends up to Y = -6.0F to meet roof, Z: -25.5F
+                .uv(128, 128).cuboid(-12.5F, -6.0F, -25.5F, 25.0F, 15.5F, 1.0F)
                 // 2) Lower Chin Bubble Glass: Thin 1-unit pane (view down to helipad)
                 .uv(128, 128).cuboid(-10.0F, 9.5F, -33.5F, 20.0F, 3.5F, 1.0F)
-                // 3) Left Cockpit Door Glass: Thin 0.5-unit pane
-                .uv(128, 128).cuboid(-13.2F, -3.0F, -24.0F, 0.5F, 11.0F, 18.0F)
-                // 4) Right Cockpit Door Glass: Thin 0.5-unit pane
-                .uv(128, 128).cuboid(12.7F, -3.0F, -24.0F, 0.5F, 11.0F, 18.0F)
+                // 3) Left Cockpit Door Glass: Seamlessly meets front glass at Z: -25.5F and roof at Y: -6.0F
+                .uv(128, 128).cuboid(-13.2F, -6.0F, -25.5F, 0.5F, 14.0F, 19.5F)
+                // 4) Right Cockpit Door Glass: Seamlessly meets front glass at Z: -25.5F and roof at Y: -6.0F
+                .uv(128, 128).cuboid(12.7F, -6.0F, -25.5F, 0.5F, 14.0F, 19.5F)
                 // 5) Left Aft Passenger Window: Thin 0.5-unit pane
                 .uv(128, 128).cuboid(-13.2F, -2.0F, -4.0F, 0.5F, 9.0F, 13.0F)
                 // 6) Right Aft Passenger Window: Thin 0.5-unit pane
                 .uv(128, 128).cuboid(12.7F, -2.0F, -4.0F, 0.5F, 9.0F, 13.0F)
-                // 7) Overhead Skylight: Thin 0.5-unit pane
-                .uv(128, 128).cuboid(-8.5F, -5.8F, -22.0F, 17.0F, 0.5F, 14.0F);
+                // 7) Overhead Skylight: Seamlessly covers roof opening from X: -11.5F to 11.5F, Z: -24.5F to -6.0F
+                .uv(128, 128).cuboid(-11.5F, -6.0F, -24.5F, 23.0F, 0.5F, 18.5F);
 
         root.addChild("glass", glass, ModelTransform.NONE);
 
-        // 9. Left Wing Hardpoint Arms
+        // 9. Left Wing Hardpoint Arms (Pivot at wing mount (0.0F, 9.0F, -14.0F) for dynamic weapon angling)
         ModelPartBuilder leftArmMining = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(-17.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
-                .uv(0, 0).cuboid(-19.0F, 8.0F, -22.0F, 4.0F, 4.0F, 12.0F) // Heavy Titanium Drill Housing
-                .uv(128, 0).cuboid(-18.0F, 9.0F, -28.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
-        root.addChild("left_arm_mining", leftArmMining, ModelTransform.NONE);
+                .uv(128, 0).cuboid(-17.0F, 0.0F, 0.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(0, 0).cuboid(-19.0F, -1.0F, -8.0F, 4.0F, 4.0F, 12.0F) // Heavy Titanium Drill Housing
+                .uv(128, 0).cuboid(-18.0F, 0.0F, -14.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
+        root.addChild("left_arm_mining", leftArmMining, ModelTransform.pivot(0.0F, 9.0F, -14.0F));
 
         ModelPartBuilder leftArmWeapon = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(-18.0F, 8.5F, -15.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
-                .uv(128, 0).cuboid(-20.5F, 7.0F, -18.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
-                .uv(128, 0).cuboid(-20.0F, 7.5F, -24.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
+                .uv(128, 0).cuboid(-18.0F, -0.5F, -1.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
+                .uv(128, 0).cuboid(-20.5F, -2.0F, -4.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
+                .uv(128, 0).cuboid(-20.0F, -1.5F, -10.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
                 // 6 Hexagonal Rotary Vulcan Minigun Barrels
-                .uv(0, 128).cuboid(-19.2F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-17.8F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-19.8F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-17.2F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-19.2F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-17.8F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(-19.5F, 8.0F, -31.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
+                .uv(0, 128).cuboid(-19.2F, -1.3F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.8F, -1.3F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.8F, -0.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.2F, -0.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.2F, 1.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-17.8F, 1.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(-19.5F, -1.0F, -17.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
                 // Quad-Cell Guided Plasma Missile Pod
-                .uv(128, 0).cuboid(-20.0F, 12.0F, -20.0F, 4.0F, 4.0F, 12.0F)
-                .uv(0, 128).cuboid(-19.5F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(-17.7F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(-19.5F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(-17.7F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(128, 0).cuboid(-20.0F, 3.0F, -6.0F, 4.0F, 4.0F, 12.0F)
+                .uv(0, 128).cuboid(-19.5F, 3.5F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-17.7F, 3.5F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-19.5F, 5.3F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(-17.7F, 5.3F, -7.5F, 1.2F, 1.2F, 1.5F)
                 // FLIR Gimbal Targeting Pod
-                .uv(0, 128).cuboid(-19.5F, 12.5F, -14.0F, 3.0F, 3.0F, 4.0F);
-        root.addChild("left_arm_weapon", leftArmWeapon, ModelTransform.NONE);
+                .uv(0, 128).cuboid(-19.5F, 3.5F, 0.0F, 3.0F, 3.0F, 4.0F);
+        root.addChild("left_arm_weapon", leftArmWeapon, ModelTransform.pivot(0.0F, 9.0F, -14.0F));
 
-        // 10. Right Wing Hardpoint Arms
+        // 10. Right Wing Hardpoint Arms (Pivot at wing mount (0.0F, 9.0F, -14.0F) for dynamic weapon angling)
         ModelPartBuilder rightArmMining = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(14.0F, 9.0F, -14.0F, 3.0F, 2.0F, 6.0F) // Pylon
-                .uv(0, 0).cuboid(15.0F, 8.0F, -22.0F, 4.0F, 4.0F, 12.0F) // Drill Housing
-                .uv(128, 0).cuboid(16.0F, 9.0F, -28.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
-        root.addChild("right_arm_mining", rightArmMining, ModelTransform.NONE);
+                .uv(128, 0).cuboid(14.0F, 0.0F, 0.0F, 3.0F, 2.0F, 6.0F) // Pylon
+                .uv(0, 0).cuboid(15.0F, -1.0F, -8.0F, 4.0F, 4.0F, 12.0F) // Drill Housing
+                .uv(128, 0).cuboid(16.0F, 0.0F, -14.0F, 2.0F, 2.0F, 6.0F); // Drill Bit
+        root.addChild("right_arm_mining", rightArmMining, ModelTransform.pivot(0.0F, 9.0F, -14.0F));
 
         ModelPartBuilder rightArmWeapon = ModelPartBuilder.create()
-                .uv(128, 0).cuboid(14.0F, 8.5F, -15.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
-                .uv(128, 0).cuboid(15.5F, 7.0F, -18.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
-                .uv(128, 0).cuboid(16.0F, 7.5F, -24.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
+                .uv(128, 0).cuboid(14.0F, -0.5F, -1.0F, 4.0F, 2.0F, 10.0F) // Heavy Pylon Stub
+                .uv(128, 0).cuboid(15.5F, -2.0F, -4.0F, 5.0F, 5.0F, 10.0F) // Ammo Receiver Housing
+                .uv(128, 0).cuboid(16.0F, -1.5F, -10.0F, 4.0F, 4.0F, 6.0F) // Vented Titanium Shroud
                 // 6 Hexagonal Rotary Vulcan Minigun Barrels
-                .uv(0, 128).cuboid(16.6F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(18.0F, 7.7F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(16.0F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(18.6F, 8.9F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(16.6F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(18.0F, 10.1F, -30.0F, 1.2F, 1.2F, 12.0F)
-                .uv(0, 128).cuboid(16.5F, 8.0F, -31.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
+                .uv(0, 128).cuboid(16.6F, -1.3F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.0F, -1.3F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.0F, -0.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.6F, -0.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.6F, 1.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(18.0F, 1.1F, -16.0F, 1.2F, 1.2F, 12.0F)
+                .uv(0, 128).cuboid(16.5F, -1.0F, -17.0F, 3.0F, 3.0F, 1.0F) // Muzzle Ring
                 // Quad-Cell Guided Plasma Missile Pod
-                .uv(128, 0).cuboid(16.0F, 12.0F, -20.0F, 4.0F, 4.0F, 12.0F)
-                .uv(0, 128).cuboid(16.5F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(18.3F, 12.5F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(16.5F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
-                .uv(0, 128).cuboid(18.3F, 14.3F, -21.5F, 1.2F, 1.2F, 1.5F)
+                .uv(128, 0).cuboid(16.0F, 3.0F, -6.0F, 4.0F, 4.0F, 12.0F)
+                .uv(0, 128).cuboid(16.5F, 3.5F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(18.3F, 3.5F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(16.5F, 5.3F, -7.5F, 1.2F, 1.2F, 1.5F)
+                .uv(0, 128).cuboid(18.3F, 5.3F, -7.5F, 1.2F, 1.2F, 1.5F)
                 // FLIR Gimbal Targeting Pod
-                .uv(0, 128).cuboid(16.5F, 12.5F, -14.0F, 3.0F, 3.0F, 4.0F);
-        root.addChild("right_arm_weapon", rightArmWeapon, ModelTransform.NONE);
+                .uv(0, 128).cuboid(16.5F, 3.5F, 0.0F, 3.0F, 3.0F, 4.0F);
+        root.addChild("right_arm_weapon", rightArmWeapon, ModelTransform.pivot(0.0F, 9.0F, -14.0F));
 
         return TexturedModelData.of(modelData, 256, 256);
     }
@@ -273,6 +279,13 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
 
         // Tail Anti-Torque Rotor spin
         this.tail_rotor.pitch = (float) Math.toRadians(heli.getTailRotorAngle());
+
+        // Weapon & Mining Wing Arm dynamic pitch angling
+        float weaponPitchRad = (float) Math.toRadians(heli.getWeaponAngle());
+        this.left_arm_mining.pitch = weaponPitchRad;
+        this.left_arm_weapon.pitch = weaponPitchRad;
+        this.right_arm_mining.pitch = weaponPitchRad;
+        this.right_arm_weapon.pitch = weaponPitchRad;
     }
 
     @Override

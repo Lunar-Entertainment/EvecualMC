@@ -25,6 +25,7 @@ uniform float viewWidth;
 uniform float viewHeight;
 uniform float frameTimeCounter;
 uniform vec3 sunPosition;
+uniform vec3 upPosition;
 
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
@@ -168,23 +169,27 @@ void main() {
     #endif
 
     #ifdef CLOUDS
-    // Procedural multi-layer drifting volumetric clouds in the sky
+    // Procedural multi-layer drifting volumetric clouds projected in 3D celestial sky dome
     if (depth >= 0.9999) {
-        vec2 uv = (texcoord - 0.5) * vec2(viewWidth / max(viewHeight, 1.0), 1.0);
-        float time = frameTimeCounter * 0.014;
-        vec2 cloudCoord = uv * 2.8 + vec2(time, time * 0.35);
+        vec4 clipPos = vec4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, 1.0, 1.0);
+        vec4 viewRay = gbufferProjectionInverse * clipPos;
+        viewRay /= max(abs(viewRay.w), 0.0001);
+        vec3 worldDir = normalize((gbufferModelViewInverse * vec4(viewRay.xyz, 0.0)).xyz);
 
-        float cloudDensity = fbm(cloudCoord);
-        float cloudMask = smoothstep(0.38, 0.76, cloudDensity);
+        if (worldDir.y > 0.02) {
+            vec2 cloudCoord = (worldDir.xz / max(worldDir.y, 0.08)) * 0.40 + vec2(frameTimeCounter * 0.005, frameTimeCounter * 0.002);
+            float cloudDensity = fbm(cloudCoord);
+            float cloudMask = smoothstep(0.38, 0.74, cloudDensity) * smoothstep(0.02, 0.20, worldDir.y);
 
-        if (cloudMask > 0.01) {
-            float cloudShading = smoothstep(0.40, 0.84, fbm(cloudCoord + vec2(0.02, 0.04)));
-            vec3 sunDir = normalize(sunPosition);
-            float sunFacing = max(dot(vec3(uv, 0.5), sunDir), 0.0);
-            vec3 silverLining = vec3(1.0, 0.95, 0.85) * pow(sunFacing, 8.0) * 0.45;
+            if (cloudMask > 0.01) {
+                float cloudShading = smoothstep(0.40, 0.84, fbm(cloudCoord + vec2(0.02, 0.04)));
+                vec3 worldSun = normalize((gbufferModelViewInverse * vec4(sunPosition, 0.0)).xyz);
+                float sunFacing = max(dot(worldDir, worldSun), 0.0);
+                vec3 silverLining = vec3(1.0, 0.95, 0.85) * pow(sunFacing, 8.0) * 0.45;
 
-            vec3 cloudCol = mix(vec3(0.80, 0.86, 0.96), vec3(1.00, 1.00, 1.00), cloudShading) + silverLining;
-            sceneColor = mix(sceneColor, cloudCol, cloudMask * 0.92);
+                vec3 cloudCol = mix(vec3(0.80, 0.86, 0.96), vec3(1.00, 1.00, 1.00), cloudShading) + silverLining;
+                sceneColor = mix(sceneColor, cloudCol, cloudMask * 0.92);
+            }
         }
     }
     #endif
@@ -210,11 +215,11 @@ void main() {
                 }
             }
 
-            float sunElev = normalize(sunPosition).y;
+            float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
             vec3 rayColor;
-            if (sunElev > 0.15) {
+            if (trueSunElev > 0.15) {
                 rayColor = vec3(1.00, 0.96, 0.84); // Bright Golden Sunlight
-            } else if (sunElev > -0.10) {
+            } else if (trueSunElev > -0.10) {
                 rayColor = vec3(1.00, 0.62, 0.30); // Warm Sunset/Sunrise Ray
             } else {
                 rayColor = vec3(0.45, 0.65, 1.00); // Cool Moonlight Ray
@@ -231,7 +236,8 @@ void main() {
     if (depth < 0.9999) {
         float linD = linearizeDepth(depth);
         float fogFactor = clamp(pow(linD * 2.8, 1.8), 0.0, 0.65);
-        vec3 horizonColor = mix(vec3(0.68, 0.82, 0.98), vec3(0.95, 0.70, 0.45), clamp(1.0 - abs(normalize(sunPosition).y) * 4.0, 0.0, 1.0));
+        float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
+        vec3 horizonColor = mix(vec3(0.68, 0.82, 0.98), vec3(0.95, 0.70, 0.45), clamp(1.0 - abs(trueSunElev) * 4.0, 0.0, 1.0));
         sceneColor = mix(sceneColor, horizonColor, fogFactor);
     }
     #endif

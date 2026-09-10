@@ -102,11 +102,53 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding RC_PERSPECTIVE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.toggle_rc_perspective",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_WORLD_1,
+            "category.evecualmc.evecual"
+    ));
+
+    public static final KeyBinding HELI_WEAPON_UP_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.heli_weapon_up",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_UP,
+            "category.evecualmc.evecual"
+    ));
+
+    public static final KeyBinding HELI_WEAPON_DOWN_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.heli_weapon_down",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_DOWN,
+            "category.evecualmc.evecual"
+    ));
+
+    public static boolean isKeyOrMousePressed(KeyBinding keyBinding, long windowHandle) {
+        if (keyBinding == null) return false;
+        if (keyBinding.isPressed()) return true;
+        InputUtil.Key boundKey = KeyBindingHelper.getBoundKeyOf(keyBinding);
+        if (boundKey.getCategory() == InputUtil.Type.KEYSYM) {
+            int code = boundKey.getCode();
+            if (code != GLFW.GLFW_KEY_UNKNOWN && InputUtil.isKeyPressed(windowHandle, code)) {
+                return true;
+            }
+        } else if (boundKey.getCategory() == InputUtil.Type.MOUSE) {
+            int button = boundKey.getCode();
+            if (button >= 0 && GLFW.glfwGetMouseButton(windowHandle, button) == GLFW.GLFW_PRESS) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean wasCPressed = false;
+    private static boolean wasPerspectivePressed = false;
     private static boolean wasAttackPressed = false;
+    private static boolean wasUsePressed = false;
     private static boolean wasLeftArmPressed = false;
     private static boolean wasRightArmPressed = false;
     private static int robotAttackCooldown = 0;
+    private static int robotPlaceCooldown = 0;
     private static int heliLeftArmCooldown = 0;
     private static int heliRightArmCooldown = 0;
     private static Perspective previousPerspective = Perspective.FIRST_PERSON;
@@ -161,12 +203,12 @@ public class EvecualMCClient implements ClientModInitializer {
         if (client == null || !isRcCameraActive() || client.player == null) return;
         if (client.options.getPerspective().isFirstPerson()) {
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-            sendSafeActionBar(client, "§b📷 RC Camera: §eTHIRD PERSON §7[RMB: FPV, Scroll: Zoom]");
+            sendSafeActionBar(client, "§b📷 RC Camera: §eTHIRD PERSON §7[<: FPV, Scroll: Zoom]");
         } else {
             client.options.setPerspective(Perspective.FIRST_PERSON);
             targetRcCameraYaw = 0.0F;
             smoothRcCameraYaw = 0.0F;
-            sendSafeActionBar(client, "§b📷 RC Camera: §aFIRST PERSON (FPV) §7[RMB: 3RD, Scroll: Zoom]");
+            sendSafeActionBar(client, "§b📷 RC Camera: §aFIRST PERSON (FPV) §7[<: 3RD, Scroll: Zoom]");
         }
     }
 
@@ -482,7 +524,7 @@ public class EvecualMCClient implements ClientModInitializer {
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
             String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
-            sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[RMB: View | F: Exit]");
+            sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[<: View | F: Exit]");
         }
     }
 
@@ -678,11 +720,26 @@ public class EvecualMCClient implements ClientModInitializer {
                 if (robotAttackCooldown > 0) {
                     robotAttackCooldown--;
                 }
+                if (robotPlaceCooldown > 0) {
+                    robotPlaceCooldown--;
+                }
                 if (heliLeftArmCooldown > 0) {
                     heliLeftArmCooldown--;
                 }
                 if (heliRightArmCooldown > 0) {
                     heliRightArmCooldown--;
+                }
+
+                // Toggle RC Perspective Key ('<' by default, also checks physical < / comma key)
+                boolean perspectiveDown = isKeyOrMousePressed(RC_PERSPECTIVE_KEY, client.getWindow().getHandle())
+                        || (isRcCameraActive() && (InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_WORLD_1) || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_COMMA)));
+                if (perspectiveDown) {
+                    if (!wasPerspectivePressed && client.currentScreen == null) {
+                        wasPerspectivePressed = true;
+                        toggleRcPerspective(client);
+                    }
+                } else {
+                    wasPerspectivePressed = false;
                 }
 
                 // Open Trunk / Cargo Key ('Z')
@@ -858,10 +915,29 @@ public class EvecualMCClient implements ClientModInitializer {
                     buf.writeBoolean(sprint);
                     ClientPlayNetworking.send(EvecualMC.HELI_INPUT_PACKET_ID, buf);
 
-                    // Left Arm [ I Key ] & Right Arm [ O Key ]: Fire hardpoint arms while in flight
+                    // Hardpoint Weapon Angling (-60° to +30°)
                     long wHandle = client.getWindow().getHandle();
-                    boolean iDown = HELI_LEFT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_I);
-                    boolean oDown = HELI_RIGHT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_O);
+                    boolean upAngle = isKeyOrMousePressed(HELI_WEAPON_UP_KEY, wHandle) || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_UP);
+                    boolean downAngle = isKeyOrMousePressed(HELI_WEAPON_DOWN_KEY, wHandle) || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_DOWN);
+                    if (upAngle || downAngle) {
+                        float curAngle = heli.getWeaponAngle();
+                        float newAngle = curAngle;
+                        if (upAngle) newAngle += 1.5F;
+                        if (downAngle) newAngle -= 1.5F;
+                        newAngle = MathHelper.clamp(newAngle, -60.0F, 30.0F);
+                        if (Math.abs(newAngle - curAngle) > 0.01F) {
+                            heli.setWeaponAngle(newAngle);
+                            PacketByteBuf angleBuf = PacketByteBufs.create();
+                            angleBuf.writeInt(heli.getId());
+                            angleBuf.writeFloat(newAngle);
+                            ClientPlayNetworking.send(EvecualMC.HELI_WEAPON_ANGLE_PACKET_ID, angleBuf);
+                            sendSafeActionBar(client, String.format("§6🎯 Hardpoint Angle: §e%.1f° §7(Up/Down Arrow)", newAngle));
+                        }
+                    }
+
+                    // Left Arm & Right Arm: Fire hardpoint arms while in flight (allows same keybind!)
+                    boolean iDown = isKeyOrMousePressed(HELI_LEFT_ARM_KEY, wHandle) || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_I);
+                    boolean oDown = isKeyOrMousePressed(HELI_RIGHT_ARM_KEY, wHandle) || InputUtil.isKeyPressed(wHandle, GLFW.GLFW_KEY_O);
 
                     if (iDown) {
                         if (!wasLeftArmPressed || heliLeftArmCooldown <= 0) {
@@ -972,7 +1048,7 @@ public class EvecualMCClient implements ClientModInitializer {
                                 ClientPlayNetworking.send(EvecualMC.RC_ROBOT_INPUT_PACKET_ID, robotBuf);
                             }
 
-                            // LMB: Tool Action (holding LMB repeatedly swings & strikes every 4 ticks)
+                            // LMB: Right Arm (Weapon / Tool Action)
                             boolean isAttackDown = client.options.attackKey.isPressed();
                             if (isAttackDown) {
                                 if (!wasAttackPressed || robotAttackCooldown <= 0) {
@@ -989,6 +1065,25 @@ public class EvecualMCClient implements ClientModInitializer {
                             } else {
                                 wasAttackPressed = false;
                                 robotAttackCooldown = 0;
+                            }
+
+                            // RMB: Left Arm (Block / Item Placement Action)
+                            boolean isUseDown = client.options.useKey.isPressed();
+                            if (isUseDown) {
+                                if (!wasUsePressed || robotPlaceCooldown <= 0) {
+                                    wasUsePressed = true;
+                                    robotPlaceCooldown = 4;
+                                    targetRobot.performPlaceAction(targetRcCameraPitch, targetRobot.getYaw() + targetRcCameraYaw);
+
+                                    PacketByteBuf placeBuf = PacketByteBufs.create();
+                                    placeBuf.writeUuid(pairedUuid);
+                                    placeBuf.writeFloat(targetRcCameraPitch);
+                                    placeBuf.writeFloat(targetRobot.getYaw() + targetRcCameraYaw);
+                                    ClientPlayNetworking.send(EvecualMC.RC_ROBOT_PLACE_ACTION_PACKET_ID, placeBuf);
+                                }
+                            } else {
+                                wasUsePressed = false;
+                                robotPlaceCooldown = 0;
                             }
 
                         }
@@ -1120,9 +1215,28 @@ public class EvecualMCClient implements ClientModInitializer {
                                 ClientPlayNetworking.send(EvecualMC.HELI_CONTROLLER_INPUT_PACKET_ID, heliBuf);
                             }
 
-                            // Left Arm [ I Key ] & Right Arm [ O Key ] remotely
-                            boolean remoteI = HELI_LEFT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_I);
-                            boolean remoteO = HELI_RIGHT_ARM_KEY.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_O);
+                            // Remote Hardpoint Weapon Angling (-60° to +30°)
+                            boolean remoteUp = isKeyOrMousePressed(HELI_WEAPON_UP_KEY, windowHandle) || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_UP);
+                            boolean remoteDown = isKeyOrMousePressed(HELI_WEAPON_DOWN_KEY, windowHandle) || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_DOWN);
+                            if (remoteUp || remoteDown) {
+                                float curAngle = targetHeli.getWeaponAngle();
+                                float newAngle = curAngle;
+                                if (remoteUp) newAngle += 1.5F;
+                                if (remoteDown) newAngle -= 1.5F;
+                                newAngle = MathHelper.clamp(newAngle, -60.0F, 30.0F);
+                                if (Math.abs(newAngle - curAngle) > 0.01F) {
+                                    targetHeli.setWeaponAngle(newAngle);
+                                    PacketByteBuf angleBuf = PacketByteBufs.create();
+                                    angleBuf.writeInt(targetHeli.getId());
+                                    angleBuf.writeFloat(newAngle);
+                                    ClientPlayNetworking.send(EvecualMC.HELI_WEAPON_ANGLE_PACKET_ID, angleBuf);
+                                    sendSafeActionBar(client, String.format("§6🎯 Hardpoint Angle: §e%.1f° §7(Up/Down Arrow)", newAngle));
+                                }
+                            }
+
+                            // Left Arm & Right Arm remotely (allows same keybind!)
+                            boolean remoteI = isKeyOrMousePressed(HELI_LEFT_ARM_KEY, windowHandle) || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_I);
+                            boolean remoteO = isKeyOrMousePressed(HELI_RIGHT_ARM_KEY, windowHandle) || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_O);
 
                             if (remoteI) {
                                 if (!wasLeftArmPressed || heliLeftArmCooldown <= 0) {
@@ -1181,8 +1295,10 @@ public class EvecualMCClient implements ClientModInitializer {
                         if (left) targetRcCameraYaw -= 3.0f;
                         if (right) targetRcCameraYaw += 3.0f;
                     }
-                    if (up) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch - 2.0f, -80.0f, 80.0f);
-                    if (down) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + 2.0f, -80.0f, 80.0f);
+                    if (!(client.getCameraEntity() instanceof HeliEntity) && !(client.player.getVehicle() instanceof HeliEntity)) {
+                        if (up) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch - 2.0f, -80.0f, 80.0f);
+                        if (down) targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + 2.0f, -80.0f, 80.0f);
+                    }
                 }
 
                 // Reset camera if RC link is disabled or target vehicle is invalid

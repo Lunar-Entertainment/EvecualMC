@@ -33,13 +33,4 @@ public class MouseMixin {
             ci.cancel();
         }
     }
-
-    @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)
-    private void evecual$onMouseButton(long window, int button, int action, int mods, CallbackInfo ci) {
-        if (EvecualMCClient.isRcCameraActive() && net.minecraft.client.MinecraftClient.getInstance().currentScreen == null
-                && button == org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
-            EvecualMCClient.toggleRcPerspective(net.minecraft.client.MinecraftClient.getInstance());
-            ci.cancel();
-        }
-    }
 }

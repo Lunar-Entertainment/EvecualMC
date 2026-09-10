@@ -42,6 +42,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
@@ -64,7 +65,9 @@ public class RcRobotEntity extends Entity {
     private static final TrackedData<Integer> COLOR_VARIANT = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<String> PAIRED_PLAYER_UUID = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<ItemStack> EQUIPPED_TOOL = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<ItemStack> EQUIPPED_LEFT_ARM = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Float> ARM_SWING = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final TrackedData<Float> LEFT_ARM_SWING = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Float> HEAD_PITCH = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> LIGHT_ON = DataTracker.registerData(RcRobotEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
@@ -80,6 +83,7 @@ public class RcRobotEntity extends Entity {
     private float treadRoll = 0.0F;
 
     private int armSwingTicks = 0;
+    private int leftArmSwingTicks = 0;
     private boolean autoReturning = false;
     private BlockPos targetChargerPos = null;
     private int autoReturnTicks = 0;
@@ -99,7 +103,9 @@ public class RcRobotEntity extends Entity {
         this.dataTracker.startTracking(COLOR_VARIANT, 0); // 0 = default high-tech silver/cyan
         this.dataTracker.startTracking(PAIRED_PLAYER_UUID, "");
         this.dataTracker.startTracking(EQUIPPED_TOOL, ItemStack.EMPTY);
+        this.dataTracker.startTracking(EQUIPPED_LEFT_ARM, ItemStack.EMPTY);
         this.dataTracker.startTracking(ARM_SWING, 0.0F);
+        this.dataTracker.startTracking(LEFT_ARM_SWING, 0.0F);
         this.dataTracker.startTracking(HEAD_PITCH, 0.0F);
         this.dataTracker.startTracking(LIGHT_ON, false);
     }
@@ -240,6 +246,14 @@ public class RcRobotEntity extends Entity {
         this.dataTracker.set(EQUIPPED_TOOL, tool == null ? ItemStack.EMPTY : tool);
     }
 
+    public ItemStack getEquippedLeftArm() {
+        return this.dataTracker.get(EQUIPPED_LEFT_ARM);
+    }
+
+    public void setEquippedLeftArm(ItemStack stack) {
+        this.dataTracker.set(EQUIPPED_LEFT_ARM, stack == null ? ItemStack.EMPTY : stack);
+    }
+
     public SimpleInventory getInventory() {
         return this.inventory;
     }
@@ -258,6 +272,10 @@ public class RcRobotEntity extends Entity {
 
     public float getArmSwing() {
         return this.dataTracker.get(ARM_SWING);
+    }
+
+    public float getLeftArmSwing() {
+        return this.dataTracker.get(LEFT_ARM_SWING);
     }
 
     public float getHeadPitch() {
@@ -337,13 +355,22 @@ public class RcRobotEntity extends Entity {
             }
         }
 
-        // Arm swing animation progress
+        // Arm swing animation progress (Right arm - weapon/tool)
         if (armSwingTicks > 0) {
             armSwingTicks--;
             float swing = (float) Math.sin((8 - armSwingTicks) / 8.0F * Math.PI);
             this.dataTracker.set(ARM_SWING, swing);
         } else {
             this.dataTracker.set(ARM_SWING, 0.0F);
+        }
+
+        // Arm swing animation progress (Left arm - placement)
+        if (leftArmSwingTicks > 0) {
+            leftArmSwingTicks--;
+            float leftSwing = (float) Math.sin((8 - leftArmSwingTicks) / 8.0F * Math.PI);
+            this.dataTracker.set(LEFT_ARM_SWING, leftSwing);
+        } else {
+            this.dataTracker.set(LEFT_ARM_SWING, 0.0F);
         }
 
         // Check if parked in a Robot Parking Spot block
@@ -650,6 +677,133 @@ public class RcRobotEntity extends Entity {
         }
 
         return true;
+    }
+
+    /**
+     * Executes block/item placement with the left arm towards the target position / direction
+     */
+    public boolean performPlaceAction(float lookPitch, float lookYaw) {
+        if (getEnergy() <= 0) return false;
+
+        this.setHeadPitch(lookPitch);
+        this.leftArmSwingTicks = 8;
+        this.dataTracker.set(LEFT_ARM_SWING, 1.0F);
+
+        World world = this.getWorld();
+        Vec3d eyePos = this.getEyePos();
+        float f = -MathHelper.sin(lookYaw * ((float)Math.PI / 180F)) * MathHelper.cos(lookPitch * ((float)Math.PI / 180F));
+        float g = -MathHelper.sin(lookPitch * ((float)Math.PI / 180F));
+        float h = MathHelper.cos(lookYaw * ((float)Math.PI / 180F)) * MathHelper.cos(lookPitch * ((float)Math.PI / 180F));
+        Vec3d dir = new Vec3d(f, g, h).normalize();
+        double reach = 4.5;
+        Vec3d reachEnd = eyePos.add(dir.multiply(reach));
+
+        if (!world.isClient()) {
+            BlockHitResult blockHit = world.raycast(new RaycastContext(eyePos, reachEnd, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, this));
+            if (blockHit.getType() == HitResult.Type.BLOCK) {
+                ItemStack placeStack = getEquippedLeftArm();
+                boolean fromArm = true;
+                int invSlot = -1;
+
+                if (placeStack.isEmpty() || !(placeStack.getItem() instanceof BlockItem)) {
+                    for (int i = 0; i < this.inventory.size(); i++) {
+                        ItemStack s = this.inventory.getStack(i);
+                        if (!s.isEmpty() && s.getItem() instanceof BlockItem) {
+                            placeStack = s;
+                            fromArm = false;
+                            invSlot = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (placeStack.isEmpty() || !(placeStack.getItem() instanceof BlockItem blockItem)) {
+                    world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.NEUTRAL, 0.4f, 1.8f);
+                    return false;
+                }
+
+                PlayerEntity player = null;
+                String pUuid = getPairedPlayerUuid();
+                if (pUuid != null && !pUuid.isEmpty()) {
+                    try {
+                        player = world.getPlayerByUuid(UUID.fromString(pUuid));
+                    } catch (Exception ignored) {}
+                }
+
+                ItemPlacementContext placeCtx = new ItemPlacementContext(world, player, Hand.MAIN_HAND, placeStack, blockHit) {
+                    @Override
+                    public Direction[] getPlacementDirections() {
+                        return new Direction[]{ blockHit.getSide(), blockHit.getSide().getOpposite() };
+                    }
+                    @Override
+                    public Direction getPlayerLookDirection() {
+                        return Direction.getFacing(dir.x, dir.y, dir.z);
+                    }
+                    @Override
+                    public Direction getHorizontalPlayerFacing() {
+                        return Direction.fromRotation(lookYaw);
+                    }
+                };
+
+                BlockPos targetPos = blockHit.getBlockPos().offset(blockHit.getSide());
+                BlockState existingState = world.getBlockState(blockHit.getBlockPos());
+                if (existingState.canReplace(placeCtx)) {
+                    targetPos = blockHit.getBlockPos();
+                }
+
+                Box targetBox = new Box(targetPos);
+                if (!world.getBlockState(targetPos).canReplace(placeCtx) ||
+                    !world.canPlace(blockItem.getBlock().getDefaultState(), targetPos, net.minecraft.block.ShapeContext.absent()) ||
+                    world.getOtherEntities(null, targetBox, Entity::isCollidable).stream().anyMatch(e -> e != null)) {
+                    return false;
+                }
+
+                BlockState placeState = blockItem.getBlock().getPlacementState(placeCtx);
+                if (placeState == null) {
+                    placeState = blockItem.getBlock().getDefaultState();
+                }
+
+                if (world.setBlockState(targetPos, placeState, Block.NOTIFY_ALL | Block.REDRAW_ON_MAIN_THREAD)) {
+                    blockItem.getBlock().onPlaced(world, targetPos, placeState, player, placeStack);
+                    BlockSoundGroup soundGroup = placeState.getSoundGroup();
+                    world.playSound(null, targetPos, soundGroup.getPlaceSound(), SoundCategory.BLOCKS, (soundGroup.getVolume() + 1.0F) / 2.0F, soundGroup.getPitch() * 0.8F);
+
+                    if (world instanceof ServerWorld sw) {
+                        sw.spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, placeState),
+                                targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5,
+                                8, 0.25, 0.25, 0.25, 0.05);
+                    }
+
+                    placeStack.decrement(1);
+                    if (fromArm) {
+                        if (placeStack.isEmpty()) {
+                            setEquippedLeftArm(ItemStack.EMPTY);
+                            for (int i = 0; i < this.inventory.size(); i++) {
+                                ItemStack s = this.inventory.getStack(i);
+                                if (!s.isEmpty() && s.isOf(blockItem)) {
+                                    setEquippedLeftArm(s.copy());
+                                    this.inventory.setStack(i, ItemStack.EMPTY);
+                                    break;
+                                }
+                            }
+                        } else {
+                            setEquippedLeftArm(placeStack);
+                        }
+                    } else {
+                        if (placeStack.isEmpty()) {
+                            this.inventory.setStack(invSlot, ItemStack.EMPTY);
+                        } else {
+                            this.inventory.setStack(invSlot, placeStack);
+                        }
+                    }
+
+                    setEnergy(Math.max(0, getEnergy() - 1));
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void breakBlockAndCollect(BlockPos pos, BlockState state, ItemStack tool) {
@@ -1039,6 +1193,9 @@ public class RcRobotEntity extends Entity {
         if (!getEquippedTool().isEmpty()) {
             nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
         }
+        if (!getEquippedLeftArm().isEmpty()) {
+            nbt.put("EquippedLeftArm", getEquippedLeftArm().writeNbt(new NbtCompound()));
+        }
 
         DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);
         boolean hasItems = false;
@@ -1076,9 +1233,10 @@ public class RcRobotEntity extends Entity {
             return ActionResult.success(this.getWorld().isClient());
         }
 
-        // 1. Equip tool if holding a tool or weapon
+        // 1. Equip weapon / tool in RIGHT arm (LMB to use)
         if (held.getItem() instanceof ToolItem || held.getItem() instanceof MiningToolItem ||
-            held.getItem() instanceof SwordItem || held.getItem() instanceof ShearsItem) {
+            held.getItem() instanceof SwordItem || held.getItem() instanceof ShearsItem ||
+            held.getItem() instanceof RangedWeaponItem || held.getItem() instanceof TridentItem) {
             if (!this.getWorld().isClient()) {
                 ItemStack oldTool = getEquippedTool();
                 ItemStack equipStack = held.split(1);
@@ -1091,12 +1249,31 @@ public class RcRobotEntity extends Entity {
                 }
 
                 this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, SoundCategory.PLAYERS, 1.0f, 1.2f);
-                player.sendMessage(Text.literal("§a🤖 RC Robot equipped with: §f" + equipStack.getName().getString() + " §7(Press LMB to use)"), true);
+                player.sendMessage(Text.literal("§a🤖 RC Robot right arm equipped with: §f" + equipStack.getName().getString() + " §7(Press LMB to use)"), true);
             }
             return ActionResult.SUCCESS;
         }
 
-        // 2. Sneak + Empty hand: Pick up Robot as Item
+        // 2. Equip blocks / items in LEFT arm (RMB to place)
+        if (held.getItem() instanceof BlockItem) {
+            if (!this.getWorld().isClient()) {
+                ItemStack oldLeft = getEquippedLeftArm();
+                ItemStack equipStack = held.split(held.getCount());
+                setEquippedLeftArm(equipStack);
+
+                if (!oldLeft.isEmpty()) {
+                    if (!player.giveItemStack(oldLeft)) {
+                        this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), oldLeft));
+                    }
+                }
+
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, SoundCategory.PLAYERS, 1.0f, 1.2f);
+                player.sendMessage(Text.literal("§a🤖 RC Robot left arm equipped with: §f" + equipStack.getName().getString() + " x" + equipStack.getCount() + " §7(Press RMB to place)"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 3. Sneak + Empty hand: Pick up Robot as Item
         if (player.isSneaking() && held.isEmpty()) {
             if (!this.getWorld().isClient()) {
                 ItemStack drop = asItemStack();
@@ -1108,7 +1285,7 @@ public class RcRobotEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 3. Normal Right Click with Empty Hand: Retrieve equipped tool
+        // 4. Normal Right Click with Empty Hand: Retrieve equipped RIGHT tool
         if (held.isEmpty() && !getEquippedTool().isEmpty()) {
             if (!this.getWorld().isClient()) {
                 ItemStack tool = getEquippedTool();
@@ -1117,13 +1294,27 @@ public class RcRobotEntity extends Entity {
                     this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), tool));
                 }
                 this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
-                player.sendMessage(Text.literal("§e🤖 Retrieved §f" + tool.getName().getString() + " §efrom RC Robot"), true);
+                player.sendMessage(Text.literal("§e🤖 Retrieved §f" + tool.getName().getString() + " §efrom RC Robot right arm"), true);
             }
             return ActionResult.SUCCESS;
         }
 
-        // 4. Normal Right Click with Empty Hand when NO tool is equipped: Open Cargo Inventory!
-        if (held.isEmpty() && getEquippedTool().isEmpty()) {
+        // 5. Normal Right Click with Empty Hand when right arm is empty: Retrieve equipped LEFT arm stack
+        if (held.isEmpty() && !getEquippedLeftArm().isEmpty()) {
+            if (!this.getWorld().isClient()) {
+                ItemStack leftStack = getEquippedLeftArm();
+                setEquippedLeftArm(ItemStack.EMPTY);
+                if (!player.giveItemStack(leftStack)) {
+                    this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), leftStack));
+                }
+                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                player.sendMessage(Text.literal("§e🤖 Retrieved §f" + leftStack.getName().getString() + " §efrom RC Robot left arm"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        // 6. Normal Right Click with Empty Hand when BOTH arms are empty: Open Cargo Inventory!
+        if (held.isEmpty() && getEquippedTool().isEmpty() && getEquippedLeftArm().isEmpty()) {
             if (!this.getWorld().isClient()) {
                 openInventory(player);
             }
@@ -1142,7 +1333,7 @@ public class RcRobotEntity extends Entity {
                 return true;
             }
 
-            // Drop as item with full cargo inventory and equipped tool preserved
+            // Drop as item with full cargo inventory and equipped tools preserved
             ItemStack drop = asItemStack();
             this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), drop));
             this.discard();
@@ -1185,6 +1376,9 @@ public class RcRobotEntity extends Entity {
         if (nbt.contains("EquippedTool")) {
             setEquippedTool(ItemStack.fromNbt(nbt.getCompound("EquippedTool")));
         }
+        if (nbt.contains("EquippedLeftArm")) {
+            setEquippedLeftArm(ItemStack.fromNbt(nbt.getCompound("EquippedLeftArm")));
+        }
         if (nbt.contains("LightOn")) {
             setLightOn(nbt.getBoolean("LightOn"));
         }
@@ -1206,6 +1400,9 @@ public class RcRobotEntity extends Entity {
         nbt.putBoolean("LightOn", isLightOn());
         if (!getEquippedTool().isEmpty()) {
             nbt.put("EquippedTool", getEquippedTool().writeNbt(new NbtCompound()));
+        }
+        if (!getEquippedLeftArm().isEmpty()) {
+            nbt.put("EquippedLeftArm", getEquippedLeftArm().writeNbt(new NbtCompound()));
         }
 
         DefaultedList<ItemStack> list = DefaultedList.ofSize(this.inventory.size(), ItemStack.EMPTY);

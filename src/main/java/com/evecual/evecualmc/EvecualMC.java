@@ -530,7 +530,9 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier RC_DRONE_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_drone_auto_dock");
     public static final Identifier RC_ROBOT_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_robot_input");
     public static final Identifier RC_ROBOT_TOOL_ACTION_PACKET_ID = new Identifier(MOD_ID, "rc_robot_tool_action");
+    public static final Identifier RC_ROBOT_PLACE_ACTION_PACKET_ID = new Identifier(MOD_ID, "rc_robot_place_action");
     public static final Identifier RC_ROBOT_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "rc_robot_auto_dock");
+    public static final Identifier HELI_WEAPON_ANGLE_PACKET_ID = new Identifier(MOD_ID, "heli_weapon_angle");
     public static final Identifier OPEN_TRUNK_PACKET_ID = new Identifier(MOD_ID, "open_trunk");
     public static final Identifier CHARGER_WAYPOINT_PACKET_ID = new Identifier(MOD_ID, "charger_waypoint");
     public static final Identifier TOGGLE_CABLE_PACKET_ID = new Identifier(MOD_ID, "toggle_cable");
@@ -730,6 +732,24 @@ public class EvecualMC implements ModInitializer {
                             if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
                                 if (player.squaredDistanceTo(robot) <= 65536.0) {
                                     robot.performToolAction(lookPitch, lookYaw);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(RC_ROBOT_PLACE_ACTION_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID robotUuid = buf.readUuid();
+                    float lookPitch = buf.readFloat();
+                    float lookYaw = buf.readFloat();
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(robotUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.RcRobotEntity robot) {
+                                if (player.squaredDistanceTo(robot) <= 65536.0) {
+                                    robot.performPlaceAction(lookPitch, lookYaw);
                                 }
                             }
                         }
@@ -1070,6 +1090,19 @@ public class EvecualMC implements ModInitializer {
                     server.execute(() -> {
                         if (player.getVehicle() instanceof HeliEntity heli) {
                             heli.performArmAction(player, armIndex);
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(HELI_WEAPON_ANGLE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    int heliId = buf.readInt();
+                    float angle = buf.readFloat();
+                    server.execute(() -> {
+                        if (player.getWorld().getEntityById(heliId) instanceof HeliEntity heli) {
+                            if (heli.hasPassenger(player) || (heli.getPairedPlayerUuid() != null && heli.getPairedPlayerUuid().equals(player.getUuidAsString()))) {
+                                heli.setWeaponAngle(angle);
+                            }
                         }
                     });
                 });

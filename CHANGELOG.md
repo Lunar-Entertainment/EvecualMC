@@ -1,5 +1,39 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.0] - 2026-09-10
+### Added & Overhauled
+- **RC Excavator Robot Dual-Arm System**:
+  - Fully implemented independent dual-arm mechanics: Right Arm for weapons and mining tools, Left Arm for block/item placement.
+  - **Right Arm (LMB)**: Executes strikes, weapon attacks, block mining, and tool actions with animated hydraulic swing.
+  - **Left Arm (RMB)**: Places blocks and items directly into the world with reach raycasting, block orientation awareness, placement sound effects, and block particles.
+  - **Smart Inventory Refill**: Automatically pulls blocks from the 54-slot cargo chest when the equipped left arm stack is empty.
+  - **Interactive Equipping**: Right-click robot with tools/weapons to equip Right Arm; right-click with blocks to equip Left Arm.
+  - **3D Claw Rendering**: The equipped block/item is rendered directly in the robot's left claw clamp.
+- **Perspective Toggle Key Remap (`<`)**:
+  - Remapped RC vehicle perspective toggle from RMB to the `<` key (configurable via `RC_PERSPECTIVE_KEY`, supporting ISO `GLFW_KEY_WORLD_1` and US comma).
+  - Frees up RMB exclusively for secondary vehicle and left-arm actions.
+- **Lightning Item Fire Mode Switch**:
+  - Added Sneak + Right-Click toggle between **Fire Mode** (standard fire-spawning lightning) and **No-Fire Mode** (pure lightning strike dealing damage without placing fire).
+  - Displays instant actionbar alerts and detailed item tooltips.
+- **Helicopter Cockpit In-Flight Item Interaction**:
+  - Players seated in the EV Helicopter cockpit can now use, eat, interact with, and pair handheld inventory items (such as RC Controllers and Heli Controllers).
+- **Helicopter Weapon Hardpoint Angling**:
+  - Wing hardpoint weapons (miniguns, rockets, mining drills) can now be angled up and down (-60° to +30°) using Arrow Keys or configurable keybindings (`HELI_WEAPON_UP_KEY` / `HELI_WEAPON_DOWN_KEY`).
+  - Rotates 3D wing weapon models and adjusts projectile trajectory pitch in real time.
+- **Same-Keybind Dual-Arm Firing**:
+  - Implemented direct input polling helper (`isKeyOrMousePressed`) allowing both left and right helicopter hardpoint arms to fire simultaneously when bound to the same key or button.
+
+### Fixed
+- **EvecualTechShader Sky Invariance**:
+  - Fixed camera pitch and yaw altering the sky color gradient and sunlight glare. Elevation is now computed invariant to view rotation via true celestial eye-space dot products.
+- **Glass Translucency & Water/Particle Visibility**:
+  - Resolved invisibilities where water, mining arm particles, and sonic boom trails could not be seen through helicopter glass panes.
+  - Added particle shader passes and configured `separateEntityDraws=true` and `particles.ordering=after`.
+- **Helicopter Cockpit Canopy Holes**:
+  - Sealed visible gaps where the front windshield, side door glass, and roof canopy meet.
+- **Controls Menu Localization**:
+  - Added missing localization entries in `en_us.json` and `en-US.json` for all custom keybindings and container titles.
+
 ## [1.7.0] - 2026-09-06
 ### Added
 - **Electronic Duper Block (`electronic_duper`)**:
