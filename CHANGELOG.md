@@ -1,5 +1,17 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.2] - 2026-09-10
+### Added & Improved
+- **RC Robot Dual-Arm Inventory Integration**:
+  - Overhauled the RC Excavator Robot inventory interface with a dedicated custom GUI (`RcRobotScreenHandler` & `RcRobotScreen`).
+  - Added dedicated **Left Arm** and **Right Arm** equipment slots directly in the robot's inventory screen:
+    - **Left Arm Slot**: Exclusively accepts **blocks** (`BlockItem`) for Left Arm (RMB) placement in the world. Rejects tools, weapons, and non-block items.
+    - **Right Arm Slot**: Exclusively accepts **tools / weapons / items** for Right Arm (LMB) mining and combat. Rejects block items.
+  - Full drag-and-drop support: Players can freely pick any block or tool from the robot's 54 cargo slots or their player inventory and equip them directly into either hand.
+  - Smart Shift-Click (`quickMove`): Shift-clicking blocks automatically equips them into an empty Left Arm; shift-clicking tools/items automatically equips them into an empty Right Arm. Shift-clicking equipped arms returns items to cargo or player inventory.
+  - Seamless World Synchronization: Equipping or removing items from the screen instantly updates the robot's 3D claw models and server-side tracking.
+  - Direct Empty-Hand Interaction: Right-clicking the RC Robot in person with an empty hand (without sneaking) now immediately opens the full cargo and arm management screen.
+
 ## [1.8.1] - 2026-09-10
 ### Fixed & Improved
 - **RC Controller Right-Click & Unlinking Resolution**:

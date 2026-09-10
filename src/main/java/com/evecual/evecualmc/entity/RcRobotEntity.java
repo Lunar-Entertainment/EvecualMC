@@ -260,10 +260,14 @@ public class RcRobotEntity extends Entity {
 
     public void openInventory(PlayerEntity player) {
         if (!this.getWorld().isClient) {
+            SimpleInventory armInv = new SimpleInventory(2);
+            armInv.setStack(0, this.getEquippedLeftArm());
+            armInv.setStack(1, this.getEquippedTool());
+
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
-                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(
-                            ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, this.inventory, 6),
-                    Text.literal("RC Robot Cargo (54 Slots)")
+                    (syncId, playerInventory, p) -> new com.evecual.evecualmc.screen.RcRobotScreenHandler(
+                            syncId, playerInventory, armInv, this.inventory, this),
+                    Text.literal("RC Robot Cargo & Dual Arms")
             ));
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                     SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.PLAYERS, 0.6f, 1.2f);
@@ -1285,36 +1289,8 @@ public class RcRobotEntity extends Entity {
             return ActionResult.SUCCESS;
         }
 
-        // 4. Normal Right Click with Empty Hand: Retrieve equipped RIGHT tool
-        if (held.isEmpty() && !getEquippedTool().isEmpty()) {
-            if (!this.getWorld().isClient()) {
-                ItemStack tool = getEquippedTool();
-                setEquippedTool(ItemStack.EMPTY);
-                if (!player.giveItemStack(tool)) {
-                    this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), tool));
-                }
-                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
-                player.sendMessage(Text.literal("§e🤖 Retrieved §f" + tool.getName().getString() + " §efrom RC Robot right arm"), true);
-            }
-            return ActionResult.SUCCESS;
-        }
-
-        // 5. Normal Right Click with Empty Hand when right arm is empty: Retrieve equipped LEFT arm stack
-        if (held.isEmpty() && !getEquippedLeftArm().isEmpty()) {
-            if (!this.getWorld().isClient()) {
-                ItemStack leftStack = getEquippedLeftArm();
-                setEquippedLeftArm(ItemStack.EMPTY);
-                if (!player.giveItemStack(leftStack)) {
-                    this.getWorld().spawnEntity(new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.5, this.getZ(), leftStack));
-                }
-                this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
-                player.sendMessage(Text.literal("§e🤖 Retrieved §f" + leftStack.getName().getString() + " §efrom RC Robot left arm"), true);
-            }
-            return ActionResult.SUCCESS;
-        }
-
-        // 6. Normal Right Click with Empty Hand when BOTH arms are empty: Open Cargo Inventory!
-        if (held.isEmpty() && getEquippedTool().isEmpty() && getEquippedLeftArm().isEmpty()) {
+        // 4. Normal Right Click with Empty Hand: Open Robot Cargo & Dual-Arm Control Screen!
+        if (held.isEmpty()) {
             if (!this.getWorld().isClient()) {
                 openInventory(player);
             }

@@ -429,6 +429,13 @@ public class EvecualMC implements ModInitializer {
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectronicDuperScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.RcRobotScreenHandler> RC_ROBOT_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "rc_robot_screen"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.RcRobotScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
     // Entity Types
     public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
