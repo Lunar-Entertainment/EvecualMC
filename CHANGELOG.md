@@ -1,5 +1,15 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.3] - 2026-09-10
+### Fixed
+- **Helicopter Fall Damage & High-Speed Flight Safety**:
+  - Fixed an issue where players flying or landing the EV Helicopter at high speeds took phantom fall damage and died (`Player hit the ground too hard`).
+  - Added passenger fall distance resets on flight ticks and dismount, and overrode `handleFallDamage` and `fall` in `HeliEntity` to ensure neither the helicopter nor its passengers suffer fall damage.
+- **RC Robot Screen Layout & Tips Button Alignment**:
+  - Re-aligned the `💡 Tips` button in `RcRobotScreen` above the right sidebar to eliminate visual overlap with the cargo title.
+- **Shaderpack Auto-Sync on Launch**:
+  - Updated `launch.ps1` to automatically synchronize `shader/EvecualTechShader.zip` to `run/shaderpacks/` (and `.minecraft/shaderpacks/` when installed) so the permanent daytime twilight sky palette is loaded immediately.
+
 ## [1.8.2] - 2026-09-10
 ### Added & Improved
 - **RC Robot Dual-Arm Inventory Integration**:

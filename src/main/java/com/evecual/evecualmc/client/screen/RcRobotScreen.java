@@ -37,7 +37,7 @@ public class RcRobotScreen extends HandledScreen<RcRobotScreenHandler> {
                         ));
                     }
                 }
-        ).dimensions(x + 124, y + 4, 46, 12).build());
+        ).dimensions(x + 174, y + 3, 45, 12).build());
     }
 
     @Override

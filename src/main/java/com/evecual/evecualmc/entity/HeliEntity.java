@@ -696,6 +696,9 @@ public class HeliEntity extends Entity {
     @Override
     protected void updatePassengerPosition(Entity passenger, PositionUpdater positionUpdater) {
         if (this.hasPassenger(passenger)) {
+            passenger.fallDistance = 0.0F;
+            passenger.onLanding();
+
             double radYaw = Math.toRadians(this.getYaw());
             double curPitch = this.dataTracker.get(PITCH_TILT);
             double radPitch = Math.toRadians(curPitch);
@@ -719,12 +722,16 @@ public class HeliEntity extends Entity {
 
     @Override
     public Vec3d updatePassengerForDismount(LivingEntity passenger) {
+        passenger.fallDistance = 0.0F;
+        passenger.onLanding();
         Direction dir = this.getHorizontalFacing().rotateYClockwise();
         return new Vec3d(this.getX() + dir.getOffsetX() * 2.0, this.getY() + 0.1, this.getZ() + dir.getOffsetZ() * 2.0);
     }
 
     @Override
     protected void removePassenger(Entity passenger) {
+        passenger.fallDistance = 0.0F;
+        passenger.onLanding();
         super.removePassenger(passenger);
         this.inputForward = false;
         this.inputBack = false;
@@ -733,6 +740,16 @@ public class HeliEntity extends Entity {
         this.inputUp = false;
         this.inputDown = false;
         this.inputSprint = false;
+    }
+
+    @Override
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
+    }
+
+    @Override
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+        this.fallDistance = 0.0F;
     }
 
     @Nullable

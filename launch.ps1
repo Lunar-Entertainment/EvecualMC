@@ -45,7 +45,17 @@ if ($Install) {
         Copy-Item -Path $jar.FullName -Destination $modsDir -Force
         Write-Host "Installed $($jar.Name) to $modsDir" -ForegroundColor Green
     }
-    Write-Host "`nMod installed successfully into .minecraft/mods!" -ForegroundColor Cyan
+
+    $shaderDir = Join-Path $env:APPDATA ".minecraft\shaderpacks"
+    if (-not (Test-Path $shaderDir)) {
+        New-Item -ItemType Directory -Path $shaderDir -Force | Out-Null
+    }
+    if (Test-Path "shader/EvecualTechShader.zip") {
+        Copy-Item -Path "shader/EvecualTechShader.zip" -Destination (Join-Path $shaderDir "EvecualTechShader.zip") -Force
+        Write-Host "Installed EvecualTechShader.zip to $shaderDir" -ForegroundColor Green
+    }
+
+    Write-Host "`nMod and Shader installed successfully into .minecraft!" -ForegroundColor Cyan
     exit 0
 }
 
@@ -53,6 +63,16 @@ if ($BuildOnly) {
     Write-Host "Building mod JAR..." -ForegroundColor Green
     & .\gradlew.bat build
     exit $LASTEXITCODE
+}
+
+# Ensure shaderpack in run/shaderpacks is always up to date with the latest code
+$runShaderDir = "run/shaderpacks"
+if (-not (Test-Path $runShaderDir)) {
+    New-Item -ItemType Directory -Path $runShaderDir -Force | Out-Null
+}
+if (Test-Path "shader/EvecualTechShader.zip") {
+    Copy-Item -Path "shader/EvecualTechShader.zip" -Destination (Join-Path $runShaderDir "EvecualTechShader.zip") -Force
+    Write-Host "Synchronized EvecualTechShader.zip to $runShaderDir" -ForegroundColor Green
 }
 
 Write-Host "Launching Minecraft 1.20.1 with EvecualMC mod..." -ForegroundColor Green
