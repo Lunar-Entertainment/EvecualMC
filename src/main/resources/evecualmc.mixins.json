@@ -13,7 +13,8 @@
     "CameraMixin",
     "MouseMixin",
     "GameRendererMixin",
-    "InGameHudMixin"
+    "InGameHudMixin",
+    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

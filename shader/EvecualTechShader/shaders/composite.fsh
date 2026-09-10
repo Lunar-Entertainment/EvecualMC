@@ -187,7 +187,10 @@ void main() {
                 float sunFacing = max(dot(worldDir, worldSun), 0.0);
                 vec3 silverLining = vec3(1.0, 0.95, 0.85) * pow(sunFacing, 8.0) * 0.45;
 
-                vec3 cloudCol = mix(vec3(0.80, 0.86, 0.96), vec3(1.00, 1.00, 1.00), cloudShading) + silverLining;
+                float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
+                vec3 baseCloudCol = trueSunElev > -0.05 ? vec3(0.92, 0.78, 0.86) : vec3(0.40, 0.45, 0.60);
+                vec3 litCloudCol  = trueSunElev > -0.05 ? vec3(1.00, 0.94, 0.90) : vec3(0.65, 0.70, 0.85);
+                vec3 cloudCol = mix(baseCloudCol, litCloudCol, cloudShading) + silverLining;
                 sceneColor = mix(sceneColor, cloudCol, cloudMask * 0.92);
             }
         }
@@ -218,9 +221,9 @@ void main() {
             float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
             vec3 rayColor;
             if (trueSunElev > 0.15) {
-                rayColor = vec3(1.00, 0.96, 0.84); // Bright Golden Sunlight
+                rayColor = vec3(1.00, 0.92, 0.80); // Warm Golden-Peach Sunlight
             } else if (trueSunElev > -0.10) {
-                rayColor = vec3(1.00, 0.62, 0.30); // Warm Sunset/Sunrise Ray
+                rayColor = vec3(1.00, 0.62, 0.35); // Warm Sunset/Sunrise Ray
             } else {
                 rayColor = vec3(0.45, 0.65, 1.00); // Cool Moonlight Ray
             }
@@ -237,7 +240,7 @@ void main() {
         float linD = linearizeDepth(depth);
         float fogFactor = clamp(pow(linD * 2.8, 1.8), 0.0, 0.65);
         float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
-        vec3 horizonColor = mix(vec3(0.68, 0.82, 0.98), vec3(0.95, 0.70, 0.45), clamp(1.0 - abs(trueSunElev) * 4.0, 0.0, 1.0));
+        vec3 horizonColor = trueSunElev > -0.05 ? vec3(0.96, 0.72, 0.60) : vec3(0.15, 0.18, 0.28);
         sceneColor = mix(sceneColor, horizonColor, fogFactor);
     }
     #endif

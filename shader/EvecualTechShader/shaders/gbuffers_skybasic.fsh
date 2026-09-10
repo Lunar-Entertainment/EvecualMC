@@ -19,15 +19,19 @@ void main() {
     // True sun elevation (altitude above horizon) invariant to camera looking angle
     float sunElev = dot(sunDir, upDir);
 
-    // Daytime sky colors
-    vec3 dayZenith  = mix(vec3(0.08, 0.35, 0.88), color.rgb, 0.45);
-    vec3 dayMidSky  = mix(vec3(0.30, 0.65, 0.98), color.rgb, 0.65);
-    vec3 dayHorizon = mix(vec3(0.68, 0.86, 1.00), color.rgb, 0.80);
+    // Daytime sky colors (Requested 1-minute twilight aesthetic: dreamy pastel violet -> orchid rose -> warm golden peach)
+    vec3 targetDayZenith  = vec3(0.46, 0.38, 0.62); // Dreamy pastel violet / twilight purple
+    vec3 targetDayMidSky  = vec3(0.75, 0.45, 0.60); // Radiant soft orchid / rose twilight
+    vec3 targetDayHorizon = vec3(0.97, 0.68, 0.52); // Warm peach / sunset golden blush
+
+    vec3 dayZenith  = mix(targetDayZenith, color.rgb * 0.7 + targetDayZenith * 0.3, 0.10);
+    vec3 dayMidSky  = mix(targetDayMidSky, color.rgb * 0.7 + targetDayMidSky * 0.3, 0.10);
+    vec3 dayHorizon = mix(targetDayHorizon, color.rgb * 0.7 + targetDayHorizon * 0.3, 0.10);
 
     // Sunset / Sunrise warm atmospheric scattering
-    vec3 sunsetZenith  = vec3(0.12, 0.16, 0.38);
-    vec3 sunsetMidSky  = vec3(0.85, 0.42, 0.28);
-    vec3 sunsetHorizon = vec3(1.00, 0.68, 0.32);
+    vec3 sunsetZenith  = vec3(0.28, 0.20, 0.46);
+    vec3 sunsetMidSky  = vec3(0.85, 0.42, 0.45);
+    vec3 sunsetHorizon = vec3(1.00, 0.64, 0.35);
 
     // Night sky
     vec3 nightZenith  = vec3(0.02, 0.03, 0.08);
@@ -53,7 +57,7 @@ void main() {
     float sunDot = max(dot(npos, sunDir), 0.0);
     float sunDisk = pow(sunDot, 1024.0) * 8.0;
     float sunCorona = pow(sunDot, 32.0) * 0.45 * (1.0 - nightFactor);
-    vec3 sunLight = (sunsetFactor > 0.3 ? vec3(1.0, 0.7, 0.4) : vec3(1.0, 0.98, 0.85)) * (sunDisk + sunCorona);
+    vec3 sunLight = (sunsetFactor > 0.3 ? vec3(1.0, 0.7, 0.4) : vec3(1.0, 0.90, 0.78)) * (sunDisk + sunCorona);
 
     // Moon corona in opposite direction
     float moonDot = max(dot(npos, -sunDir), 0.0);

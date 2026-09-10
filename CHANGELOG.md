@@ -1,5 +1,21 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.1] - 2026-09-10
+### Fixed & Improved
+- **RC Controller Right-Click & Unlinking Resolution**:
+  - Fixed an issue where right-clicking with the RC Controller (such as when placing blocks with the RC Robot's left arm) unlinked the controller and forced the player camera back to normal view.
+  - Normal right-click when active now preserves the active connection and never toggles to standby.
+  - To intentionally switch the controller to `STANDBY` or toggle links, players use **Shift + Right-Click** (`Sneak + Use`).
+  - Added `MinecraftClientMixin` to suppress client-side `doItemUse` and `doAttack` while actively looking through any RC vehicle camera, ensuring block placement and tool mining are handled exclusively by remote vehicle inputs without interference from the player's physical body.
+  - Updated in-game tooltips with explicit control hints: `[Right-Click] Connect | [Shift + Right-Click] Standby`.
+- **EvecualTechShader Permanent Twilight Daytime Sky**:
+  - Permanently applied the requested 1-minute twilight color palette across the entire daytime sky:
+    - Zenith: Dreamy pastel violet / twilight purple (`#76619E`)
+    - Mid-sky: Radiant soft orchid / rose twilight (`#BF7399`)
+    - Horizon: Warm peach / golden sunset blush (`#F7AD85`)
+  - Tuned solar corona with warm golden sunlight illumination (`#FFE6C7`).
+  - Updated procedural volumetric cloud shading and atmospheric horizon fog to harmonize with the soft rose and golden peach aesthetic.
+
 ## [1.8.0] - 2026-09-10
 ### Added & Overhauled
 - **RC Excavator Robot Dual-Arm System**:

@@ -204,8 +204,15 @@ public class RcControllerItem extends Item {
 
         boolean hasPairing = nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone") || nbt.containsUuid("PairedRobot");
 
-        // If player sneaks or is unpaired and a vehicle is found, pair immediately!
-        if (targetVehicle != null && (user.isSneaking() || !hasPairing)) {
+        boolean alreadyPairedToThis = false;
+        if (targetVehicle != null) {
+            if (targetVehicle instanceof RcRobotEntity && targetVehicle.getUuid().equals(getPairedRobotUuid(stack))) alreadyPairedToThis = true;
+            if (targetVehicle instanceof RcDroneEntity && targetVehicle.getUuid().equals(getPairedDroneUuid(stack))) alreadyPairedToThis = true;
+            if (targetVehicle instanceof RcCarEntity && targetVehicle.getUuid().equals(getPairedCarUuid(stack))) alreadyPairedToThis = true;
+        }
+
+        // If player sneaks or is unpaired and a new vehicle is found, pair immediately!
+        if (targetVehicle != null && !alreadyPairedToThis && (user.isSneaking() || !hasPairing)) {
             if (!world.isClient) {
                 if (targetVehicle instanceof RcRobotEntity robot) {
                     pairWithRobot(stack, user, robot);
@@ -228,7 +235,16 @@ public class RcControllerItem extends Item {
         }
 
         boolean currentActive = nbt.getBoolean("ActiveLink");
-        boolean newActive = !currentActive;
+
+        // When already active and user is NOT sneaking:
+        // NEVER toggle to STANDBY or unlink on normal right click!
+        // This ensures block placement (RMB Left Arm) and normal interactions never kick player out of the droid!
+        if (currentActive && !user.isSneaking()) {
+            return TypedActionResult.pass(stack);
+        }
+
+        // Shift + Right-Click toggles active link; normal Right-Click when in STANDBY turns it on.
+        boolean newActive = user.isSneaking() ? !currentActive : true;
         nbt.putBoolean("ActiveLink", newActive);
 
         boolean isDrone = nbt.containsUuid("PairedDrone") || "drone".equals(nbt.getString("PairedType"));
@@ -248,7 +264,7 @@ public class RcControllerItem extends Item {
                             }
                         }
                     }
-                    user.sendMessage(Text.literal("§6🤖 RC Robot Link: §aENABLED §7[W/A/S/D Move, LMB Use Tool, F Camera]"), true);
+                    user.sendMessage(Text.literal("§6🤖 RC Robot Link: §aENABLED §7[W/A/S/D Move, LMB Tool, RMB Place, F Camera]"), true);
                 } else if (isDrone) {
                     if (droneUuid != null) {
                         for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(512.0), d -> d.getUuid().equals(droneUuid))) {
@@ -301,7 +317,7 @@ public class RcControllerItem extends Item {
         return null;
     }
 
-    public static boolean isLinkActive(ItemStack stack) {
+    public static boolean isRcActive(ItemStack stack) {
         return stack.hasNbt() && stack.getNbt() != null && stack.getNbt().getBoolean("ActiveLink");
     }
 
@@ -315,15 +331,18 @@ public class RcControllerItem extends Item {
             if (nbt.containsUuid("PairedRobot") || "robot".equals(type)) {
                 tooltip.add(Text.literal("§7Paired to: §6RC Robot"));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 256m)" : "§cSTANDBY")));
-                tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Tool | Z Cargo | C Dock"));
+                tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Right Arm | RMB Left Arm | Z Cargo"));
+                tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));
             } else if (nbt.containsUuid("PairedDrone") || "drone".equals(type)) {
                 tooltip.add(Text.literal("§7Paired to: §bRC Drone"));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 512m)" : "§cSTANDBY")));
                 tooltip.add(Text.literal("§8Controls: W/S Pitch | A/D Roll | Space/Shift Alt | C Auto-Dock"));
+                tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));
             } else if (nbt.containsUuid("PairedCar")) {
                 tooltip.add(Text.literal("§7Paired to: §aRC Car"));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 256m)" : "§cSTANDBY")));
                 tooltip.add(Text.literal("§8Controls: W/S Throttle | A/D Steering | C Auto-Park"));
+                tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));
             } else {
                 tooltip.add(Text.literal("§7Paired to: §cNone"));
                 tooltip.add(Text.literal("§8Aim and Right-click near an RC Car, Drone, or Robot to pair."));
