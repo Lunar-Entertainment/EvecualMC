@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "evecualmc:block/turret_ammo_container"
+    },
+    "facing=south": {
+      "model": "evecualmc:block/turret_ammo_container",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "evecualmc:block/turret_ammo_container",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "evecualmc:block/turret_ammo_container",
+      "y": 90
+    }
+  }
+}

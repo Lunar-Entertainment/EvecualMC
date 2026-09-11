@@ -535,7 +535,9 @@ public class EvecualMCClient implements ClientModInitializer {
 
         // Register Wire Cutout Render Layer & Wind Turbine Renderer
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.STATIONARY_TURRET_BLOCK, RenderLayer.getCutout());
         BlockEntityRendererFactories.register(EvecualMC.WIND_TURBINE_BLOCK_ENTITY, WindTurbineBlockEntityRenderer::new);
+        BlockEntityRendererFactories.register(EvecualMC.STATIONARY_TURRET_BLOCK_ENTITY, com.evecual.evecualmc.client.render.StationaryTurretBlockEntityRenderer::new);
 
         // Register Screens
         HandledScreens.register(EvecualMC.ELECTRONIC_COMBINER_SCREEN_HANDLER, ElectronicCombinerScreen::new);
@@ -543,6 +545,9 @@ public class EvecualMCClient implements ClientModInitializer {
         HandledScreens.register(EvecualMC.CAR_TRUNK_SCREEN_HANDLER, CarTrunkScreen::new);
         HandledScreens.register(EvecualMC.HELI_UPGRADE_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.HeliUpgradeScreen::new);
         HandledScreens.register(EvecualMC.RC_ROBOT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.RcRobotScreen::new);
+        HandledScreens.register(EvecualMC.STATIONARY_TURRET_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.StationaryTurretScreen::new);
+        HandledScreens.register(EvecualMC.FLYING_TURRET_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.FlyingTurretScreen::new);
+        HandledScreens.register(EvecualMC.TURRET_AMMO_CONTAINER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.TurretAmmoContainerScreen::new);
 
         // Register Car Entity Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);
@@ -563,6 +568,10 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register EV Heli Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(HeliEntityModel.MODEL_LAYER, HeliEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.HELI_ENTITY, HeliEntityRenderer::new);
+
+        // Register Turret Bullet & Flying Turret Drone Renderers
+        EntityRendererRegistry.register(EvecualMC.TURRET_BULLET_ENTITY, com.evecual.evecualmc.client.render.TurretBulletEntityRenderer::new);
+        EntityRendererRegistry.register(EvecualMC.FLYING_TURRET_ENTITY, com.evecual.evecualmc.client.render.FlyingTurretEntityRenderer::new);
 
         // Explicitly render the Player in the world when looking through RC Camera view
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {

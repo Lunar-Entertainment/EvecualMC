@@ -1,5 +1,27 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.5] - 2026-09-11
+### Added & Improved
+- **Stationary Defense Turret**:
+  - Placed base defense turret with full 360-degree yaw and pitch rotation.
+  - Supports configurable defense zone radius from 16x16 up to 512x512 blocks.
+  - Automatically draws kinetic ammunition from linked Turret Ammo Containers via wireless encrypted quantum coordinates.
+  - 2.0-second firing cooldown (40 ticks) between shots with smooth aiming kinematics.
+  - Configurable target whitelist & threat filtering: Players (safe vs hostile), Hostile Monsters, Passive Animals, and Bosses.
+- **Flying Defense Turret Drone**:
+  - Autonomous aerial defense drone capable of high-altitude hovering and patrolling.
+  - Expanded massive defense zone coverage from 16x16 up to 1024x1024 blocks (radius up to 512 blocks).
+  - Configurable patrol flight altitude (6m to 48m above terrain) and dynamic return-to-base navigation.
+  - 2.0-second firing cooldown with dual gimbal-stabilized kinetic rail cannons.
+  - Same advanced target filtering GUI and wireless linked ammo supply.
+- **Turret Ammo Container & Tiered Munitions**:
+  - **Turret Ammo Container**: 27-slot dedicated munitions silo that supplies linked stationary and flying turrets across any distance.
+  - **Turret Linker Device**: Handheld pairing tool that links containers to turrets with a single right-click sequence.
+  - **Copper Defense Ammo**: Light projectile dealing 6 damage at 0.8x projectile speed.
+  - **Iron Defense Ammo**: Standard armor-piercing kinetic projectile dealing 14 damage at 1.2x projectile speed.
+  - **Diamond Defense Ammo**: High-velocity heavy tungsten-diamond projectile dealing 30 damage at 1.8x projectile speed.
+  - Smart automatic ammo selection: prioritize highest tier ammo available in the linked container with particle tracers and impacts.
+
 ## [1.8.4] - 2026-09-11
 ### Added & Improved
 - **Lightning Item Durability & Extended Cooldown**:

@@ -152,6 +152,31 @@ public class EvecualMC implements ModInitializer {
             new com.evecual.evecualmc.item.IceCreamItem(com.evecual.evecualmc.item.IceCreamItem.Flavor.ELECTRIC,
                     new Item.Settings()));
 
+    public static final Item COPPER_AMMO = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "copper_ammo"),
+            new Item(new Item.Settings()));
+
+    public static final Item IRON_AMMO = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "iron_ammo"),
+            new Item(new Item.Settings()));
+
+    public static final Item DIAMOND_AMMO = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "diamond_ammo"),
+            new Item(new Item.Settings()));
+
+    public static final Item TURRET_LINKER = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "turret_linker"),
+            new com.evecual.evecualmc.item.TurretLinkerItem(new Item.Settings().maxCount(1)));
+
+    public static final Item FLYING_TURRET_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "flying_turret"),
+            new com.evecual.evecualmc.item.FlyingTurretItem(new Item.Settings().maxCount(1)));
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -318,6 +343,28 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "charger_cable"),
             new Item(new Item.Settings().maxCount(1)));
 
+    public static final Block STATIONARY_TURRET_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "stationary_turret"),
+            new com.evecual.evecualmc.block.StationaryTurretBlock(
+                    FabricBlockSettings.create().strength(2.0f).sounds(BlockSoundGroup.METAL).nonOpaque()));
+
+    public static final Item STATIONARY_TURRET_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "stationary_turret"),
+            new BlockItem(STATIONARY_TURRET_BLOCK, new Item.Settings()));
+
+    public static final Block TURRET_AMMO_CONTAINER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "turret_ammo_container"),
+            new com.evecual.evecualmc.block.TurretAmmoContainerBlock(
+                    FabricBlockSettings.create().strength(1.5f).sounds(BlockSoundGroup.METAL)));
+
+    public static final Item TURRET_AMMO_CONTAINER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "turret_ammo_container"),
+            new BlockItem(TURRET_AMMO_CONTAINER_BLOCK, new Item.Settings()));
+
     // Block Entities
     public static final BlockEntityType<SolarPanelBlockEntity> SOLAR_PANEL_BLOCK_ENTITY = Registry.register(
             Registries.BLOCK_ENTITY_TYPE,
@@ -401,6 +448,24 @@ public class EvecualMC implements ModInitializer {
                                     ELECTRONIC_DUPER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity> STATIONARY_TURRET_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "stationary_turret"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity::new,
+                                    STATIONARY_TURRET_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity> TURRET_AMMO_CONTAINER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "turret_ammo_container"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity::new,
+                                    TURRET_AMMO_CONTAINER_BLOCK)
+                            .build());
+
     // Screen Handlers
     public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry
             .register(
@@ -434,6 +499,27 @@ public class EvecualMC implements ModInitializer {
                     Registries.SCREEN_HANDLER,
                     new Identifier(MOD_ID, "rc_robot_screen"),
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.RcRobotScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.StationaryTurretScreenHandler> STATIONARY_TURRET_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "stationary_turret"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.StationaryTurretScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.FlyingTurretScreenHandler> FLYING_TURRET_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "flying_turret"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.FlyingTurretScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.TurretAmmoContainerScreenHandler> TURRET_AMMO_CONTAINER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "turret_ammo_container"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.TurretAmmoContainerScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
     // Entity Types
@@ -481,6 +567,25 @@ public class EvecualMC implements ModInitializer {
                     .trackRangeChunks(64) // 1024 blocks range
                     .build());
 
+    public static final EntityType<com.evecual.evecualmc.entity.TurretBulletEntity> TURRET_BULLET_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "turret_bullet"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.TurretBulletEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.TurretBulletEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.25f, 0.25f))
+                    .trackRangeChunks(64)
+                    .trackedUpdateRate(1)
+                    .build());
+
+    public static final EntityType<com.evecual.evecualmc.entity.FlyingTurretEntity> FLYING_TURRET_ENTITY = Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, "flying_turret"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.FlyingTurretEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.FlyingTurretEntity::new)
+                    .dimensions(EntityDimensions.fixed(1.0f, 0.8f))
+                    .trackRangeChunks(64)
+                    .build());
+
     // Creative Inventory Tab: "evecual" with lightning icon
     public static final RegistryKey<ItemGroup> EVECUAL_ITEM_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
@@ -526,6 +631,13 @@ public class EvecualMC implements ModInitializer {
                 entries.add(CHOCOLATE_ICE_CREAM);
                 entries.add(SWEET_BERRY_ICE_CREAM);
                 entries.add(ELECTRIC_ICE_CREAM);
+                entries.add(COPPER_AMMO);
+                entries.add(IRON_AMMO);
+                entries.add(DIAMOND_AMMO);
+                entries.add(TURRET_LINKER);
+                entries.add(STATIONARY_TURRET_ITEM);
+                entries.add(FLYING_TURRET_ITEM);
+                entries.add(TURRET_AMMO_CONTAINER_ITEM);
             })
             .build();
 
@@ -572,6 +684,11 @@ public class EvecualMC implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(Registries.ITEM_GROUP, EVECUAL_ITEM_GROUP_KEY, EVECUAL_ITEM_GROUP);
+
+        net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(
+                FLYING_TURRET_ENTITY,
+                com.evecual.evecualmc.entity.FlyingTurretEntity.createFlyingTurretAttributes()
+        );
 
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CAR_INPUT_PACKET_ID,
                 (server, player, handler, buf, responseSender) -> {

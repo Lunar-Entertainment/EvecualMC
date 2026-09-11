@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " R ",
+    " S ",
+    " G "
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:lightning_rod"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "evecualmc:turret_linker",
+    "count": 1
+  }
+}

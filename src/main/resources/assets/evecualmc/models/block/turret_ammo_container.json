@@ -1,0 +1,9 @@
+{
+  "parent": "block/orientable",
+  "textures": {
+    "top": "evecualmc:block/turret_ammo_container_top",
+    "bottom": "evecualmc:block/turret_ammo_container_bottom",
+    "front": "evecualmc:block/turret_ammo_container_front",
+    "side": "evecualmc:block/turret_ammo_container_side"
+  }
+}

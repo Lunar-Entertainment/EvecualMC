@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " R ",
+    "SDS",
+    " E "
+  ],
+  "key": {
+    "R": {
+      "item": "evecualmc:rc_drone"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "D": {
+      "item": "minecraft:dispenser"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    }
+  },
+  "result": {
+    "item": "evecualmc:flying_turret",
+    "count": 1
+  }
+}

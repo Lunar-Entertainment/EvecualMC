@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "DDD",
+    "SES",
+    "SSS"
+  ],
+  "key": {
+    "D": {
+      "item": "minecraft:dispenser"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    }
+  },
+  "result": {
+    "item": "evecualmc:stationary_turret",
+    "count": 1
+  }
+}
