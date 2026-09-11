@@ -38,6 +38,8 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -308,6 +310,17 @@ public class EvecualMCClient implements ClientModInitializer {
                 targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
                 robot.setHeadPitch(targetRcCameraPitch);
                 return;
+            } else if (cam instanceof com.evecual.evecualmc.entity.FlyingTurretEntity turret) {
+                float newYaw = MathHelper.wrapDegrees(turret.getYaw() + yawDelta);
+                turret.setYaw(newYaw);
+                turret.prevYaw += yawDelta;
+                turret.setBodyYaw(newYaw);
+                turret.setHeadYaw(newYaw);
+                targetRcCameraYaw = 0.0F;
+                smoothRcCameraYaw = 0.0F;
+                targetRcCameraPitch = MathHelper.clamp(targetRcCameraPitch + (float) (cursorDeltaY * 0.15), -80.0F, 80.0F);
+                turret.setPitch(targetRcCameraPitch);
+                return;
             } else if (cam instanceof RcCarEntity car) {
                 if (car.isAutoReturning()) {
                     targetRcCameraYaw = 0.0F;
@@ -341,7 +354,7 @@ public class EvecualMCClient implements ClientModInitializer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null) return false;
         Entity cam = client.getCameraEntity();
-        return cam instanceof RcCarEntity || cam instanceof RcDroneEntity || cam instanceof RcRobotEntity || cam instanceof HeliEntity;
+        return cam instanceof RcCarEntity || cam instanceof RcDroneEntity || cam instanceof RcRobotEntity || cam instanceof HeliEntity || cam instanceof com.evecual.evecualmc.entity.FlyingTurretEntity;
     }
 
     public static BlockPos activeStationPos = null;
@@ -477,6 +490,27 @@ public class EvecualMCClient implements ClientModInitializer {
         return null;
     }
 
+    public static com.evecual.evecualmc.entity.FlyingTurretEntity getTargetFlyingTurret(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return null;
+        net.minecraft.item.ItemStack held = null;
+        if (client.player.getMainHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
+            held = client.player.getMainHandStack();
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
+            held = client.player.getOffHandStack();
+        }
+        if (held == null || !held.hasNbt()) return null;
+        net.minecraft.nbt.NbtCompound nbt = held.getNbt();
+        if (nbt == null || !nbt.containsUuid("PairedTurret")) return null;
+        java.util.UUID pairedUuid = nbt.getUuid("PairedTurret");
+
+        for (Entity e : client.world.getEntities()) {
+            if (e instanceof com.evecual.evecualmc.entity.FlyingTurretEntity turret && turret.getUuid().equals(pairedUuid)) {
+                return turret;
+            }
+        }
+        return null;
+    }
+
     public static void toggleRcCamera(MinecraftClient client) {
         if (client == null || client.player == null || client.world == null) return;
 
@@ -502,9 +536,12 @@ public class EvecualMCClient implements ClientModInitializer {
         if (targetRc == null) {
             targetRc = getTargetHeli(client);
         }
+        if (targetRc == null) {
+            targetRc = getTargetFlyingTurret(client);
+        }
 
         if (targetRc == null) {
-            client.player.sendMessage(Text.literal("§c📷 No linked RC Vehicle or EV Heli found in range!"), true);
+            client.player.sendMessage(Text.literal("§c📷 No linked RC Vehicle, Drone, or EV Heli found in range!"), true);
             return;
         }
 
@@ -513,17 +550,17 @@ public class EvecualMCClient implements ClientModInitializer {
             client.options.setPerspective(previousPerspective);
             targetRcFpZoom = 1.0F;
             rcFpZoom = 1.0F;
-            sendSafeActionBar(client, "§7📷 RC Camera: §cDISABLED §7[Player View]");
+            sendSafeActionBar(client, "§7📷 Camera: §cDISABLED §7[Player View]");
         } else {
             resetRcCameraAngle();
-            targetRcCameraDistance = (targetRc instanceof HeliEntity) ? 6.5F : 3.5F;
+            targetRcCameraDistance = (targetRc instanceof HeliEntity) ? 6.5F : (targetRc instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) ? 4.0F : 3.5F;
             rcCameraDistance = targetRcCameraDistance;
             targetRcFpZoom = 1.0F;
             rcFpZoom = 1.0F;
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-            String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
+            String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) ? "Turret Drone" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
             sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[<: View | F: Exit]");
         }
     }
@@ -1277,6 +1314,92 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
+                // Flying Turret Drone Remote Flight & Manual Firing Controller
+                ItemStack turretControllerStack = null;
+                if (client.player.getMainHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
+                    turretControllerStack = client.player.getMainHandStack();
+                } else if (client.player.getOffHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
+                    turretControllerStack = client.player.getOffHandStack();
+                }
+
+                if (turretControllerStack != null && turretControllerStack.hasNbt()) {
+                    NbtCompound nbt = turretControllerStack.getNbt();
+                    if (nbt != null && nbt.containsUuid("PairedTurret") && nbt.getBoolean("ActiveLink")) {
+                        isRcActive = true;
+                        java.util.UUID pairedUuid = nbt.getUuid("PairedTurret");
+                        com.evecual.evecualmc.entity.FlyingTurretEntity targetTurret = null;
+                        for (Entity e : client.world.getEntities()) {
+                            if (e instanceof com.evecual.evecualmc.entity.FlyingTurretEntity turret && turret.getUuid().equals(pairedUuid)) {
+                                targetTurret = turret;
+                                break;
+                            }
+                        }
+
+                        if (targetTurret != null && client.player.squaredDistanceTo(targetTurret) <= 1048576.0) {
+                            boolean rcFwd = client.options.forwardKey.isPressed();
+                            boolean rcBack = client.options.backKey.isPressed();
+                            boolean rcLeft = client.options.leftKey.isPressed();
+                            boolean rcRight = client.options.rightKey.isPressed();
+                            boolean rcUp = client.options.jumpKey.isPressed();
+                            boolean rcDown = client.options.sneakKey.isPressed();
+                            boolean rcSprint = client.options.sprintKey.isPressed() || InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_LEFT_CONTROL);
+
+                            boolean hasManualMove = rcFwd || rcBack || rcLeft || rcRight || rcUp || rcDown;
+
+                            if (hasManualMove || client.getCameraEntity() == targetTurret) {
+                                float sendYaw = (client.getCameraEntity() == targetTurret) ? targetTurret.getYaw() : client.player.getYaw();
+                                float sendPitch = (client.getCameraEntity() == targetTurret) ? targetTurret.getPitch() : client.player.getPitch();
+
+                                targetTurret.setRemoteInputs(rcFwd, rcBack, rcLeft, rcRight, rcUp, rcDown, rcSprint, sendYaw, sendPitch);
+
+                                PacketByteBuf turretBuf = PacketByteBufs.create();
+                                turretBuf.writeUuid(pairedUuid);
+                                turretBuf.writeBoolean(rcFwd);
+                                turretBuf.writeBoolean(rcBack);
+                                turretBuf.writeBoolean(rcLeft);
+                                turretBuf.writeBoolean(rcRight);
+                                turretBuf.writeBoolean(rcUp);
+                                turretBuf.writeBoolean(rcDown);
+                                turretBuf.writeBoolean(rcSprint);
+                                turretBuf.writeFloat(sendYaw);
+                                turretBuf.writeFloat(sendPitch);
+                                ClientPlayNetworking.send(EvecualMC.FLYING_TURRET_INPUT_PACKET_ID, turretBuf);
+                            }
+
+                            // Manual Kinetic Cannon Fire (Attack Key / LMB)
+                            if (client.options.attackKey.isPressed() || GLFW.glfwGetMouseButton(windowHandle, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS) {
+                                if (!wasAttackPressed) {
+                                    wasAttackPressed = true;
+                                    Vec3d aimDir = (client.getCameraEntity() == targetTurret)
+                                            ? targetTurret.getRotationVec(1.0f)
+                                            : client.player.getRotationVec(1.0f);
+
+                                    PacketByteBuf fireBuf = PacketByteBufs.create();
+                                    fireBuf.writeUuid(pairedUuid);
+                                    fireBuf.writeDouble(aimDir.x);
+                                    fireBuf.writeDouble(aimDir.y);
+                                    fireBuf.writeDouble(aimDir.z);
+                                    ClientPlayNetworking.send(EvecualMC.FLYING_TURRET_FIRE_PACKET_ID, fireBuf);
+                                }
+                            } else {
+                                wasAttackPressed = false;
+                            }
+
+                            // Recall Drone to Player Position (C Key)
+                            if (isKeyOrMousePressed(AUTO_PARK_KEY, windowHandle)) {
+                                if (!wasCPressed) {
+                                    wasCPressed = true;
+                                    PacketByteBuf recallBuf = PacketByteBufs.create();
+                                    recallBuf.writeUuid(pairedUuid);
+                                    ClientPlayNetworking.send(EvecualMC.FLYING_TURRET_RECALL_PACKET_ID, recallBuf);
+                                }
+                            } else {
+                                wasCPressed = false;
+                            }
+                        }
+                    }
+                }
+
                 // Arrow keys support as secondary camera control
                 if (isRcCameraActive() && client.currentScreen == null) {
                     boolean left = InputUtil.isKeyPressed(windowHandle, GLFW.GLFW_KEY_LEFT);
@@ -1298,6 +1421,9 @@ public class EvecualMCClient implements ClientModInitializer {
                         } else if (cam instanceof HeliEntity heli) {
                             if (left) { heli.setYaw(MathHelper.wrapDegrees(heli.getYaw() - 3.0F)); heli.prevYaw -= 3.0F; }
                             if (right) { heli.setYaw(MathHelper.wrapDegrees(heli.getYaw() + 3.0F)); heli.prevYaw += 3.0F; }
+                        } else if (cam instanceof com.evecual.evecualmc.entity.FlyingTurretEntity turret) {
+                            if (left) { turret.setYaw(MathHelper.wrapDegrees(turret.getYaw() - 3.0F)); turret.prevYaw -= 3.0F; }
+                            if (right) { turret.setYaw(MathHelper.wrapDegrees(turret.getYaw() + 3.0F)); turret.prevYaw += 3.0F; }
                         }
                         targetRcCameraYaw = 0.0F;
                         smoothRcCameraYaw = 0.0F;
@@ -1332,6 +1458,12 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 } else if (client.getCameraEntity() instanceof HeliEntity heli) {
                     boolean valid = isRcActive && heli.isAlive() && !heli.isRemoved() && client.player.squaredDistanceTo(heli) <= 1048576.0;
+                    if (!valid) {
+                        client.setCameraEntity(client.player);
+                        client.options.setPerspective(previousPerspective);
+                    }
+                } else if (client.getCameraEntity() instanceof com.evecual.evecualmc.entity.FlyingTurretEntity turret) {
+                    boolean valid = isRcActive && turret.isAlive() && !turret.isRemoved() && client.player.squaredDistanceTo(turret) <= 1048576.0;
                     if (!valid) {
                         client.setCameraEntity(client.player);
                         client.options.setPerspective(previousPerspective);

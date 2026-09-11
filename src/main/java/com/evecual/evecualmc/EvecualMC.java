@@ -177,6 +177,11 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "flying_turret"),
             new com.evecual.evecualmc.item.FlyingTurretItem(new Item.Settings().maxCount(1)));
 
+    public static final Item FLYING_TURRET_CONTROLLER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "flying_turret_controller"),
+            new com.evecual.evecualmc.item.FlyingTurretControllerItem(new Item.Settings().maxCount(1)));
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -637,6 +642,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(TURRET_LINKER);
                 entries.add(STATIONARY_TURRET_ITEM);
                 entries.add(FLYING_TURRET_ITEM);
+                entries.add(FLYING_TURRET_CONTROLLER_ITEM);
                 entries.add(TURRET_AMMO_CONTAINER_ITEM);
             })
             .build();
@@ -671,6 +677,9 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier HELI_CONTROLLER_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_controller_input");
     public static final Identifier HELI_CONTROLLER_ARM_ACTION_PACKET_ID = new Identifier(MOD_ID, "heli_controller_arm_action");
     public static final Identifier HELI_CONTROLLER_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "heli_controller_auto_dock");
+    public static final Identifier FLYING_TURRET_INPUT_PACKET_ID = new Identifier(MOD_ID, "flying_turret_input");
+    public static final Identifier FLYING_TURRET_FIRE_PACKET_ID = new Identifier(MOD_ID, "flying_turret_fire");
+    public static final Identifier FLYING_TURRET_RECALL_PACKET_ID = new Identifier(MOD_ID, "flying_turret_recall");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -1283,6 +1292,66 @@ public class EvecualMC implements ModInitializer {
                             if (target instanceof HeliEntity heli) {
                                 if (player.squaredDistanceTo(heli) <= 1048576.0) {
                                     heli.toggleAutoPark(player);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_INPUT_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID droneUuid = buf.readUuid();
+                    boolean forward = buf.readBoolean();
+                    boolean back = buf.readBoolean();
+                    boolean left = buf.readBoolean();
+                    boolean right = buf.readBoolean();
+                    boolean up = buf.readBoolean();
+                    boolean down = buf.readBoolean();
+                    boolean sprint = buf.readBoolean();
+                    float yaw = buf.readFloat();
+                    float pitch = buf.readFloat();
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(droneUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 1048576.0) { // 1024 blocks
+                                    drone.setRemoteInputs(forward, back, left, right, up, down, sprint, yaw, pitch);
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_FIRE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID droneUuid = buf.readUuid();
+                    double dirX = buf.readDouble();
+                    double dirY = buf.readDouble();
+                    double dirZ = buf.readDouble();
+
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(droneUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 1048576.0) {
+                                    drone.fireManual(new net.minecraft.util.math.Vec3d(dirX, dirY, dirZ).normalize());
+                                }
+                            }
+                        }
+                    });
+                });
+
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_RECALL_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    java.util.UUID droneUuid = buf.readUuid();
+                    server.execute(() -> {
+                        if (player.getServerWorld() != null) {
+                            Entity target = player.getServerWorld().getEntity(droneUuid);
+                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
+                                if (player.squaredDistanceTo(drone) <= 1048576.0) {
+                                    drone.recallTo(player.getBlockPos().up(12));
+                                    player.sendMessage(Text.literal("§a🚁 Flying Defense Drone recalled to your position!"), true);
                                 }
                             }
                         }

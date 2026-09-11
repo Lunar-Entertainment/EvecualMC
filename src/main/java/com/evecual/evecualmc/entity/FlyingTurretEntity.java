@@ -67,6 +67,20 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
     private BlockPos linkedAmmoContainerPos = null;
     @Nullable
     private LivingEntity currentTarget = null;
+    @Nullable
+    private String pairedPlayerUuid = null;
+
+    // Remote Control State
+    private int remoteControlTicks = 0;
+    private boolean remoteFwd = false;
+    private boolean remoteBack = false;
+    private boolean remoteLeft = false;
+    private boolean remoteRight = false;
+    private boolean remoteUp = false;
+    private boolean remoteDown = false;
+    private boolean remoteSprint = false;
+    private float remoteYaw = 0.0f;
+    private float remotePitch = 0.0f;
 
     public float rotorAngle = 0.0f;
     public float gimbalYaw = 0.0f;
@@ -160,6 +174,38 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
         this.linkedAmmoContainerPos = pos;
     }
 
+    public void setRemoteInputs(boolean fwd, boolean back, boolean left, boolean right, boolean up, boolean down, boolean sprint, float yaw, float pitch) {
+        this.remoteControlTicks = 20; // Active for 1 second if packets continue
+        this.remoteFwd = fwd;
+        this.remoteBack = back;
+        this.remoteLeft = left;
+        this.remoteRight = right;
+        this.remoteUp = up;
+        this.remoteDown = down;
+        this.remoteSprint = sprint;
+        this.remoteYaw = yaw;
+        this.remotePitch = pitch;
+    }
+
+    public void recallTo(BlockPos pos) {
+        this.homePos = pos;
+        this.currentTarget = null;
+        this.remoteControlTicks = 0;
+    }
+
+    @Nullable
+    public String getPairedPlayerUuid() {
+        return pairedPlayerUuid;
+    }
+
+    public void setPairedPlayerUuid(@Nullable String uuid) {
+        this.pairedPlayerUuid = uuid;
+    }
+
+    public boolean isRemoteControlled() {
+        return this.remoteControlTicks > 0;
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -178,15 +224,39 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
             this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK, this.getX(), this.getY() - 0.2, this.getZ(), 0, -0.05, 0);
         }
 
-        // Server-side AI & Targeting
+        // Server-side AI & Flight Execution
         if (!this.getWorld().isClient()) {
-            // Target scanning
-            if (this.age % 5 == 0 || this.currentTarget == null || !this.currentTarget.isAlive()) {
-                this.scanForTarget();
-            }
+            if (this.remoteControlTicks > 0) {
+                this.remoteControlTicks--;
 
-            // Autonomous Flight & Aiming
-            if (this.currentTarget != null && this.currentTarget.isAlive()) {
+                // Manual Piloting
+                this.setYaw(this.remoteYaw);
+                this.setPitch(this.remotePitch);
+                this.setBodyYaw(this.remoteYaw);
+                this.setHeadYaw(this.remoteYaw);
+
+                double rad = Math.toRadians(this.remoteYaw);
+                double fwdX = -Math.sin(rad);
+                double fwdZ = Math.cos(rad);
+                double rightX = -Math.sin(rad - Math.PI / 2);
+                double rightZ = Math.cos(rad - Math.PI / 2);
+
+                double speed = this.remoteSprint ? 0.95 : 0.48;
+                double moveX = 0;
+                double moveZ = 0;
+                double moveY = 0;
+
+                if (this.remoteFwd) { moveX += fwdX * speed; moveZ += fwdZ * speed; }
+                if (this.remoteBack) { moveX -= fwdX * (speed * 0.7); moveZ -= fwdZ * (speed * 0.7); }
+                if (this.remoteLeft) { moveX -= rightX * (speed * 0.7); moveZ -= rightZ * (speed * 0.7); }
+                if (this.remoteRight) { moveX += rightX * (speed * 0.7); moveZ += rightZ * (speed * 0.7); }
+                if (this.remoteUp) { moveY += speed * 0.8; }
+                if (this.remoteDown) { moveY -= speed * 0.8; }
+
+                this.setVelocity(this.getVelocity().multiply(0.75).add(moveX * 0.25, moveY * 0.25, moveZ * 0.25));
+
+            } else if (this.currentTarget != null && this.currentTarget.isAlive()) {
+                // Autonomous Target Engagement
                 Vec3d targetPos = this.currentTarget.getPos().add(0, 1.0, 0);
                 Vec3d dronePos = this.getPos();
 
@@ -221,6 +291,11 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
                     this.fireAtTarget(muzzlePos, aimDir);
                 }
             } else {
+                // Target scanning
+                if (this.age % 5 == 0) {
+                    this.scanForTarget();
+                }
+
                 // Idle Patrol around home anchor point
                 double time = this.age * 0.02;
                 double patrolRadius = 12.0;
@@ -279,6 +354,35 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
         }
 
         this.cooldown = COOLDOWN_TICKS;
+    }
+
+    public boolean fireManual(Vec3d aimDir) {
+        if (this.cooldown > 0) return false;
+        Vec3d muzzlePos = this.getPos().add(0, -0.4, 0);
+        TurretAmmoContainerBlockEntity container = getLinkedAmmoContainer();
+        if (container == null || !container.hasAmmo()) {
+            this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 0.8F, 1.8F);
+            return false;
+        }
+
+        AmmoType ammo = container.consumeBestAmmo();
+        if (ammo == null) return false;
+
+        TurretBulletEntity bullet = new TurretBulletEntity(this.getWorld(), muzzlePos.x + aimDir.x * 0.8, muzzlePos.y + aimDir.y * 0.8, muzzlePos.z + aimDir.z * 0.8, ammo);
+        float velocity = 4.2f * ammo.getVelocityMultiplier();
+        bullet.setVelocity(aimDir.x * velocity, aimDir.y * velocity, aimDir.z * velocity);
+        this.getWorld().spawnEntity(bullet);
+
+        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.7F, 1.9F);
+        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0F, 0.9F);
+
+        if (this.getWorld() instanceof ServerWorld serverWorld) {
+            serverWorld.spawnParticles(ParticleTypes.FLASH, muzzlePos.x, muzzlePos.y, muzzlePos.z, 1, 0, 0, 0, 0);
+            serverWorld.spawnParticles(ParticleTypes.SMOKE, muzzlePos.x, muzzlePos.y, muzzlePos.z, 3, 0.05, 0.05, 0.05, 0.02);
+        }
+
+        this.cooldown = COOLDOWN_TICKS;
+        return true;
     }
 
     @Nullable
@@ -354,6 +458,9 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
         if (this.linkedAmmoContainerPos != null) {
             nbt.put("LinkedContainer", NbtHelper.fromBlockPos(this.linkedAmmoContainerPos));
         }
+        if (this.pairedPlayerUuid != null) {
+            nbt.putString("PairedPlayer", this.pairedPlayerUuid);
+        }
     }
 
     @Override
@@ -367,6 +474,9 @@ public class FlyingTurretEntity extends PathAwareEntity implements NamedScreenHa
         }
         if (nbt.contains("LinkedContainer")) {
             this.linkedAmmoContainerPos = NbtHelper.toBlockPos(nbt.getCompound("LinkedContainer"));
+        }
+        if (nbt.contains("PairedPlayer")) {
+            this.pairedPlayerUuid = nbt.getString("PairedPlayer");
         }
     }
 }

@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.6] - 2026-09-11
+### Added & Improved
+- **Flying Turret Remote Controller**:
+  - Added dedicated handheld flight and combat remote control device (`Flying Turret Controller`) for the Flying Defense Drone with a 1024-block operating range.
+  - **Pairing & Link Management**:
+    - Right-click any Flying Defense Drone within 16 blocks to establish an encrypted radio telecommand link.
+    - Right-click in the air to toggle remote link between `ACTIVE` and `STANDBY`.
+    - Shift + Right-Click in the air to remotely access the Flying Drone's Area & Target Filter Terminal across dimensions.
+  - **First-Person Remote View (FPV Camera)**:
+    - Press `F` while paired to switch your camera directly to the Flying Drone's nose-mounted tactical optics.
+    - Supports full mouse look steering and optical zoom.
+  - **Manual 3D Flight Piloting**:
+    - Full manual 3D maneuver control (WASD for horizontal directional vectoring, Space to Ascend, Sneak to Descend, Sprint / Ctrl for high-speed turbo thrusters).
+  - **Manual Kinetic Cannon Trigger**:
+    - Press Left-Click (Attack Key) with the controller or in FPV view to fire kinetic rounds directly at your crosshair.
+  - **Instant Recall**:
+    - Press `C` (Auto Park Key) with the controller to instantly command the drone to return to your current position.
+  - **Crafting Recipe**: 1 Eye of Ender + 2 Steel Ingots + 1 Turret Linker + 1 Redstone.
+
 ## [1.8.5] - 2026-09-11
 ### Added & Improved
 - **Stationary Defense Turret**:

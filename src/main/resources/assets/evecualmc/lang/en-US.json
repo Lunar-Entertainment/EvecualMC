@@ -83,6 +83,7 @@
   "container.evecualmc.stationary_turret": "Stationary Turret Terminal",
   "container.evecualmc.flying_turret": "Flying Turret Drone Terminal",
   "item.evecualmc.flying_turret": "Flying Defense Turret",
+  "item.evecualmc.flying_turret_controller": "Flying Turret Controller",
   "entity.evecualmc.flying_turret": "Flying Defense Drone",
   "entity.evecualmc.turret_bullet": "Turret Kinetic Round",
   "category.evecualmc.evecual": "Evecual"
