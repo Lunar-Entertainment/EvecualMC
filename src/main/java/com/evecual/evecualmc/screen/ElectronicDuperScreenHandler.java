@@ -16,7 +16,7 @@ public class ElectronicDuperScreenHandler extends ScreenHandler {
     private final PropertyDelegate propertyDelegate;
 
     public ElectronicDuperScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(2), new ArrayPropertyDelegate(4));
+        this(syncId, playerInventory, new SimpleInventory(2), new ArrayPropertyDelegate(9));
     }
 
     public ElectronicDuperScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate) {
@@ -56,11 +56,25 @@ public class ElectronicDuperScreenHandler extends ScreenHandler {
     }
 
     public int getProgressTicks() {
-        return this.propertyDelegate.get(2);
+        return (this.propertyDelegate.get(2) & 0xFFFF) | ((this.propertyDelegate.get(3) & 0xFFFF) << 16);
+    }
+
+    public int getTotalTicks() {
+        int val = (this.propertyDelegate.get(4) & 0xFFFF) | ((this.propertyDelegate.get(5) & 0xFFFF) << 16);
+        return val > 0 ? val : 300;
     }
 
     public boolean isDuplicating() {
-        return this.propertyDelegate.get(3) == 1;
+        return this.propertyDelegate.get(6) == 1;
+    }
+
+    public int getEnergyCost() {
+        int val = (this.propertyDelegate.get(7) & 0xFFFF) | ((this.propertyDelegate.get(8) & 0xFFFF) << 16);
+        return val > 0 ? val : 100;
+    }
+
+    public ItemStack getInputStack() {
+        return this.inventory.getStack(0);
     }
 
     @Override

@@ -127,14 +127,33 @@ public class EnergyHudOverlay implements HudRenderCallback {
     private void renderDuperTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity duper) {
         long energy = duper.getEnergy();
         long maxEnergy = duper.getMaxEnergy();
-        String status = duper.isDuplicating()
-                ? "🌀 Duplicating... " + (int) ((duper.getProgressTicks() / 2400.0F) * 100) + "% (" + (2400 - duper.getProgressTicks()) / 20 + "s left)"
-                : (energy >= 1500 ? "⚡ Ready - Insert Item & 1500 EU" : "⚡ Need Energy: 1500 EU (Need " + (1500 - energy) + " more)");
-        int color = duper.isDuplicating() ? 0xFF86EFAC : (energy >= 1500 ? 0xFF67E8F9 : 0xFFF87171);
+        int maxTicks = duper.getTotalTicks();
+        int reqEnergy = duper.getEnergyCost();
+        int progress = duper.getProgressTicks();
+
+        String status;
+        if (duper.isDuplicating()) {
+            int pct = (int) (((float) progress / Math.max(1, maxTicks)) * 100);
+            int remTicks = Math.max(0, maxTicks - progress);
+            String timeStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(remTicks);
+            status = "🌀 Duplicating... " + pct + "% (" + timeStr + " left)";
+        } else {
+            ItemStack stack = duper.getStack(0);
+            if (!stack.isEmpty()) {
+                String durStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(maxTicks);
+                status = energy >= reqEnergy
+                        ? "⚡ Ready: " + durStr + " (" + reqEnergy + " EU)"
+                        : "⚡ Need Energy: " + reqEnergy + " EU (Need " + (reqEnergy - energy) + " more)";
+            } else {
+                status = "⚡ Idle - Insert Item to Duplicate";
+            }
+        }
+        int color = duper.isDuplicating() ? 0xFF86EFAC : (energy >= reqEnergy ? 0xFF67E8F9 : 0xFFF87171);
 
         renderUnifiedHud(context, client, "🌀", "Electronic Duper", 0xFF00E5FF,
                 energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
-                (double) duper.getProgressTicks() / 2400.0, 0xFF06B6D4);
+                duper.isDuplicating() ? (double) progress / Math.max(1, maxTicks) : null,
+                duper.isDuplicating() ? 0xFF06B6D4 : null);
     }
 
     private void renderChargerWaypoints(DrawContext context, MinecraftClient client) {

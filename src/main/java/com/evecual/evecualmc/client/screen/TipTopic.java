@@ -117,7 +117,7 @@ public enum TipTopic {
             },
             new String[]{
                     "Wires can be concealed under floors or inside walls to create clean, hidden electrical grids.",
-                    "No power loss over distance—build your power plant anywhere and cable it to your garage.",
+                    "Cables transfer power reliably up to 32 blocks away from your power generators and batteries.",
                     "Single wires can bridge solar arrays on roofs straight down into basement battery rooms."
             }
     ),

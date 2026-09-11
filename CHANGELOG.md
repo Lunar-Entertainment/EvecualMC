@@ -1,5 +1,35 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.4] - 2026-09-11
+### Added & Improved
+- **Lightning Item Durability & Extended Cooldown**:
+  - Added 64 durability points to the Lightning Item, consuming 1 durability per strike.
+  - Increased cooldown from 0.5s (10 ticks) to 4.0s (80 ticks) between strikes to prevent spamming.
+  - Added durability and cooldown status indicators to item tooltips.
+- **Electronic Duper Tiered Item Rarity & Duration Scaling**:
+  - Replaced the flat duplication cycle with a dynamic item rarity evaluation system (`DuperRarityHelper`):
+    - **Common / Basic Materials** (Dirt, Stone, Cobblestone, Seeds, Wood, Gravel, Sand, etc.): 15 seconds (300 ticks), 100 EU.
+    - **Uncommon / Resources** (Iron, Copper, Coal, Redstone, Lapis, Quartz, Amethyst, Gunpowder, etc.): 60 seconds (1,200 ticks), 400 EU.
+    - **Precious Metals & Drops** (Gold, Ender Pearls, Blaze Rods, Slimeballs, Obsidian, etc.): 3 minutes (3,600 ticks), 800 EU.
+    - **Rare / Gems** (Diamonds, Emeralds, Ancient Debris, Nautilus Shells, etc.): 15 minutes (18,000 ticks), 1,500 EU.
+    - **Epic Artifacts** (Beacons, Totems of Undying, Tridents, Enchanted Apples, etc.): 25 minutes (30,000 ticks), 2,000 EU.
+    - **Shulker Class** (Shulker Shells & Shulker Boxes): 35 minutes (42,000 ticks), 2,500 EU.
+    - **End-Game / Legendary** (Elytra, Dragon Eggs, Nether Stars): 60 minutes (72,000 ticks), 3,000 EU.
+    - **Mythic Netherite** (Netherite Ingots, Scraps, Armor, Tools, Templates): 75 minutes / 1h 15m (90,000 ticks), 3,000 EU.
+  - Screen and HUD overlays now dynamically render item rarity tier, required energy, progress %, and exact remaining time in `Xh Ym Zs` format without 16-bit integer limitations.
+- **Cable Transmission Distance Limitation**:
+  - Power wires and cables now transmit electricity reliably up to a maximum distance of 32 blocks from the power source or battery cluster, preventing infinite distance propagation.
+  - Traversed wires actively record energy throughput during electrical distribution.
+
+### Fixed
+- **Electronic Duper Missing Texture**:
+  - Created dedicated 16x16 pixel-art textures (`duper_front.png`, `duper_side.png`, `duper_top.png`, `duper_bottom.png`) with cyan quantum vortex emitters, illuminated status LEDs, and reinforced alloy chassis.
+  - Corrected `models/block/electronic_duper.json` texture mappings to resolve missing purple-black checkerboard rendering.
+- **Battery Energy Output & Machine Compatibility**:
+  - Fixed a bug where Battery Blocks failed to output electricity to connected machines (such as the Electronic Duper).
+  - Generalized battery discharge to recognize any `EnergyStorage` receiver.
+  - Streamlined battery cluster distribution so the whole cluster discharges uniformly and charge levels remain synchronized.
+
 ## [1.8.3] - 2026-09-10
 ### Fixed
 - **Helicopter Fall Damage & High-Speed Flight Safety**:

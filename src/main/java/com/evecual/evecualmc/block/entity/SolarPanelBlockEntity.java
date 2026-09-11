@@ -66,19 +66,28 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
         }
     }
 
+    public static final int MAX_WIRE_DISTANCE = 32;
+
+    private record WireHop(BlockPos pos, int distance) {}
+
     private void transferEnergyToNetwork(World world, BlockPos startPos) {
-        Queue<BlockPos> queue = new ArrayDeque<>();
+        Queue<WireHop> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
         List<EnergyStorage> targets = new ArrayList<>();
+        visited.add(startPos);
 
         // Check direct neighbors of solar panel
         for (Direction dir : Direction.values()) {
             BlockPos neighbor = startPos.offset(dir);
-            BlockState neighborState = world.getBlockState(neighbor);
+            if (!visited.add(neighbor)) continue;
 
+            BlockState neighborState = world.getBlockState(neighbor);
             if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
-                queue.add(neighbor);
-                visited.add(neighbor);
+                queue.add(new WireHop(neighbor, 1));
+                BlockEntity wireBe = world.getBlockEntity(neighbor);
+                if (wireBe instanceof WireBlockEntity wbe) {
+                    wbe.recordEnergyTransfer(5);
+                }
             } else {
                 BlockEntity neighborBe = world.getBlockEntity(neighbor);
                 if (neighborBe instanceof EnergyStorage storage && neighborBe != this) {
@@ -87,18 +96,23 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
             }
         }
 
-        // BFS through connected wire network (up to 64 hops)
-        int maxHops = 64;
-        while (!queue.isEmpty() && visited.size() <= maxHops) {
-            BlockPos current = queue.poll();
+        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (32 blocks)
+        while (!queue.isEmpty()) {
+            WireHop current = queue.poll();
 
             for (Direction dir : Direction.values()) {
-                BlockPos next = current.offset(dir);
+                BlockPos next = current.pos().offset(dir);
                 if (!visited.add(next)) continue;
 
                 BlockState nextState = world.getBlockState(next);
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
-                    queue.add(next);
+                    if (current.distance() < MAX_WIRE_DISTANCE) {
+                        queue.add(new WireHop(next, current.distance() + 1));
+                        BlockEntity wireBe = world.getBlockEntity(next);
+                        if (wireBe instanceof WireBlockEntity wbe) {
+                            wbe.recordEnergyTransfer(5);
+                        }
+                    }
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
                     if (nextBe instanceof EnergyStorage storage && nextBe != this) {

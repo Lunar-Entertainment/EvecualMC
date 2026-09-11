@@ -60,6 +60,7 @@ public class LightningItem extends Item {
             boolean noFire = itemStack.hasNbt() && itemStack.getNbt().getBoolean("NoFire");
 
             if (!world.isClient()) {
+                itemStack.damage(1, user, p -> p.sendToolBreakStatus(hand));
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dz = -1; dz <= 1; dz++) {
                         BlockPos strikePos = targetPos.add(dx, 0, dz);
@@ -80,7 +81,7 @@ public class LightningItem extends Item {
                 }
             }
 
-            user.getItemCooldownManager().set(this, 10);
+            user.getItemCooldownManager().set(this, 80);
             return TypedActionResult.success(itemStack, world.isClient());
         }
 
@@ -90,6 +91,8 @@ public class LightningItem extends Item {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         boolean noFire = stack.hasNbt() && stack.getNbt().getBoolean("NoFire");
+        tooltip.add(Text.literal("§e⚡ Cooldown: §f4.0s"));
+        tooltip.add(Text.literal("§7Durability: §a" + (stack.getMaxDamage() - stack.getDamage()) + " §7/ §2" + stack.getMaxDamage()));
         if (noFire) {
             tooltip.add(Text.literal("§7Mode: §b⚡ Pure Lightning (No Fire, Damage Only)"));
         } else {

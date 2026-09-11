@@ -41,8 +41,12 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
         }
     }
 
+    public static final int MAX_WIRE_DISTANCE = 32;
+
+    private record WireHop(BlockPos pos, int distance) {}
+
     private void outputEnergyToNetwork(World world, BlockPos basePos) {
-        Queue<BlockPos> queue = new ArrayDeque<>();
+        Queue<WireHop> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
         List<EnergyStorage> targets = new ArrayList<>();
 
@@ -57,7 +61,11 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
 
                 BlockState neighborState = world.getBlockState(neighbor);
                 if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
-                    queue.add(neighbor);
+                    queue.add(new WireHop(neighbor, 1));
+                    BlockEntity wireBe = world.getBlockEntity(neighbor);
+                    if (wireBe instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) {
+                        wbe.recordEnergyTransfer(OUTPUT_RATE);
+                    }
                 } else {
                     BlockEntity neighborBe = world.getBlockEntity(neighbor);
                     if (neighborBe instanceof EnergyStorage storage && neighborBe != this) {
@@ -67,21 +75,22 @@ public class WindTurbineBlockEntity extends BlockEntity implements EnergyStorage
             }
         }
 
-        // BFS through connected wire network (up to 64 hops)
-        int maxHops = 64;
-        while (!queue.isEmpty() && visited.size() <= maxHops) {
-            BlockPos current = queue.poll();
+        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (32 blocks)
+        while (!queue.isEmpty()) {
+            WireHop current = queue.poll();
 
             for (Direction dir : Direction.values()) {
-                BlockPos next = current.offset(dir);
+                BlockPos next = current.pos().offset(dir);
                 if (!visited.add(next)) continue;
 
                 BlockState nextState = world.getBlockState(next);
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
-                    queue.add(next);
-                    BlockEntity wireBe = world.getBlockEntity(next);
-                    if (wireBe instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) {
-                        wbe.recordEnergyTransfer(OUTPUT_RATE);
+                    if (current.distance() < MAX_WIRE_DISTANCE) {
+                        queue.add(new WireHop(next, current.distance() + 1));
+                        BlockEntity wireBe = world.getBlockEntity(next);
+                        if (wireBe instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) {
+                            wbe.recordEnergyTransfer(OUTPUT_RATE);
+                        }
                     }
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);

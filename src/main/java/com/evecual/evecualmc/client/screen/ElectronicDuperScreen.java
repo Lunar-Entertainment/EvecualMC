@@ -6,6 +6,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -48,14 +49,15 @@ public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHa
         // 1. Energy Storage Gauge Bar (x: 16, y: 24, w: 14, h: 48)
         int energy = this.handler.getEnergy();
         int maxEnergy = 3000;
+        int reqEnergy = this.handler.getEnergyCost();
         float energyRatio = Math.min(1.0F, (float) energy / (float) maxEnergy);
         int energyFillHeight = (int) (46 * energyRatio);
 
         context.fill(x + 16, y + 24, x + 30, y + 72, 0xFF080D1A);
         context.drawBorder(x + 16, y + 24, 14, 48, 0xFF00E5FF);
 
-        // Required 1500 EU Threshold Line
-        int reqY = y + 72 - (int) (46 * (1500.0F / 3000.0F));
+        // Required EU Threshold Line
+        int reqY = y + 72 - (int) (46 * Math.min(1.0F, (float) reqEnergy / (float) maxEnergy));
         context.fill(x + 17, reqY, x + 29, reqY + 1, 0xFFFFD700);
 
         if (energyFillHeight > 0) {
@@ -64,9 +66,9 @@ public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHa
 
         // 2. Quantum Duplication Progress Beam (x: 68, y: 39, w: 56, h: 10)
         int progress = this.handler.getProgressTicks();
-        int maxProgress = 2400; // 2 minutes
+        int maxProgress = this.handler.getTotalTicks();
         boolean isDuplicating = this.handler.isDuplicating();
-        float progressRatio = isDuplicating ? Math.min(1.0F, (float) progress / (float) maxProgress) : 0.0F;
+        float progressRatio = isDuplicating ? Math.min(1.0F, (float) progress / (float) Math.max(1, maxProgress)) : 0.0F;
         int progressFillWidth = (int) (54 * progressRatio);
 
         context.fill(x + 68, y + 39, x + 124, y + 49, 0xFF080D1A);
@@ -76,19 +78,27 @@ public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHa
             context.fill(x + 69, y + 40, x + 69 + progressFillWidth, y + 48, 0xFFFFD700);
         }
 
-        // Status Message below slots
+        // Status Message & Rarity Badge below slots
+        ItemStack input = this.handler.getInputStack();
         if (isDuplicating) {
             int pct = (int) (progressRatio * 100);
-            int remSec = Math.max(0, (maxProgress - progress) / 20);
-            int mins = remSec / 60;
-            int secs = remSec % 60;
-            String timeStr = String.format("%dm %02ds", mins, secs);
-            context.drawText(this.textRenderer, "🌀 Duplicating... " + pct + "% (" + timeStr + ")", x + 40, y + 62, 0xFFFFD700, false);
+            int remTicks = Math.max(0, maxProgress - progress);
+            String timeStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(remTicks);
+            context.drawText(this.textRenderer, "🌀 " + pct + "% (" + timeStr + ")", x + 38, y + 60, 0xFFFFD700, false);
+            context.drawText(this.textRenderer, "Tier: " + com.evecual.evecualmc.util.DuperRarityHelper.getRarityLabel(input), x + 38, y + 70, 0xFF67E8F9, false);
         } else {
-            if (energy < 1500) {
-                context.drawText(this.textRenderer, "⚡ Needs 1500 EU (Stored: " + energy + " EU)", x + 38, y + 62, 0xFFFFAA00, false);
+            if (!input.isEmpty()) {
+                String rarity = com.evecual.evecualmc.util.DuperRarityHelper.getRarityLabel(input);
+                String durStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(maxProgress);
+                if (energy < reqEnergy) {
+                    context.drawText(this.textRenderer, "⚡ Needs " + reqEnergy + " EU (" + energy + "/" + reqEnergy + ")", x + 38, y + 60, 0xFFFFAA00, false);
+                    context.drawText(this.textRenderer, "Time: " + durStr + " | " + rarity, x + 38, y + 70, 0xFF94A3B8, false);
+                } else {
+                    context.drawText(this.textRenderer, "⚡ Ready: " + durStr + " (" + reqEnergy + " EU)", x + 38, y + 60, 0xFF55FF55, false);
+                    context.drawText(this.textRenderer, "Rarity: " + rarity, x + 38, y + 70, 0xFF67E8F9, false);
+                }
             } else {
-                context.drawText(this.textRenderer, "⚡ Ready - Insert Item & 1500 EU", x + 38, y + 62, 0xFF55FF55, false);
+                context.drawText(this.textRenderer, "⚡ Insert Item to Duplicate", x + 38, y + 62, 0xFF94A3B8, false);
             }
         }
 
@@ -118,7 +128,7 @@ public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHa
 
         // Energy Gauge Tooltip
         if (mouseX >= x + 16 && mouseX <= x + 30 && mouseY >= y + 24 && mouseY <= y + 72) {
-            context.drawTooltip(this.textRenderer, Text.literal("⚡ Stored Energy: " + this.handler.getEnergy() + " / 3000 EU\nRequired per cycle: 1500 EU"), mouseX, mouseY);
+            context.drawTooltip(this.textRenderer, Text.literal("⚡ Stored Energy: " + this.handler.getEnergy() + " / 3000 EU\nRequired per cycle: " + this.handler.getEnergyCost() + " EU"), mouseX, mouseY);
         }
     }
 }

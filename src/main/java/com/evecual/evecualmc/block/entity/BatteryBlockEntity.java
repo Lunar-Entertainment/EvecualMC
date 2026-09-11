@@ -29,6 +29,8 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         super(EvecualMC.BATTERY_BLOCK_ENTITY, pos, state);
     }
 
+    public static final int MAX_WIRE_DISTANCE = 32;
+
     public static void tick(net.minecraft.world.World world, BlockPos pos, BlockState state, BatteryBlockEntity be) {
         if (world.isClient) return;
 
@@ -37,8 +39,10 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
             be.equalizeCluster();
         }
 
-        if (be.energy > 0) {
-            be.transferEnergyToConsumers(world, pos);
+        BatteryCluster cluster = be.getCluster();
+        // Only the first battery in the cluster drives the network transfer to avoid redundant or conflicting discharge
+        if (!cluster.batteries().isEmpty() && cluster.batteries().get(0) == be && cluster.totalEnergy() > 0) {
+            be.transferEnergyToConsumers(world, pos, cluster);
         }
         be.updateChargeLevel();
     }
@@ -98,13 +102,14 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         }
     }
 
-    private void transferEnergyToConsumers(net.minecraft.world.World world, BlockPos startPos) {
-        Queue<BlockPos> queue = new ArrayDeque<>();
+    private record WireHop(BlockPos pos, int distance) {}
+
+    private void transferEnergyToConsumers(net.minecraft.world.World world, BlockPos startPos, BatteryCluster cluster) {
+        Queue<WireHop> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
         List<EnergyStorage> consumers = new ArrayList<>();
 
         // Add all battery positions in the cluster to visited so the cluster doesn't feed into itself
-        BatteryCluster cluster = getCluster();
         for (BatteryBlockEntity bbe : cluster.batteries()) {
             visited.add(bbe.getPos());
         }
@@ -116,47 +121,63 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
 
                 BlockState neighborState = world.getBlockState(neighbor);
                 if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
-                    queue.add(neighbor);
+                    queue.add(new WireHop(neighbor, 1));
+                    BlockEntity wireBe = world.getBlockEntity(neighbor);
+                    if (wireBe instanceof WireBlockEntity wbe) {
+                        wbe.recordEnergyTransfer(20);
+                    }
                 } else {
                     BlockEntity neighborBe = world.getBlockEntity(neighbor);
-                    if ((neighborBe instanceof ElectronicCombinerBlockEntity || neighborBe instanceof ChargerBlockEntity || neighborBe instanceof RcChargerBlockEntity) && neighborBe != this) {
-                        consumers.add((EnergyStorage) neighborBe);
+                    if (neighborBe instanceof EnergyStorage storage
+                            && !(neighborBe instanceof BatteryBlockEntity)
+                            && !(neighborBe instanceof SolarPanelBlockEntity)
+                            && !(neighborBe instanceof WindTurbineBlockEntity)) {
+                        consumers.add(storage);
                     }
                 }
             }
         }
 
-        int maxHops = 64;
-        while (!queue.isEmpty() && visited.size() <= maxHops) {
-            BlockPos current = queue.poll();
+        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (32 blocks)
+        while (!queue.isEmpty()) {
+            WireHop current = queue.poll();
 
             for (Direction dir : Direction.values()) {
-                BlockPos next = current.offset(dir);
+                BlockPos next = current.pos().offset(dir);
                 if (!visited.add(next)) continue;
 
                 BlockState nextState = world.getBlockState(next);
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
-                    queue.add(next);
+                    if (current.distance() < MAX_WIRE_DISTANCE) {
+                        queue.add(new WireHop(next, current.distance() + 1));
+                        BlockEntity wireBe = world.getBlockEntity(next);
+                        if (wireBe instanceof WireBlockEntity wbe) {
+                            wbe.recordEnergyTransfer(20);
+                        }
+                    }
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
-                    if ((nextBe instanceof ElectronicCombinerBlockEntity || nextBe instanceof ChargerBlockEntity || nextBe instanceof RcChargerBlockEntity) && nextBe != this) {
-                        consumers.add((EnergyStorage) nextBe);
+                    if (nextBe instanceof EnergyStorage storage
+                            && !(nextBe instanceof BatteryBlockEntity)
+                            && !(nextBe instanceof SolarPanelBlockEntity)
+                            && !(nextBe instanceof WindTurbineBlockEntity)) {
+                        consumers.add(storage);
                     }
                 }
             }
         }
 
-        if (!consumers.isEmpty()) {
+        if (!consumers.isEmpty() && cluster.totalEnergy() > 0) {
             for (EnergyStorage consumer : consumers) {
-                if (this.energy <= 0) break;
+                if (cluster.totalEnergy() <= 0) break;
 
                 long needed = consumer.getMaxEnergy() - consumer.getEnergy();
                 if (needed > 0) {
-                    long toSend = Math.min(this.energy, Math.min(needed, 10));
-                    long inserted = consumer.insertEnergy(toSend, false);
-                    this.energy -= inserted;
-                    this.markDirty();
-                    this.sync();
+                    long toSend = Math.min(cluster.totalEnergy(), Math.min(needed, 20));
+                    long extracted = this.extractEnergy(toSend, false);
+                    if (extracted > 0) {
+                        consumer.insertEnergy(extracted, false);
+                    }
                 }
             }
         }

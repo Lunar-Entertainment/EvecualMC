@@ -3,6 +3,7 @@ package com.evecual.evecualmc.block.entity;
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.energy.EnergyStorage;
 import com.evecual.evecualmc.screen.ElectronicDuperScreenHandler;
+import com.evecual.evecualmc.util.DuperRarityHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ElectronicDuperBlockEntity extends BlockEntity implements EnergyStorage, NamedScreenHandlerFactory, SidedInventory {
     public static final int MAX_ENERGY = 3000;
-    public static final int CYCLE_ENERGY_COST = 1500;
-    public static final int CYCLE_TOTAL_TICKS = 2400; // 2 minutes (120 sec * 20 tps)
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(2, ItemStack.EMPTY);
     private int energy = 0;
     private int progressTicks = 0;
+    private int totalTicks = DuperRarityHelper.TICKS_COMMON;
+    private int energyCost = DuperRarityHelper.ENERGY_COMMON;
     private boolean duplicating = false;
     private ItemStack duplicatingTarget = ItemStack.EMPTY;
 
@@ -46,8 +47,13 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
             return switch (index) {
                 case 0 -> energy & 0xFFFF;
                 case 1 -> (energy >> 16) & 0xFFFF;
-                case 2 -> progressTicks;
-                case 3 -> duplicating ? 1 : 0;
+                case 2 -> progressTicks & 0xFFFF;
+                case 3 -> (progressTicks >> 16) & 0xFFFF;
+                case 4 -> totalTicks & 0xFFFF;
+                case 5 -> (totalTicks >> 16) & 0xFFFF;
+                case 6 -> duplicating ? 1 : 0;
+                case 7 -> energyCost & 0xFFFF;
+                case 8 -> (energyCost >> 16) & 0xFFFF;
                 default -> 0;
             };
         }
@@ -57,14 +63,19 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
             switch (index) {
                 case 0 -> energy = (energy & 0xFFFF0000) | (value & 0xFFFF);
                 case 1 -> energy = (energy & 0x0000FFFF) | ((value & 0xFFFF) << 16);
-                case 2 -> progressTicks = value;
-                case 3 -> duplicating = (value == 1);
+                case 2 -> progressTicks = (progressTicks & 0xFFFF0000) | (value & 0xFFFF);
+                case 3 -> progressTicks = (progressTicks & 0x0000FFFF) | ((value & 0xFFFF) << 16);
+                case 4 -> totalTicks = (totalTicks & 0xFFFF0000) | (value & 0xFFFF);
+                case 5 -> totalTicks = (totalTicks & 0x0000FFFF) | ((value & 0xFFFF) << 16);
+                case 6 -> duplicating = (value == 1);
+                case 7 -> energyCost = (energyCost & 0xFFFF0000) | (value & 0xFFFF);
+                case 8 -> energyCost = (energyCost & 0x0000FFFF) | ((value & 0xFFFF) << 16);
             }
         }
 
         @Override
         public int size() {
-            return 4;
+            return 9;
         }
     };
 
@@ -78,6 +89,14 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
 
     public int getProgressTicks() {
         return this.progressTicks;
+    }
+
+    public int getTotalTicks() {
+        return this.totalTicks;
+    }
+
+    public int getEnergyCost() {
+        return this.energyCost;
     }
 
     public boolean isDuplicating() {
@@ -126,16 +145,29 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
         ServerWorld serverWorld = (ServerWorld) world;
         ItemStack inputStack = be.getStack(0);
 
+        // Update preview requirement when idle
+        if (!be.duplicating) {
+            if (!inputStack.isEmpty()) {
+                be.totalTicks = DuperRarityHelper.getRequiredTicks(inputStack);
+                be.energyCost = DuperRarityHelper.getRequiredEnergy(inputStack);
+            } else {
+                be.totalTicks = DuperRarityHelper.TICKS_COMMON;
+                be.energyCost = DuperRarityHelper.ENERGY_COMMON;
+            }
+        }
+
         // Check if output slot can accept a duplicate unit
         boolean canAcceptOutput = be.canAcceptOutput(be.duplicating ? be.duplicatingTarget : inputStack);
 
         // Start new duplication cycle if conditions are met
-        if (!be.duplicating && !inputStack.isEmpty() && be.energy >= CYCLE_ENERGY_COST && canAcceptOutput) {
-            be.energy -= CYCLE_ENERGY_COST;
+        if (!be.duplicating && !inputStack.isEmpty() && be.energy >= be.energyCost && canAcceptOutput) {
+            be.energy -= be.energyCost;
             be.duplicating = true;
             be.progressTicks = 0;
             be.duplicatingTarget = inputStack.copy();
             be.duplicatingTarget.setCount(1);
+            be.totalTicks = DuperRarityHelper.getRequiredTicks(be.duplicatingTarget);
+            be.energyCost = DuperRarityHelper.getRequiredEnergy(be.duplicatingTarget);
             be.markDirty();
             be.sync();
         }
@@ -158,15 +190,15 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
                 world.playSound(null, pos, SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS, 0.3F, 1.8F);
             }
 
-            // Completion check (2 minutes / 2400 ticks)
-            if (be.progressTicks >= CYCLE_TOTAL_TICKS) {
+            // Completion check based on dynamic totalTicks
+            if (be.progressTicks >= be.totalTicks) {
                 if (!be.duplicatingTarget.isEmpty() && be.canAcceptOutput(be.duplicatingTarget)) {
                     be.depositDuplicate(be.duplicatingTarget.copy());
                     world.playSound(null, pos, SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.BLOCKS, 0.8F, 1.5F);
                     world.playSound(null, pos, SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.BLOCKS, 0.5F, 1.8F);
 
                     // Quantum burst particle effect
-                    serverWorld.spawnParticles(ParticleTypes.FIREWORK, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 12, 0.15, 0.15, 0.15, 0.05);
+                    serverWorld.spawnParticles(ParticleTypes.FIREWORK, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 16, 0.15, 0.15, 0.15, 0.05);
                 }
 
                 be.duplicating = false;
@@ -299,6 +331,8 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
         super.readNbt(nbt);
         energy = nbt.getInt("Energy");
         progressTicks = nbt.getInt("ProgressTicks");
+        totalTicks = nbt.contains("TotalTicks") ? nbt.getInt("TotalTicks") : DuperRarityHelper.TICKS_COMMON;
+        energyCost = nbt.contains("EnergyCost") ? nbt.getInt("EnergyCost") : DuperRarityHelper.ENERGY_COMMON;
         duplicating = nbt.getBoolean("Duplicating");
         if (nbt.contains("DuplicatingTarget", 10)) {
             duplicatingTarget = ItemStack.fromNbt(nbt.getCompound("DuplicatingTarget"));
@@ -313,6 +347,8 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
         super.writeNbt(nbt);
         nbt.putInt("Energy", energy);
         nbt.putInt("ProgressTicks", progressTicks);
+        nbt.putInt("TotalTicks", totalTicks);
+        nbt.putInt("EnergyCost", energyCost);
         nbt.putBoolean("Duplicating", duplicating);
         if (!duplicatingTarget.isEmpty()) {
             NbtCompound itemNbt = new NbtCompound();

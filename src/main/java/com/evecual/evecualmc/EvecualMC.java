@@ -51,7 +51,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item LIGHTNING_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "lightning"),
-            new LightningItem(new Item.Settings().maxCount(1)));
+            new LightningItem(new Item.Settings().maxCount(1).maxDamage(64)));
 
     public static final Item STEEL_INGOT = Registry.register(
             Registries.ITEM,
