@@ -853,6 +853,77 @@ public enum TipTopic {
                     "Combine with Mining Arms to create an autonomous aerial mining drone.",
                     "Helicopter chunk remains loaded during active flight operations."
             }
+    ),
+
+    STATIONARY_TURRET(
+            "stationary_turret",
+            "Stationary Turret",
+            "🛡️ Automated Defense Sentry",
+            () -> new ItemStack(EvecualMC.STATIONARY_TURRET_ITEM),
+            "Heavy automated defense sentry that tracks and engages hostile mobs, intruders, and aerial threats with high-velocity kinetic projectiles.",
+            new String[]{
+                    "Place down in an open perimeter or defense vantage point.",
+                    "Must be linked to a Turret Ammo Container using the Turret Linker tool.",
+                    "Right-click the turret to open the Target Filter GUI (adjust detection radius from 8m up to 256m).",
+                    "Configurable to target Hostile Monsters, Players, Animals, and Bosses.",
+                    "Smoothly rotates yaw and pitch to lead moving targets and fires automatically."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Target Filter & Radius GUI"},
+                    {"Turret Linker", "Link to Ammo Container (Right-click container, then turret)"},
+                    {"Pickaxe / Hand", "Mineable to retrieve"}
+            },
+            new String[]{
+                    "Link multiple turrets to a single Turret Ammo Container for synchronized perimeter defense.",
+                    "Supports Copper, Iron, and Diamond ammunition types for scaled projectile damage.",
+                    "Has an effective operational range of up to 256 blocks (512x512 area coverage)!"
+            }
+    ),
+
+    TURRET_AMMO_CONTAINER(
+            "turret_ammo_container",
+            "Turret Ammo Container",
+            "📦 Heavy Ammunition Magazine",
+            () -> new ItemStack(EvecualMC.TURRET_AMMO_CONTAINER_ITEM),
+            "Armored 27-slot ammunition supply depot that feeds linked Stationary Turrets wirelessly with ammunition.",
+            new String[]{
+                    "Place near your base or defense installations.",
+                    "Load with Copper Ammo, Iron Ammo, or Diamond Ammo (up to 27 full stacks).",
+                    "Right-click with the Turret Linker tool to select this container as the ammo source.",
+                    "Feeds ammo directly to any number of linked Stationary Turrets across the perimeter."
+            },
+            new String[][]{
+                    {"Right-Click", "Open 27-Slot Ammo Storage Matrix"},
+                    {"Turret Linker", "Right-click to select as source for turrets"},
+                    {"Hopper / Pipe", "Automated ammo replenishment from bottom/sides"}
+            },
+            new String[]{
+                    "Automatically supplies whichever ammo type is loaded, prioritizing higher tier ammo.",
+                    "Breaking the container safely preserves items or spills them if broken in survival.",
+                    "One ammo container can supply an entire network of defensive turrets."
+            }
+    ),
+
+    TURRET_LINKER(
+            "turret_linker",
+            "Turret Linker",
+            "🔧 Defense Configuration Tool",
+            () -> new ItemStack(EvecualMC.TURRET_LINKER),
+            "Tactical RF calibration tool used to bind Stationary Turrets to Turret Ammo Containers.",
+            new String[]{
+                    "Step 1: Right-click on a Turret Ammo Container to store its frequency.",
+                    "Step 2: Right-click on any Stationary Turret to establish the telemetry link.",
+                    "The turret will now draw ammunition wirelessly from the linked container."
+            },
+            new String[][]{
+                    {"Right-Click Ammo Container", "Select and store ammo depot position"},
+                    {"Right-Click Turret", "Bind turret to stored ammo container"},
+                    {"Shift + Right-Click Air", "Clear saved container position"}
+            },
+            new String[]{
+                    "Link status is confirmed with chime sounds and action bar confirmations.",
+                    "A single container can be linked to indefinitely many turrets."
+            }
     );
 
     public final String id;
@@ -939,6 +1010,8 @@ public enum TipTopic {
         if (block == EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) return PICKUP_DRONE_PARKING_SPOT;
         if (block == EvecualMC.ELECTRIC_CHUTE_BLOCK) return ELECTRIC_CHUTE;
         if (block == EvecualMC.STORAGE_UNIT_BLOCK) return STORAGE_UNIT;
+        if (block == EvecualMC.STATIONARY_TURRET_BLOCK) return STATIONARY_TURRET;
+        if (block == EvecualMC.TURRET_AMMO_CONTAINER_BLOCK) return TURRET_AMMO_CONTAINER;
         return null;
     }
 
@@ -955,6 +1028,9 @@ public enum TipTopic {
         if (item == EvecualMC.PICKUP_DRONE_PARKING_SPOT_ITEM) return PICKUP_DRONE_PARKING_SPOT;
         if (item == EvecualMC.ELECTRIC_CHUTE_ITEM) return ELECTRIC_CHUTE;
         if (item == EvecualMC.STORAGE_UNIT_ITEM) return STORAGE_UNIT;
+        if (item == EvecualMC.STATIONARY_TURRET_ITEM) return STATIONARY_TURRET;
+        if (item == EvecualMC.TURRET_AMMO_CONTAINER_ITEM) return TURRET_AMMO_CONTAINER;
+        if (item == EvecualMC.TURRET_LINKER) return TURRET_LINKER;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
         if (item == EvecualMC.STATIONARY_RC_CONTROLLER_ITEM) return STATIONARY_RC_CONTROLLER;

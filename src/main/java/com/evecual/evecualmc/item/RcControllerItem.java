@@ -65,6 +65,7 @@ public class RcControllerItem extends Item {
         }
 
         String droneName = (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity) ? "Pickup Drone" : "RC Drone";
+        nbt.putString("VehicleName", droneName);
         player.sendMessage(Text.literal("§a📡 RC Controller paired to " + droneName + "! §7(Range: 512m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
@@ -274,7 +275,9 @@ public class RcControllerItem extends Item {
                             }
                         }
                     }
-                    user.sendMessage(Text.literal("§b🚁 RC Drone Flight Link: §aENABLED §7[W/A/S/D Fly, Space Up, Shift Down, F Camera]"), true);
+                    String dName = nbt.contains("VehicleName") ? nbt.getString("VehicleName") : "RC Drone";
+                    String dIcon = dName.contains("Pickup") ? "🛡️" : "🚁";
+                    user.sendMessage(Text.literal("§b" + dIcon + " " + dName + " Flight Link: §aENABLED §7[W/A/S/D Fly, Space Up, Shift Down, F Camera]"), true);
                 } else {
                     if (carUuid != null) {
                         for (RcCarEntity car : world.getEntitiesByClass(RcCarEntity.class, user.getBoundingBox().expand(256.0), c -> c.getUuid().equals(carUuid))) {
@@ -283,7 +286,7 @@ public class RcControllerItem extends Item {
                             }
                         }
                     }
-                    user.sendMessage(Text.literal("§a📡 RC Car Remote Link: §aENABLED §7[W/A/S/D Drive, F Camera]"), true);
+                    user.sendMessage(Text.literal("§a🏎️ RC Car Remote Link: §aENABLED §7[W/A/S/D Drive, F Camera]"), true);
                 }
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
                         SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.PLAYERS, 0.6f, 1.8f);
@@ -335,7 +338,9 @@ public class RcControllerItem extends Item {
                 tooltip.add(Text.literal("§8Controls: W/A/S/D Move | LMB Right Arm | RMB Left Arm | Z Cargo"));
                 tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));
             } else if (nbt.containsUuid("PairedDrone") || "drone".equals(type)) {
-                tooltip.add(Text.literal("§7Paired to: §bRC Drone"));
+                String droneName = nbt.contains("VehicleName") ? nbt.getString("VehicleName") : "RC Drone";
+                String droneIcon = droneName.contains("Pickup") ? "§b🛡️ " : "§b🚁 ";
+                tooltip.add(Text.literal("§7Paired to: " + droneIcon + droneName));
                 tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 512m)" : "§cSTANDBY")));
                 tooltip.add(Text.literal("§8Controls: W/S Pitch | A/D Roll | Space/Shift Alt | C Auto-Dock"));
                 tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));

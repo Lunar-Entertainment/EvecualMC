@@ -1366,6 +1366,10 @@ public class EvecualMCClient implements ClientModInitializer {
 
         // 2. If looking through RC camera or piloting RC vehicle
         Entity cam = client.getCameraEntity();
+        if (cam instanceof com.evecual.evecualmc.entity.PickupDroneEntity pickupDrone) {
+            client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.PICKUP_DRONE, pickupDrone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🛡️ Pickup Drone Telemetry: " + pickupDrone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
+            return;
+        }
         if (cam instanceof RcDroneEntity drone) {
             client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_DRONE, drone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🚁 Aerial Telemetry: " + drone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
             return;
@@ -1382,6 +1386,10 @@ public class EvecualMCClient implements ClientModInitializer {
         // 3. If crosshair is aiming directly at an entity
         if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit && hit.getEntity() != null) {
             Entity hitEnt = hit.getEntity();
+            if (hitEnt instanceof com.evecual.evecualmc.entity.PickupDroneEntity pickupDrone) {
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.PICKUP_DRONE, pickupDrone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🛡️ Pickup Drone Targeted: " + pickupDrone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
+                return;
+            }
             if (hitEnt instanceof RcDroneEntity drone) {
                 client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_DRONE, drone.getEnergy(), RcDroneEntity.MAX_ENERGY, "🚁 Drone Targeted: " + drone.getEnergy() + " / " + RcDroneEntity.MAX_ENERGY + " EU"));
                 return;
@@ -1402,10 +1410,42 @@ public class EvecualMCClient implements ClientModInitializer {
 
         // 4. If crosshair is aiming directly at a block
         if (client.crosshairTarget instanceof net.minecraft.util.hit.BlockHitResult blockHit && client.world != null) {
-            net.minecraft.block.BlockState bs = client.world.getBlockState(blockHit.getBlockPos());
+            BlockPos bp = blockHit.getBlockPos();
+            net.minecraft.block.BlockState bs = client.world.getBlockState(bp);
+            net.minecraft.block.entity.BlockEntity be = client.world.getBlockEntity(bp);
             com.evecual.evecualmc.client.screen.TipTopic blockTopic = com.evecual.evecualmc.client.screen.TipTopic.fromBlock(bs.getBlock());
             if (blockTopic != null) {
-                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(blockTopic, 0, 0, "🔍 Inspected: " + blockTopic.title));
+                int curE = 0;
+                int maxE = 0;
+                String status = "🔍 Inspected: " + blockTopic.title;
+                if (be instanceof com.evecual.evecualmc.block.entity.ElectricChuteBlockEntity chute) {
+                    curE = (int) chute.getEnergy();
+                    maxE = (int) chute.getMaxEnergy();
+                    status = chute.getStatusMessage();
+                } else if (be instanceof com.evecual.evecualmc.block.entity.StorageUnitBlockEntity storage) {
+                    curE = (int) storage.getEnergy();
+                    maxE = (int) storage.getMaxEnergy();
+                    status = storage.isLockedDueToPower() ? "🔒 Locked: Connect ≥ 200 EU" : "⚡ " + (storage.isElectricallyCharged() ? "Retention Charged" : "Uncharged");
+                } else if (be instanceof com.evecual.evecualmc.block.entity.DronePickupBlockEntity dpbe) {
+                    status = dpbe.getStatusMessage();
+                } else if (bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)) {
+                    boolean onPickup = client.world.getBlockState(bp.down()).isOf(EvecualMC.DRONE_PICKUP_BLOCK);
+                    status = onPickup ? "🛡️ Specialized Dock: Ready for Pickup Drone" : "⚠️ Invalid Spot: Must be on a Drone Pickup Station";
+                } else if (be instanceof com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity turret) {
+                    BlockPos linkedPos = turret.getLinkedAmmoContainerPos();
+                    int radius = turret.getTargetFilter().getRadius();
+                    status = linkedPos != null
+                            ? "🎯 Sentry Active: Scanning (" + radius + "m radius | Linked)"
+                            : "⚠️ Unlinked: Right-click Ammo Container then Turret with Turret Linker";
+                } else if (be instanceof com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity container) {
+                    int count = 0;
+                    for (int i = 0; i < container.size(); i++) {
+                        if (!container.getStack(i).isEmpty()) count += container.getStack(i).getCount();
+                    }
+                    int turrets = container.getLinkedStationaryTurrets().size();
+                    status = "📦 Ammo Magazine: " + count + " rounds | Feeds " + turrets + " Turret(s)";
+                }
+                client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(blockTopic, curE, maxE, status));
                 return;
             }
         }

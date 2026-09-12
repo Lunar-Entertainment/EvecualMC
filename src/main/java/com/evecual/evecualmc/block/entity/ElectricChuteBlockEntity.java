@@ -43,9 +43,21 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
         // 2. Transfer items from Drone Pickup to Storage Unit
         Direction facing = state.get(ElectricChuteBlock.FACING);
         DronePickupBlockEntity pickup = be.findUpstreamPickup(world, pos, facing);
-        StorageUnitBlockEntity storage = be.findDownstreamStorage(world, pos, facing);
+        StorageUnitBlockEntity storage = be.findDownstreamStorage(world, pos, facing, pickup);
 
         if (pickup != null && storage != null) {
+            // Draw energy if needed from storage unit or parked drone
+            if (be.energy < TRANSFER_COST && storage.getEnergy() >= TRANSFER_COST) {
+                long pulled = storage.extractEnergy(TRANSFER_COST - be.energy, false);
+                be.energy += (int) pulled;
+                be.markDirty();
+            }
+            if (be.energy < TRANSFER_COST && pickup.getParkedDrone() != null && pickup.getParkedDrone().getEnergy() >= 10) {
+                pickup.getParkedDrone().setEnergy(pickup.getParkedDrone().getEnergy() - TRANSFER_COST);
+                be.energy += TRANSFER_COST;
+                be.markDirty();
+            }
+
             if (be.energy >= TRANSFER_COST && pickup.hasParkedDrone()) {
                 ItemStack stack = pickup.extractItem(4);
                 if (!stack.isEmpty()) {
@@ -91,42 +103,70 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
     }
 
     @Nullable
-    private DronePickupBlockEntity findUpstreamPickup(World world, BlockPos pos, Direction facing) {
-        // Look directly backwards from facing first
-        BlockEntity direct = world.getBlockEntity(pos.offset(facing.getOpposite()));
+    public DronePickupBlockEntity findUpstreamPickup(World world, BlockPos pos, Direction facing) {
+        // 1. Direct opposite of facing
+        BlockEntity opp = world.getBlockEntity(pos.offset(facing.getOpposite()));
+        if (opp instanceof DronePickupBlockEntity dp) return dp;
+
+        // 2. Direct facing
+        BlockEntity direct = world.getBlockEntity(pos.offset(facing));
         if (direct instanceof DronePickupBlockEntity dp) return dp;
 
-        // Check any adjacent block
+        // 3. Any adjacent block
         for (Direction d : Direction.values()) {
-            if (d == facing) continue;
             BlockEntity be = world.getBlockEntity(pos.offset(d));
             if (be instanceof DronePickupBlockEntity dp) return dp;
         }
 
-        // Trace backwards along chute chain
-        BlockPos current = pos.offset(facing.getOpposite());
-        for (int i = 0; i < 8; i++) {
-            BlockEntity be = world.getBlockEntity(current);
-            if (be instanceof DronePickupBlockEntity dp) return dp;
-            if (!(be instanceof ElectricChuteBlockEntity)) break;
-            current = current.offset(facing.getOpposite());
+        // 4. Trace along chute chain in all directions
+        for (Direction d : Direction.values()) {
+            BlockPos current = pos.offset(d);
+            for (int i = 0; i < 16; i++) {
+                BlockEntity be = world.getBlockEntity(current);
+                if (be instanceof DronePickupBlockEntity dp) return dp;
+                if (!(be instanceof ElectricChuteBlockEntity)) break;
+                current = current.offset(d);
+            }
         }
         return null;
     }
 
     @Nullable
-    private StorageUnitBlockEntity findDownstreamStorage(World world, BlockPos pos, Direction facing) {
-        // Look directly in facing direction
-        BlockEntity direct = world.getBlockEntity(pos.offset(facing));
-        if (direct instanceof StorageUnitBlockEntity su) return su;
+    public StorageUnitBlockEntity findDownstreamStorage(World world, BlockPos pos, Direction facing, @Nullable DronePickupBlockEntity knownPickup) {
+        BlockPos pickupPos = knownPickup != null ? knownPickup.getPos() : null;
 
-        // Trace forward along chute chain
-        BlockPos current = pos.offset(facing);
-        for (int i = 0; i < 8; i++) {
-            BlockEntity be = world.getBlockEntity(current);
+        // 1. Direct in facing direction (if not pickup)
+        BlockPos facingPos = pos.offset(facing);
+        if (!facingPos.equals(pickupPos)) {
+            BlockEntity direct = world.getBlockEntity(facingPos);
+            if (direct instanceof StorageUnitBlockEntity su) return su;
+        }
+
+        // 2. Direct opposite of facing (if not pickup)
+        BlockPos oppPos = pos.offset(facing.getOpposite());
+        if (!oppPos.equals(pickupPos)) {
+            BlockEntity opp = world.getBlockEntity(oppPos);
+            if (opp instanceof StorageUnitBlockEntity su) return su;
+        }
+
+        // 3. Any adjacent neighbor (excluding the pickup block!)
+        for (Direction d : Direction.values()) {
+            BlockPos p = pos.offset(d);
+            if (p.equals(pickupPos)) continue;
+            BlockEntity be = world.getBlockEntity(p);
             if (be instanceof StorageUnitBlockEntity su) return su;
-            if (!(be instanceof ElectricChuteBlockEntity)) break;
-            current = current.offset(facing);
+        }
+
+        // 4. Trace along chute chain in all directions
+        for (Direction d : Direction.values()) {
+            BlockPos current = pos.offset(d);
+            for (int i = 0; i < 16; i++) {
+                if (current.equals(pickupPos)) break;
+                BlockEntity be = world.getBlockEntity(current);
+                if (be instanceof StorageUnitBlockEntity su) return su;
+                if (!(be instanceof ElectricChuteBlockEntity)) break;
+                current = current.offset(d);
+            }
         }
         return null;
     }
@@ -166,7 +206,7 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
         if (this.world == null) return "⚡ Electric Chute: Offline";
         Direction facing = this.getCachedState().get(ElectricChuteBlock.FACING);
         DronePickupBlockEntity pickup = findUpstreamPickup(this.world, this.pos, facing);
-        StorageUnitBlockEntity storage = findDownstreamStorage(this.world, this.pos, facing);
+        StorageUnitBlockEntity storage = findDownstreamStorage(this.world, this.pos, facing, pickup);
 
         if (pickup == null) {
             return "⚠️ No Drone Pickup Station connected upstream.";
@@ -174,11 +214,11 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
         if (storage == null) {
             return "⚠️ No Storage Unit connected downstream.";
         }
-        if (this.energy < TRANSFER_COST) {
-            return "⚡ Unpowered: Connect electricity (Needs ≥ 5 EU).";
-        }
         if (!pickup.hasParkedDrone()) {
-            return "🟢 Active: Awaiting Pickup Drone landing on station.";
+            return "🟢 Standby: Awaiting Pickup Drone landing on station.";
+        }
+        if (this.energy < TRANSFER_COST && storage.getEnergy() < TRANSFER_COST && (pickup.getParkedDrone() == null || pickup.getParkedDrone().getEnergy() < 10)) {
+            return "⚡ Unpowered: Connect electricity (Needs ≥ 5 EU).";
         }
         return "⚡ Pneumatic Transfer Active: Unloading Pickup Drone into Storage Unit!";
     }

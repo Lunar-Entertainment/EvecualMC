@@ -116,7 +116,12 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
 
     @Override
     public long extractEnergy(long amount, boolean simulate) {
-        return 0;
+        long canExtract = Math.min(amount, this.energy);
+        if (!simulate && canExtract > 0) {
+            this.energy -= (int) canExtract;
+            markDirty();
+        }
+        return canExtract;
     }
 
     public void setEnergy(int energy) {

@@ -74,6 +74,9 @@ public class EnergyHudOverlay implements HudRenderCallback {
             } else if (entity instanceof RcCarEntity rcCar) {
                 renderRcCarTip(drawContext, client, rcCar);
                 return;
+            } else if (entity instanceof com.evecual.evecualmc.entity.PickupDroneEntity pickupDrone) {
+                renderPickupDroneTip(drawContext, client, pickupDrone);
+                return;
             } else if (entity instanceof RcDroneEntity rcDrone) {
                 renderRcDroneTip(drawContext, client, rcDrone);
                 return;
@@ -118,6 +121,18 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderDroneParkingSpotTip(drawContext, client);
             } else if (state.isOf(EvecualMC.ROBOT_PARKING_SPOT_BLOCK)) {
                 renderRobotParkingSpotTip(drawContext, client);
+            } else if (state.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)) {
+                renderPickupDroneParkingSpotTip(drawContext, client, pos, state);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.DronePickupBlockEntity dronePickup) {
+                renderDronePickupTip(drawContext, client, dronePickup);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.ElectricChuteBlockEntity chute) {
+                renderElectricChuteTip(drawContext, client, chute);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.StorageUnitBlockEntity storageUnit) {
+                renderStorageUnitTip(drawContext, client, storageUnit);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity turret) {
+                renderStationaryTurretTip(drawContext, client, turret);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity ammoContainer) {
+                renderTurretAmmoContainerTip(drawContext, client, ammoContainer);
             } else if (be instanceof StationaryRcControllerBlockEntity station) {
                 renderStationaryRcControllerTip(drawContext, client, station);
             }
@@ -465,6 +480,129 @@ public class EnergyHudOverlay implements HudRenderCallback {
         renderUnifiedHud(context, client, "🏎️", "RC Car", 0xFF38BDF8,
                 energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
                 (double) energy / Math.max(1, max), 0xFF0284C7);
+    }
+
+    private void renderPickupDroneTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.entity.PickupDroneEntity drone) {
+        int energy = drone.getEnergy();
+        int max = RcDroneEntity.MAX_ENERGY;
+        int pct = energy * 100 / Math.max(1, max);
+        int filledSlots = 0;
+        int totalItems = 0;
+        for (int i = 0; i < drone.getTrunk().size(); i++) {
+            ItemStack stack = drone.getTrunk().getStack(i);
+            if (!stack.isEmpty()) {
+                filledSlots++;
+                totalItems += stack.getCount();
+            }
+        }
+        String status = "🛡️ Cargo: " + totalItems + " items (" + filledSlots + "/9 slots) | Vacuum Active";
+
+        renderUnifiedHud(context, client, "🛡️", "Pickup Drone", 0xFF38BDF8,
+                energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
+                (double) energy / Math.max(1, max), 0xFF0284C7);
+    }
+
+    private void renderPickupDroneParkingSpotTip(DrawContext context, MinecraftClient client, BlockPos pos, BlockState state) {
+        boolean onPickup = client.world != null && client.world.getBlockState(pos.down()).isOf(EvecualMC.DRONE_PICKUP_BLOCK);
+        String status = onPickup
+                ? "🛡️ Specialized Dock: Ready for Pickup Drone (Press C in drone to land)"
+                : "⚠️ Invalid Spot: Must be placed on a Drone Pickup Station";
+        int color = onPickup ? 0xFF86EFAC : 0xFFF87171;
+        renderUnifiedHud(context, client, "🛡️", "Pickup Drone Landing Pad", 0xFFF59E0B,
+                onPickup ? "ACTIVE" : "INVALID", 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderDronePickupTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.DronePickupBlockEntity dpbe) {
+        String status = dpbe.getStatusMessage();
+        com.evecual.evecualmc.entity.PickupDroneEntity drone = dpbe.getParkedDrone();
+        int color = drone != null ? 0xFF86EFAC : (status.startsWith("⚠️") ? 0xFFF87171 : 0xFF38BDF8);
+        String val = drone != null ? "DOCKED" : "READY";
+        renderUnifiedHud(context, client, "📥", "Drone Pickup Station", 0xFF38BDF8,
+                val, 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderElectricChuteTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.ElectricChuteBlockEntity chute) {
+        long energy = chute.getEnergy();
+        long max = chute.getMaxEnergy();
+        String status = chute.getStatusMessage();
+        int color = status.startsWith("⚡ Pneumatic") || status.startsWith("🟢") ? 0xFF86EFAC : (status.startsWith("⚡ Unpowered") ? 0xFFF87171 : 0xFFFBBF24);
+        renderUnifiedHud(context, client, "⚡", "Electric Chute", 0xFF00E5FF,
+                energy + " / " + max + " EU", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, max), 0xFF0891B2);
+    }
+
+    private void renderStorageUnitTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.StorageUnitBlockEntity storage) {
+        long energy = storage.getEnergy();
+        long max = storage.getMaxEnergy();
+        var cluster = storage.findConnectedCluster();
+        int clusterSize = cluster.size();
+        int totalSlots = clusterSize * com.evecual.evecualmc.block.entity.StorageUnitBlockEntity.SLOTS_PER_UNIT;
+        int filledSlots = 0;
+        int totalItems = 0;
+        for (var unit : cluster) {
+            for (int i = 0; i < unit.size(); i++) {
+                ItemStack s = unit.getStack(i);
+                if (!s.isEmpty()) {
+                    filledSlots++;
+                    totalItems += s.getCount();
+                }
+            }
+        }
+        String status;
+        int color;
+        if (storage.isLockedDueToPower()) {
+            status = "🔒 Locked: Connect ≥ 200 EU to initialize quantum matrix";
+            color = 0xFFF87171;
+        } else if (storage.isElectricallyCharged()) {
+            status = "⚡ Charged (" + totalItems + " items in " + filledSlots + "/" + totalSlots + " slots) | Retention OK";
+            color = 0xFF86EFAC;
+        } else {
+            status = "⚠️ Uncharged (" + totalItems + " items) | Needs ≥ 200 EU to retain on mine";
+            color = 0xFFFBBF24;
+        }
+
+        renderUnifiedHud(context, client, "📦", "Storage Unit" + (clusterSize > 1 ? " (" + clusterSize + " Linked)" : ""), 0xFF38BDF8,
+                energy + " / " + max + " EU", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, max), 0xFF0284C7);
+    }
+
+    private void renderStationaryTurretTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity turret) {
+        BlockPos linkedPos = turret.getLinkedAmmoContainerPos();
+        boolean linked = linkedPos != null;
+        int radius = turret.getTargetFilter().getRadius();
+        String status;
+        int color;
+        if (!linked) {
+            status = "⚠️ Not linked to Ammo Container (Use Turret Linker on container, then turret)";
+            color = 0xFFF87171;
+        } else {
+            int dist = (int) Math.sqrt(turret.getPos().getSquaredDistance(linkedPos));
+            status = "🎯 Defense Sentry Active: Scanning (" + radius + "m radius | Ammo Depot: " + dist + "m)";
+            color = 0xFF86EFAC;
+        }
+        renderUnifiedHud(context, client, "🎯", "Stationary Turret", 0xFFF87171,
+                linked ? "LINKED" : "UNLINKED", 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderTurretAmmoContainerTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity container) {
+        int count = 0;
+        int copper = 0;
+        int iron = 0;
+        int diamond = 0;
+        for (int i = 0; i < container.size(); i++) {
+            ItemStack stack = container.getStack(i);
+            if (!stack.isEmpty()) {
+                count += stack.getCount();
+                if (stack.isOf(EvecualMC.COPPER_AMMO)) copper += stack.getCount();
+                else if (stack.isOf(EvecualMC.IRON_AMMO)) iron += stack.getCount();
+                else if (stack.isOf(EvecualMC.DIAMOND_AMMO)) diamond += stack.getCount();
+            }
+        }
+        int turrets = container.getLinkedStationaryTurrets().size();
+        String status = "Feeds " + turrets + " Turret" + (turrets == 1 ? "" : "s") + " (" + count + " total: " + copper + " Cu, " + iron + " Fe, " + diamond + " Dia)";
+        int color = count > 0 ? 0xFF86EFAC : 0xFFFBBF24;
+        renderUnifiedHud(context, client, "📦", "Turret Ammo Container", 0xFFF59E0B,
+                count + " Ammo", 0xFFFFFFFF, status, color, null, null);
     }
 
     private void renderRcDroneTip(DrawContext context, MinecraftClient client, RcDroneEntity drone) {

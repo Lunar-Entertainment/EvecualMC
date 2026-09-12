@@ -173,7 +173,7 @@ public class StationaryRcControllerItem extends BlockItem {
         if (isPaired(stack)) {
             NbtCompound nbt = stack.getNbt();
             String type = nbt != null ? nbt.getString("PairedType") : "";
-            String name = "car".equals(type) ? "RC Car" : "drone".equals(type) ? "RC Drone" : "robot".equals(type) ? "RC Robot" : "RC Vehicle";
+            String name = (nbt != null && nbt.contains("VehicleName")) ? nbt.getString("VehicleName") : ("car".equals(type) ? "RC Car" : "drone".equals(type) ? "RC Drone" : "robot".equals(type) ? "RC Robot" : "RC Vehicle");
             tooltip.add(Text.literal("§7Status: §aLinked to " + name));
             tooltip.add(Text.literal("§bReady to install! Place on ground to set up terminal."));
         } else {

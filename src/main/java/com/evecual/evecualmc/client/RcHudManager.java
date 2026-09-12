@@ -110,6 +110,9 @@ public class RcHudManager {
             }
         } else if (drone != null && (client.player.squaredDistanceTo(drone) <= 262144.0 || camEntity == drone)) {
             boolean isCamView = camEntity == drone;
+            boolean isPickup = drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity;
+            String icon = isPickup ? "🛡️" : "🚁";
+            String dName = isPickup ? "Pickup Drone" : "Drone";
             int range = (int) client.player.distanceTo(drone);
             int energy = drone.getEnergy();
             String alt = String.format("%.1f", drone.getY());
@@ -118,15 +121,15 @@ public class RcHudManager {
                 boolean fp = client.options.getPerspective().isFirstPerson();
                 String viewMode = fp ? "FPV" : "3RD";
                 if (screenWidth < 360) {
-                    persistentText = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m";
+                    persistentText = "§b" + icon + " " + dName + " (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m";
                 } else {
-                    persistentText = "§b🚁 Drone (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m §8[§fA/D§7:Strafe §fRMB§7:View §fF§7:Exit]";
+                    persistentText = "§b" + icon + " " + dName + " (" + viewMode + ") §a" + energy + "E §7| §e" + alt + "m" + (isPickup ? " §8[§fZ§7:Cargo §fRMB§7:View §fF§7:Exit]" : " §8[§fA/D§7:Strafe §fRMB§7:View §fF§7:Exit]");
                 }
             } else {
                 if (screenWidth < 380) {
-                    persistentText = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m";
+                    persistentText = "§b" + icon + " " + dName + ": §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m";
                 } else {
-                    persistentText = "§b🚁 Drone: §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m §8[§fF§7:Cam §fL§7:Light §fC§7:Dock]";
+                    persistentText = "§b" + icon + " " + dName + ": §a" + energy + "E §7| §e" + alt + "m §7| §e" + range + "m §8[§fF§7:Cam §fZ§7:Cargo §fL§7:Light §fC§7:Dock]";
                 }
             }
         } else {

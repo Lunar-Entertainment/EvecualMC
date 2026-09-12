@@ -61,11 +61,11 @@ public class DronePickupBlockEntity extends BlockEntity {
     public PickupDroneEntity findDockedDrone(BlockPos spotPos) {
         if (this.world == null) return null;
         Box detectionBox = new Box(
-                spotPos.getX() - 0.2, spotPos.getY() - 0.2, spotPos.getZ() - 0.2,
-                spotPos.getX() + 1.2, spotPos.getY() + 1.2, spotPos.getZ() + 1.2
+                spotPos.getX() - 0.3, spotPos.getY() - 0.2, spotPos.getZ() - 0.3,
+                spotPos.getX() + 1.3, spotPos.getY() + 1.5, spotPos.getZ() + 1.3
         );
         List<PickupDroneEntity> list = this.world.getEntitiesByClass(PickupDroneEntity.class, detectionBox,
-                d -> d.isAlive() && (d.isOnGround() || Math.abs(d.getY() - (spotPos.getY() + 0.1)) < 0.6));
+                d -> d.isAlive() && !d.isRemoved());
         if (!list.isEmpty()) {
             return list.get(0);
         }
@@ -75,8 +75,17 @@ public class DronePickupBlockEntity extends BlockEntity {
     @Nullable
     public PickupDroneEntity getParkedDrone() {
         if (this.world == null) return null;
-        BlockPos topPos = this.pos.up();
-        return findDockedDrone(topPos);
+        // Search vertical column from top of Drone Pickup up to 2.5 blocks above
+        Box detectionBox = new Box(
+                this.pos.getX() - 0.3, this.pos.getY() + 0.2, this.pos.getZ() - 0.3,
+                this.pos.getX() + 1.3, this.pos.getY() + 2.5, this.pos.getZ() + 1.3
+        );
+        List<PickupDroneEntity> list = this.world.getEntitiesByClass(PickupDroneEntity.class, detectionBox,
+                d -> d.isAlive() && !d.isRemoved());
+        if (!list.isEmpty()) {
+            return list.get(0);
+        }
+        return null;
     }
 
     public boolean hasParkedDrone() {

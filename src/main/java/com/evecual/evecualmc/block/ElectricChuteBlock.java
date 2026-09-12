@@ -43,8 +43,12 @@ public class ElectricChuteBlock extends BlockWithEntity {
     @Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
-        // Point towards the block clicked against
-        return this.getDefaultState().with(FACING, ctx.getSide());
+        Direction side = ctx.getSide();
+        if (side.getAxis().isHorizontal()) {
+            return this.getDefaultState().with(FACING, side.getOpposite());
+        } else {
+            return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing());
+        }
     }
 
     @Override

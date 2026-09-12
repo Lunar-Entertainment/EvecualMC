@@ -1,5 +1,29 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.12] - 2026-09-12
+### Fixed & Improved
+- **Electric Chute Connection & Pipeline Fix**:
+  - Rewrote upstream Drone Pickup and downstream Storage Unit detection algorithms to be completely orientation-tolerant (checks facing, opposite of facing, all 6 adjacent sides, and chute chains).
+  - Fixed issue where horizontal chute placement pointed at Drone Pickup skipped the station, resolving `⚠️ No Drone Pickup Station connected upstream`.
+  - Added power fail-safe: Chutes can now extract power directly from connected Storage Units and docked Pickup Drones to prevent pipeline stalling.
+  - Fixed drone docking detection in Drone Pickup Station: now scans the vertical column above the base block, detecting drones parked on both the station base and the landing pad.
+- **HUD Crosshair Tips for All Logistics & Defense Blocks**:
+  - Added real-time crosshair inspection HUD tips (`EnergyHudOverlay`) for:
+    - **Drone Pickup Station**: Displays docking state (`DOCKED` / `READY`) and live connection diagnostics.
+    - **Pickup Drone Landing Pad**: Displays docking readiness and validates placement directly on a Drone Pickup Station.
+    - **Electric Chute**: Displays EU capacity meter, transfer status, and pipeline endpoints.
+    - **Storage Unit**: Displays cluster count, multiblock slots, stored items count, and quantum field retention charge.
+    - **Stationary Turret**: Displays link status, ammo container connection distance, and targeting scan radius.
+    - **Turret Ammo Container**: Displays remaining ammo rounds breakdown (Copper, Iron, Diamond) and count of fed turrets.
+  - Added full Field Guide entries (`TipTopic`) for Stationary Turret, Turret Ammo Container, and Turret Linker.
+- **Pickup Drone Identity Fix**:
+  - Fixed issue where the Pickup Drone was identified and titled as the `RC Drone` in tips and HUD overlays:
+    - Prioritized `PickupDroneEntity` over `RcDroneEntity` in `EnergyHudOverlay` and `EvecualMCClient` contextual 'H' key inspect.
+    - `PickupDroneEntity` now displays `🛡️ Pickup Drone` with battery meter, cargo fill count, and opens the dedicated Pickup Drone Field Guide.
+    - Handheld and Stationary RC Controllers now store and display `Pickup Drone` in tooltips, link notifications, and active telemetry HUD overlays (`RcHudManager`).
+- **3D Inventory Model Fix**:
+  - Fixed `pickup_drone_parking_spot` block item model rendering flat/edge-on by inheriting `minecraft:block/block`.
+
 ## [1.8.11] - 2026-09-12
 ### Added & Improved
 - **Drone Pickup Station (`drone_pickup`) & Special Parking Spot (`pickup_drone_parking_spot`)**:
