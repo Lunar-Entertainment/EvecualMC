@@ -124,4 +124,35 @@ public class AutoPickupBlock extends BlockWithEntity {
         }
         return ActionResult.SUCCESS;
     }
+
+    @Override
+    public void onBlockBreakStart(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+        if (!player.isSneaking()) {
+            if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
+                BlockEntity be = world.getBlockEntity(pos);
+                if (be instanceof AutoPickupBlockEntity autoPickup) {
+                    if (autoPickup.isLinked() && autoPickup.getLinkedDroneUuid() != null) {
+                        if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+                            net.minecraft.entity.Entity drone = serverWorld.getEntity(autoPickup.getLinkedDroneUuid());
+                            if (drone != null && drone.isAlive()) {
+                                net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                                buf.writeBlockPos(pos);
+                                buf.writeUuid(autoPickup.getLinkedDroneUuid());
+                                buf.writeString("drone");
+                                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(serverPlayer, EvecualMC.ENTER_RC_STATION_PACKET_ID, buf);
+                                serverPlayer.sendMessage(Text.literal("§b📹 Drone Camera Feed: §a" + autoPickup.getLinkedDroneName() + " §7[Shift/Sneak: Exit]"), true);
+                                world.playSound(null, pos, SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.BLOCKS, 0.6F, 1.8F);
+                            } else {
+                                serverPlayer.sendMessage(Text.literal("§c📡 Linked Pickup Drone not found or out of range!"), true);
+                            }
+                        }
+                    } else {
+                        serverPlayer.sendMessage(Text.literal("§c⚠️ Auto Pickup Station is not linked to any Pickup Drone! (Right-click with paired RC Controller)"), true);
+                    }
+                }
+            }
+        } else {
+            super.onBlockBreakStart(state, world, pos, player);
+        }
+    }
 }

@@ -988,17 +988,19 @@ public class EvecualMCClient implements ClientModInitializer {
                     }
                 }
 
-                // Stationary RC Controller handling
+                // Stationary RC Controller & Auto Pickup Camera handling
                 if (activeStationPos != null) {
-                    if (client.world == null || client.player == null ||
+                    boolean exitPressed = client.options.sneakKey.isPressed();
+                    if (exitPressed || client.world == null || client.player == null ||
                         client.player.squaredDistanceTo(activeStationPos.getX() + 0.5, activeStationPos.getY() + 0.5, activeStationPos.getZ() + 0.5) > 36.0 ||
-                        !client.world.getBlockState(activeStationPos).isOf(EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK)) {
+                        (!client.world.getBlockState(activeStationPos).isOf(EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) && !client.world.getBlockState(activeStationPos).isOf(EvecualMC.AUTO_PICKUP_BLOCK))) {
                         ClientPlayNetworking.send(EvecualMC.EXIT_RC_STATION_PACKET_ID, PacketByteBufs.empty());
                         activeStationPos = null;
                         activeStationVehicleUuid = null;
                         activeStationType = null;
                         client.setCameraEntity(client.player);
                         client.options.setPerspective(previousPerspective != null ? previousPerspective : Perspective.FIRST_PERSON);
+                        sendSafeActionBar(client, "§7📡 Disconnected from camera feed.");
                     } else {
                         // 1. Lock player movement: stuck in place at terminal
                         client.player.setVelocity(0, client.player.getVelocity().y, 0);
@@ -1009,7 +1011,16 @@ public class EvecualMCClient implements ClientModInitializer {
                         }
 
                         // 2. Enforce RC Camera view: cannot be in player perspective
-                        Entity targetRc = getTargetRcCar(client);
+                        Entity targetRc = null;
+                        if (activeStationVehicleUuid != null && client.world != null) {
+                            for (Entity entity : client.world.getEntities()) {
+                                if (activeStationVehicleUuid.equals(entity.getUuid())) {
+                                    targetRc = entity;
+                                    break;
+                                }
+                            }
+                        }
+                        if (targetRc == null) targetRc = getTargetRcCar(client);
                         if (targetRc == null) targetRc = getTargetRcDrone(client);
                         if (targetRc == null) targetRc = getTargetRcRobot(client);
 
@@ -1154,8 +1165,10 @@ public class EvecualMCClient implements ClientModInitializer {
                         }
                     }
 
+                    boolean isAutoPickupCamera = (activeStationPos != null && client.world != null && client.world.getBlockState(activeStationPos).isOf(EvecualMC.AUTO_PICKUP_BLOCK));
+
                     // --- 3. RC Drone Handling ---
-                    RcDroneEntity targetDrone = getTargetRcDrone(client);
+                    RcDroneEntity targetDrone = isAutoPickupCamera ? null : getTargetRcDrone(client);
                     if (targetDrone != null) {
                         java.util.UUID pairedUuid = targetDrone.getUuid();
 

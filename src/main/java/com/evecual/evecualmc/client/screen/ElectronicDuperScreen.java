@@ -8,7 +8,6 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHandler> {
     public ElectronicDuperScreen(ElectronicDuperScreenHandler handler, PlayerInventory inventory, Text title) {

@@ -6,7 +6,6 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class HeliUpgradeScreen extends HandledScreen<HeliUpgradeScreenHandler> {
     public HeliUpgradeScreen(HeliUpgradeScreenHandler handler, PlayerInventory inventory, Text title) {

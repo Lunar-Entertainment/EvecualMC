@@ -1494,6 +1494,39 @@ public class EvecualMC implements ModInitializer {
                     });
                 });
 
+        // Intercept LMB (attack block) on Auto Pickup Station to engage Drone Camera feed
+        net.fabricmc.fabric.api.event.player.AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
+            if (world.getBlockState(pos).isOf(AUTO_PICKUP_BLOCK)) {
+                if (!player.isSneaking()) {
+                    if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                        net.minecraft.block.entity.BlockEntity be = world.getBlockEntity(pos);
+                        if (be instanceof com.evecual.evecualmc.block.entity.AutoPickupBlockEntity autoPickup) {
+                            if (autoPickup.isLinked() && autoPickup.getLinkedDroneUuid() != null) {
+                                if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+                                    Entity drone = serverWorld.getEntity(autoPickup.getLinkedDroneUuid());
+                                    if (drone != null && drone.isAlive()) {
+                                        net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                                        buf.writeBlockPos(pos);
+                                        buf.writeUuid(autoPickup.getLinkedDroneUuid());
+                                        buf.writeString("drone");
+                                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(serverPlayer, ENTER_RC_STATION_PACKET_ID, buf);
+                                        serverPlayer.sendMessage(Text.literal("§b📹 Drone Camera Feed: §a" + autoPickup.getLinkedDroneName() + " §7[Shift/Sneak: Exit]"), true);
+                                        world.playSound(null, pos, net.minecraft.sound.SoundEvents.BLOCK_BEACON_ACTIVATE, net.minecraft.sound.SoundCategory.BLOCKS, 0.6F, 1.8F);
+                                    } else {
+                                        serverPlayer.sendMessage(Text.literal("§c📡 Linked Pickup Drone not found or out of range!"), true);
+                                    }
+                                }
+                            } else {
+                                serverPlayer.sendMessage(Text.literal("§c⚠️ Auto Pickup Station is not linked to any Pickup Drone! (Right-click with paired RC Controller)"), true);
+                            }
+                        }
+                    }
+                    return net.minecraft.util.ActionResult.SUCCESS;
+                }
+            }
+            return net.minecraft.util.ActionResult.PASS;
+        });
+
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");

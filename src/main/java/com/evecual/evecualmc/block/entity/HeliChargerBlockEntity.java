@@ -83,7 +83,6 @@ public class HeliChargerBlockEntity extends BlockEntity {
                 pos.getX() + 3.0, pos.getY() + 2.8, pos.getZ() + 3.0);
         List<HeliEntity> helis = world.getEntitiesByClass(HeliEntity.class, searchBox, Entity -> true);
 
-        boolean chargingAny = false;
         for (HeliEntity heli : helis) {
             double dx = Math.abs(heli.getX() - (pos.getX() + 0.5));
             double dz = Math.abs(heli.getZ() - (pos.getZ() + 0.5));
@@ -97,7 +96,6 @@ public class HeliChargerBlockEntity extends BlockEntity {
                         baseCharger.extractEnergy(transfer, false);
                         heli.charge(transfer);
                         heli.setCharging(true);
-                        chargingAny = true;
 
                         // Visual electric arc spark beams between charger base and helipad
                         if (world.getTime() % 2 == 0) {

@@ -1,5 +1,17 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.24] - 2026-09-12
+### Added & Improved
+- **Auto Pickup Drone Camera Monitoring (LMB View)**:
+  - Left-clicking (LMB) on the Auto Pickup Station now directly links into the paired Pickup Drone's camera feed, providing a remote monitoring viewport while the drone operates.
+  - Intercepted block attack events (`AttackBlockCallback`) in both Survival and Creative modes so left-clicking engages the camera without damaging or breaking the station.
+  - Sneak + LMB allows breaking the block normally as intended.
+  - Pressing `Shift`/`Sneak` cleanly disengages from the camera feed back to first-person view.
+  - While observing via the Auto Pickup station camera, autonomous drone flight and item scavenging continue uninterrupted without manual WASD overriding tasks.
+- **Diagnostics & Cleanups**:
+  - Resolved unused local variable `chargingAny` in `HeliChargerBlockEntity`.
+  - Removed unused `Identifier` imports from `ElectronicDuperScreen` and `HeliUpgradeScreen`.
+
 ## [1.8.23] - 2026-09-12
 ### Fixed & Improved
 - **Auto Pickup Drone Sky Flight Bug Resolved**:
