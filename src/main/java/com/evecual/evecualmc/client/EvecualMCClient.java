@@ -369,15 +369,26 @@ public class EvecualMCClient implements ClientModInitializer {
         if (activeStationPos != null && activeStationVehicleUuid != null) {
             return true;
         }
+        if (isRcCameraActive()) {
+            return true;
+        }
         net.minecraft.item.ItemStack held = null;
-        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM) || client.player.getMainHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
+        if (client.player.getMainHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)
+                || client.player.getMainHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)
+                || client.player.getMainHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
             held = client.player.getMainHandStack();
-        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM) || client.player.getOffHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)) {
+        } else if (client.player.getOffHandStack().isOf(EvecualMC.RC_CONTROLLER_ITEM)
+                || client.player.getOffHandStack().isOf(EvecualMC.HELI_CONTROLLER_ITEM)
+                || client.player.getOffHandStack().isOf(EvecualMC.FLYING_TURRET_CONTROLLER_ITEM)) {
             held = client.player.getOffHandStack();
         }
         if (held != null && held.hasNbt()) {
             net.minecraft.nbt.NbtCompound nbt = held.getNbt();
-            return nbt != null && (nbt.containsUuid("PairedCar") || nbt.containsUuid("PairedDrone") || nbt.containsUuid("PairedRobot") || nbt.containsUuid("PairedHeli")) && nbt.getBoolean("ActiveLink");
+            return nbt != null && (nbt.containsUuid("PairedCar")
+                    || nbt.containsUuid("PairedDrone")
+                    || nbt.containsUuid("PairedRobot")
+                    || nbt.containsUuid("PairedHeli")
+                    || nbt.containsUuid("PairedTurret")) && nbt.getBoolean("ActiveLink");
         }
         return false;
     }

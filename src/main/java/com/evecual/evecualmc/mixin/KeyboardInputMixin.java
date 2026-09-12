@@ -15,7 +15,7 @@ public class KeyboardInputMixin extends Input {
     @Inject(method = "tick", at = @At("TAIL"))
     private void evecual$disableMovementDuringRc(boolean slowDown, float f, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (EvecualMCClient.isRcLinkActive()) {
+        if (EvecualMCClient.isRcLinkActive() || EvecualMCClient.isRcCameraActive()) {
             this.movementForward = 0.0F;
             this.movementSideways = 0.0F;
             this.jumping = false;

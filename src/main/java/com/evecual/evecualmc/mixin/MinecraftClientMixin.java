@@ -20,7 +20,7 @@ public class MinecraftClientMixin {
 
     @Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
     private void evecual$cancelAttackDuringRc(CallbackInfoReturnable<Boolean> cir) {
-        if (EvecualMCClient.isRcCameraActive()) {
+        if (EvecualMCClient.isRcCameraActive() || EvecualMCClient.isRcLinkActive()) {
             cir.setReturnValue(false);
         }
     }

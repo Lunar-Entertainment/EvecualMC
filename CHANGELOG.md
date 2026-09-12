@@ -1,5 +1,14 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.8] - 2026-09-12
+### Added & Improved
+- **Freeze Player Movement During Defense Drone Control**:
+  - Connected the Defense Controller (`FLYING_TURRET_CONTROLLER_ITEM`) and paired defense drone link to the client input lock system (`isRcLinkActive`).
+  - While actively piloting or maneuvering the Defense Drone (via WASD, Space to ascend, Sneak to descend, or Sprint turbo), player walking, strafing, jumping, sneaking, and sprinting are completely suppressed.
+  - The player's velocity is locked in place so you remain perfectly stationary on the ground while operating the Defense Controller.
+  - Suppressed hand swinging and accidental block breaking when clicking Attack (LMB) to fire the drone's kinetic cannon.
+  - Added Defense Drone camera pitch and yaw support to `CameraMixin` for smooth third-person camera panning and zoom.
+
 ## [1.8.7] - 2026-09-12
 ### Added & Improved
 - **Remade Defense Turret to be the Drone (`Defense Drone`)**:
