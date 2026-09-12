@@ -94,6 +94,7 @@ public class ItemChargerBlock extends BlockWithEntity {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.isOf(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);

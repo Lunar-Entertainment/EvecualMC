@@ -17,7 +17,6 @@ import net.minecraft.util.math.RotationAxis;
 public class HeliEntityModel extends EntityModel<HeliEntity> {
     public static final EntityModelLayer MODEL_LAYER = new EntityModelLayer(new Identifier("evecualmc", "ev_heli"), "main");
 
-    private final ModelPart root;
     private final ModelPart fuselage_lower;
     private final ModelPart fuselage_rear;
     private final ModelPart cockpit_roof;
@@ -33,7 +32,6 @@ public class HeliEntityModel extends EntityModel<HeliEntity> {
     private final ModelPart right_arm_weapon;
 
     public HeliEntityModel(ModelPart root) {
-        this.root = root;
         this.fuselage_lower = root.getChild("fuselage_lower");
         this.fuselage_rear = root.getChild("fuselage_rear");
         this.cockpit_roof = root.getChild("cockpit_roof");

@@ -72,9 +72,9 @@ public class CarEntity extends Entity {
     private boolean autoParking = false;
     private int autoParkPhase = 0;
     private int autoParkGraceTicks = 0;
-    private double targetParkX, targetParkY, targetParkZ;
+    private double targetParkX, targetParkZ;
     private float targetParkYaw;
-    private double entryApproachX, entryApproachY, entryApproachZ;
+    private double entryApproachX, entryApproachZ;
 
     public float getWheelRoll() {
         return this.wheelRoll;
@@ -93,11 +93,9 @@ public class CarEntity extends Entity {
         this.inputLeft = false;
         this.inputRight = false;
         this.targetParkX = px;
-        this.targetParkY = py;
         this.targetParkZ = pz;
         this.targetParkYaw = pyaw;
         this.entryApproachX = ex;
-        this.entryApproachY = ey;
         this.entryApproachZ = ez;
     }
 

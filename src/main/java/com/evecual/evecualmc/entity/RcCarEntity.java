@@ -31,12 +31,9 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LightBlock;
-import net.minecraft.block.Waterloggable;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-
-import java.util.UUID;
 
 public class RcCarEntity extends Entity {
     public static final int MAX_ENERGY = 500;

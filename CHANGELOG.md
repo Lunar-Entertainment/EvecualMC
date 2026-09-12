@@ -1,5 +1,20 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.23] - 2026-09-12
+### Fixed & Improved
+- **Auto Pickup Drone Sky Flight Bug Resolved**:
+  - Fixed altitude ratcheting bug where local ground raycasts defaulted to the drone's current Y position when more than 4 blocks in the air, creating an infinite upward loop (`desiredY = this.getY() + 1.0`) that forced drones to fly endlessly into the sky.
+  - Implemented target-centered cruising: drones cruise smoothly at `targetY + 1.5m` during approach, and drop to `targetY + 0.35m` directly above the item once within 1.8m horizontal distance to suck it into cargo.
+  - Bound return cruise altitude strictly to charger/landing pad height + clearance (`bestCharger.getY() + clearance`), preventing drones from climbing indefinitely during return-to-base maneuvers.
+  - Added vertical collision damping (`if (verticalCollision && dy > 0) dy = 0`) to immediately prevent upwards thrust if contacting a ceiling or roof.
+  - Expanded Auto Pickup radar scan area to 128 blocks (256m diameter).
+- **Codebase & IDE Diagnostic Cleanups (70+ warnings resolved)**:
+  - Added `@SuppressWarnings("deprecation")` across overridden vanilla lifecycle hooks (`onStateReplaced`, `getStateForNeighborUpdate`).
+  - Switched deprecated `WorldView.isChunkLoaded(BlockPos)` to `isChunkLoaded(chunkX, chunkZ)` in `StationaryTurretBlockEntity`.
+  - Added exhaustive enum coverage with `default` handling for `Direction` in `WindTurbineBlockEntityRenderer`.
+  - Removed all unused imports across blocks, entities, renderers, screens, items, and recipe definitions.
+  - Removed obsolete unused fields and pattern variables (`activeCharging`, `targetParkY`, `entryApproachY`, `inventory`, `root`, `TEXTURE`, `GENERIC_INVENTORY_TEXTURE`, `pct`).
+
 ## [1.8.22] - 2026-09-12
 ### Fixed & Improved
 - **Auto Pickup Drone Parking Spot Sinking Fix**:

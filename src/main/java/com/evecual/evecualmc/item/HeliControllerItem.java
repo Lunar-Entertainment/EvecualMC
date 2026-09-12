@@ -16,7 +16,6 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.UUID;
 
 public class HeliControllerItem extends Item {
     public static final double MAX_RANGE = 1024.0;

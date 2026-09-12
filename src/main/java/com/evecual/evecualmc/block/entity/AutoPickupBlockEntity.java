@@ -94,8 +94,8 @@ public class AutoPickupBlockEntity extends BlockEntity {
                 return;
             }
 
-            // Safe harvest radius (96 blocks = 192m wide active radar zone)
-            Box scanArea = new Box(pos).expand(96.0);
+            // Safe harvest radius (128 blocks = 256m wide active radar zone)
+            Box scanArea = new Box(pos).expand(128.0);
             List<ItemEntity> items = serverWorld.getEntitiesByClass(ItemEntity.class, scanArea,
                     item -> isItemHarvestable(serverWorld, item));
 
@@ -140,7 +140,7 @@ public class AutoPickupBlockEntity extends BlockEntity {
                 } else if (drone.isAutoReturning()) {
                     be.lastStatus = "🟢 Area Clear: Drone returning to landing pad";
                 } else if (drone.isInParkingSpot()) {
-                    be.lastStatus = "🟢 Standby: Radar scanning (96m radius | Drone docked & ready)";
+                    be.lastStatus = "🟢 Standby: Radar scanning (128m radius | Drone docked & ready)";
                 } else {
                     // Area is clear and drone is undocked/floating: ensure it returns home and docks!
                     if (!drone.isAutoReturning()) {

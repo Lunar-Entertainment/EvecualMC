@@ -4,8 +4,6 @@ import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.PropertyDelegate;
@@ -14,7 +12,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.math.BlockPos;
 
 public class StationaryTurretScreenHandler extends ScreenHandler {
-    private final Inventory inventory;
     private final PropertyDelegate propertyDelegate;
     private final StationaryTurretBlockEntity blockEntity;
 
@@ -24,7 +21,6 @@ public class StationaryTurretScreenHandler extends ScreenHandler {
 
     public StationaryTurretScreenHandler(int syncId, PlayerInventory playerInventory, StationaryTurretBlockEntity blockEntity, PropertyDelegate propertyDelegate) {
         super(EvecualMC.STATIONARY_TURRET_SCREEN_HANDLER, syncId);
-        this.inventory = new SimpleInventory(0);
         this.propertyDelegate = propertyDelegate;
         this.blockEntity = blockEntity;
         addProperties(propertyDelegate);

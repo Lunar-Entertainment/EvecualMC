@@ -38,8 +38,6 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -1362,7 +1360,7 @@ public class EvecualMCClient implements ClientModInitializer {
         if (client == null || client.player == null) return;
 
         // 1. If currently inside or piloting full-size Car
-        if (client.player.getVehicle() instanceof CarEntity car) {
+        if (client.player.getVehicle() instanceof CarEntity) {
             client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.CAR, 0, 1000, "⚡ Vehicle Diagnostics: Active Piloting"));
             return;
         }
@@ -1405,7 +1403,7 @@ public class EvecualMCClient implements ClientModInitializer {
                 client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.RC_CAR, car.getEnergy(), RcCarEntity.MAX_ENERGY, "🏎️ RC Car Targeted: " + car.getEnergy() + " / " + RcCarEntity.MAX_ENERGY + " EU"));
                 return;
             }
-            if (hitEnt instanceof CarEntity car) {
+            if (hitEnt instanceof CarEntity) {
                 client.setScreen(new com.evecual.evecualmc.client.screen.ModTipScreen(com.evecual.evecualmc.client.screen.TipTopic.CAR, 0, 1000, "🚗 Electric Car Targeted"));
                 return;
             }

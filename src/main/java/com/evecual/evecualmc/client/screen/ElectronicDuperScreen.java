@@ -11,8 +11,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHandler> {
-    private static final Identifier TEXTURE = new Identifier("minecraft", "textures/gui/container/generic_54.png");
-
     public ElectronicDuperScreen(ElectronicDuperScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
         this.backgroundWidth = 176;

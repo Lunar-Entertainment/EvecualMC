@@ -580,7 +580,6 @@ public class EnergyHudOverlay implements HudRenderCallback {
     private void renderPickupDroneTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.entity.PickupDroneEntity drone) {
         int energy = drone.getEnergy();
         int max = RcDroneEntity.MAX_ENERGY;
-        int pct = energy * 100 / Math.max(1, max);
         int filledSlots = 0;
         int totalItems = 0;
         for (int i = 0; i < drone.getTrunk().size(); i++) {

@@ -1,7 +1,6 @@
 package com.evecual.evecualmc.block.entity;
 
 import com.evecual.evecualmc.EvecualMC;
-import com.evecual.evecualmc.block.WindTurbineBlock;
 import com.evecual.evecualmc.energy.EnergyStorage;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;

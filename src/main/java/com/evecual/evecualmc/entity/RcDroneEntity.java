@@ -32,7 +32,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LightBlock;
-import net.minecraft.block.Waterloggable;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.world.World;
 
@@ -486,7 +485,7 @@ public class RcDroneEntity extends Entity {
             this.autoReturnTicks = 0;
             this.autoReturnStage = 0;
             double clearance = this.getWorld().isSkyVisible(bestCharger) ? 4.5 : 2.2;
-            this.cruiseAltitude = Math.max(this.getY() + 1.2, bestCharger.getY() + clearance);
+            this.cruiseAltitude = bestCharger.getY() + clearance;
             setFlying(true);
             if (!this.getWorld().isClient) {
                 this.dataTracker.set(AUTO_RETURNING, true);

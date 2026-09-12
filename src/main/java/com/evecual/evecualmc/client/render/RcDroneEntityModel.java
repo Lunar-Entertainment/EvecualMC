@@ -16,7 +16,6 @@ import net.minecraft.util.Identifier;
 public class RcDroneEntityModel extends EntityModel<RcDroneEntity> {
     public static final EntityModelLayer MODEL_LAYER = new EntityModelLayer(new Identifier("evecualmc", "rc_drone"), "main");
 
-    private final ModelPart root;
     private final ModelPart body;
     private final ModelPart prop_fl;
     private final ModelPart prop_fr;
@@ -28,7 +27,6 @@ public class RcDroneEntityModel extends EntityModel<RcDroneEntity> {
     private final ModelPart blur_disc_rr;
 
     public RcDroneEntityModel(ModelPart root) {
-        this.root = root;
         this.body = root.getChild("body");
         this.prop_fl = root.getChild("prop_fl");
         this.prop_fr = root.getChild("prop_fr");

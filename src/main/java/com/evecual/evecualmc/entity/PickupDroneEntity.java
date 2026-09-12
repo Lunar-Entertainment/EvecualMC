@@ -241,16 +241,19 @@ public class PickupDroneEntity extends RcDroneEntity {
 
                         // Local ground detection beneath drone
                         BlockPos currentPos = this.getBlockPos();
-                        double localGroundY = this.getY();
-                        for (int checkY = currentPos.getY(); checkY >= currentPos.getY() - 4 && checkY >= this.getWorld().getBottomY(); checkY--) {
+                        double groundUnderDrone = -999.0;
+                        for (int checkY = currentPos.getY(); checkY >= currentPos.getY() - 5 && checkY >= this.getWorld().getBottomY(); checkY--) {
                             BlockPos bp = new BlockPos(currentPos.getX(), checkY, currentPos.getZ());
                             if (this.getWorld().getBlockState(bp).isSolidBlock(this.getWorld(), bp)) {
-                                localGroundY = checkY + 1.0;
+                                groundUnderDrone = checkY + 1.0;
                                 break;
                             }
                         }
 
-                        double desiredY = Math.max(localGroundY + 1.0, targetY + (horizDist > 1.5 ? 1.0 : 0.20));
+                        // Target cruise height: 1.5m above item when far, dropping to 0.35m above item when close (< 1.8m)
+                        double cruiseY = targetY + (horizDist > 1.8 ? 1.5 : 0.35);
+                        double minGroundClearance = horizDist > 1.8 ? 0.85 : 0.25;
+                        double desiredY = (groundUnderDrone != -999.0) ? Math.max(cruiseY, groundUnderDrone + minGroundClearance) : cruiseY;
 
                         // Forward obstacle detection & avoidance raycast
                         double avoidUp = 0.0;
@@ -259,7 +262,11 @@ public class PickupDroneEntity extends RcDroneEntity {
                         BlockPos forwardUpPos = forwardPos.up();
                         if (this.getWorld().getBlockState(forwardPos).isSolidBlock(this.getWorld(), forwardPos) ||
                             this.getWorld().getBlockState(forwardUpPos).isSolidBlock(this.getWorld(), forwardUpPos)) {
-                            avoidUp = 0.40; // Smoothly hop up over obstacle
+                            avoidUp = 0.35; // Smoothly hop up over obstacle
+                        }
+
+                        if (this.verticalCollision && this.getVelocity().y > 0) {
+                            avoidUp = 0.0;
                         }
 
                         float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
@@ -278,6 +285,9 @@ public class PickupDroneEntity extends RcDroneEntity {
                         Vec3d hDir = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
 
                         double dy = desiredY - this.getY() + avoidUp;
+                        if (this.verticalCollision && dy > 0) {
+                            dy = 0;
+                        }
                         double yVel = MathHelper.clamp(dy * 0.35, -0.65, 0.65);
                         Vec3d targetVel = new Vec3d(hDir.x, yVel, hDir.z);
 

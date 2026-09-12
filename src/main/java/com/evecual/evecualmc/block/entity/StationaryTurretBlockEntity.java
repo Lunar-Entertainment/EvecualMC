@@ -200,7 +200,7 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
     @Nullable
     public TurretAmmoContainerBlockEntity getLinkedAmmoContainer() {
         if (world == null || linkedAmmoContainerPos == null) return null;
-        if (world.isChunkLoaded(linkedAmmoContainerPos)) {
+        if (world.isChunkLoaded(linkedAmmoContainerPos.getX() >> 4, linkedAmmoContainerPos.getZ() >> 4)) {
             BlockEntity be = world.getBlockEntity(linkedAmmoContainerPos);
             if (be instanceof TurretAmmoContainerBlockEntity container) {
                 return container;

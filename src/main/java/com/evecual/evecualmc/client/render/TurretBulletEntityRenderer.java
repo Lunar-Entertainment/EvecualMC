@@ -2,7 +2,6 @@ package com.evecual.evecualmc.client.render;
 
 import com.evecual.evecualmc.entity.TurretBulletEntity;
 import com.evecual.evecualmc.turret.AmmoType;
-import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -12,7 +11,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 public class TurretBulletEntityRenderer extends EntityRenderer<TurretBulletEntity> {

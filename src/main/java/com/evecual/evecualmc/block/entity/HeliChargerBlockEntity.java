@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HeliChargerBlockEntity extends BlockEntity {
-    private boolean activeCharging = false;
-
     public HeliChargerBlockEntity(BlockPos pos, BlockState state) {
         super(EvecualMC.HELI_CHARGER_BLOCK_ENTITY, pos, state);
     }
@@ -141,8 +139,6 @@ public class HeliChargerBlockEntity extends BlockEntity {
                 }
             }
         }
-
-        be.activeCharging = chargingAny;
     }
 
     @Nullable

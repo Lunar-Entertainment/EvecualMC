@@ -43,6 +43,7 @@ public class WindTurbineBlockEntityRenderer implements BlockEntityRenderer<WindT
             case SOUTH -> matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F));
             case WEST -> matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(270.0F));
             case EAST -> matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(90.0F));
+            default -> {}
         }
 
         // Position propeller assembly on the front face of the nacelle housing

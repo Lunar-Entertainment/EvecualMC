@@ -1,6 +1,5 @@
 package com.evecual.evecualmc.client.screen;
 
-import com.evecual.evecualmc.entity.HeliEntity;
 import com.evecual.evecualmc.screen.HeliUpgradeScreenHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -10,8 +9,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class HeliUpgradeScreen extends HandledScreen<HeliUpgradeScreenHandler> {
-    private static final Identifier GENERIC_INVENTORY_TEXTURE = new Identifier("minecraft", "textures/gui/container/generic_54.png");
-
     public HeliUpgradeScreen(HeliUpgradeScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
         this.backgroundWidth = 176;
