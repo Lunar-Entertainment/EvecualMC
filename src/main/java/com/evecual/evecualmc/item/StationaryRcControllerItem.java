@@ -62,13 +62,14 @@ public class StationaryRcControllerItem extends BlockItem {
         nbt.remove("PairedCar");
         nbt.remove("PairedRobot");
         nbt.putString("PairedType", "drone");
-        nbt.putString("VehicleName", "RC Drone");
+        String droneName = (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity) ? "Pickup Drone" : "RC Drone";
+        nbt.putString("VehicleName", droneName);
         nbt.putBoolean("ActiveLink", true);
         if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
             drone.onPairFromParkingSpot();
         }
 
-        player.sendMessage(Text.literal("§a📡 Stationary Controller linked to RC Drone! Place down to install station."), true);
+        player.sendMessage(Text.literal("§a📡 Stationary Controller linked to " + droneName + "! Place down to install station."), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
         return true;

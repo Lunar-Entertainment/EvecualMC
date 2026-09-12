@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "evecualmc:item/flying_turret_controller"
+    "layer0": "evecualmc:item/pickup_drone"
   }
 }

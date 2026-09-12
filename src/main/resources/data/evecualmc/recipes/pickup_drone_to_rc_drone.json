@@ -2,11 +2,11 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "item": "evecualmc:stationary_turret"
+      "item": "evecualmc:pickup_drone"
     }
   ],
   "result": {
-    "item": "evecualmc:flying_turret",
+    "item": "evecualmc:rc_drone",
     "count": 1
   }
 }

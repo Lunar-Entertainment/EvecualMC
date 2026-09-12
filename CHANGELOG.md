@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.9] - 2026-09-12
+### Added & Improved
+- **Pickup Drone (`pickup_drone`)**:
+  - Added the **Pickup Drone**, a direct quadcopter copy of the RC Drone engineered specifically for remote item collection and automated vacuum harvesting.
+  - **Automated Cargo Vacuum**: While flying or hovering near dropped items in the world (within 1.8m), the drone automatically vacuums items into its 9-slot onboard cargo bay with authentic pickup audio feedback.
+  - **Full RC Drone Flight & Controls**: Features identical 3D flight kinematics, tilt physics (pitch & roll), high-speed rotor blur discs, spotlight illumination, battery telemetry, and helipad docking/auto-return.
+  - **Remote Control & Ground Station Pairing**: Fully compatible with the handheld RC Controller and Stationary Ground Terminal.
+  - **Interactive Handling & Customization**: Supports color dyeing (6 variants), direct cargo access (empty hand right-click), survival item retrieval (Shift + Right-Click with empty hand), and drops itself as an item when damaged.
+  - **Crafting Recipes**:
+    - Shapeless crafting: 1 RC Drone + 1 Hopper -> 1 Pickup Drone.
+    - Reverse conversion: 1 Pickup Drone -> 1 RC Drone.
+
+### Removed
+- **Defense Drone & Defense Controller**:
+  - Completely removed the Defense Drone entity (`flying_turret`), item, model, renderer, screen, and screen handler.
+  - Completely removed the Defense Controller item (`flying_turret_controller`).
+  - Removed defense drone recipes, network packets, input listeners, and camera hooks.
+  - Cleaned up Turret Ammo Container to link exclusively to Stationary Turrets.
+
 ## [1.8.8] - 2026-09-12
 ### Added & Improved
 - **Freeze Player Movement During Defense Drone Control**:

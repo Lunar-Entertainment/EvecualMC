@@ -23,8 +23,7 @@ public abstract class CameraMixin {
     private void evecual$rotateRcCamera(Args args) {
         if (this.focusedEntity instanceof RcCarEntity ||
             this.focusedEntity instanceof com.evecual.evecualmc.entity.RcDroneEntity ||
-            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcRobotEntity ||
-            this.focusedEntity instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) {
+            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcRobotEntity) {
             float yaw = args.get(0);
             float pitch = args.get(1);
             args.set(0, yaw + EvecualMCClient.getRcCameraYaw());
@@ -39,8 +38,7 @@ public abstract class CameraMixin {
     private double evecual$modifyRcCameraDistance(double distance) {
         if (this.focusedEntity instanceof RcCarEntity ||
             this.focusedEntity instanceof com.evecual.evecualmc.entity.RcDroneEntity ||
-            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcRobotEntity ||
-            this.focusedEntity instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) {
+            this.focusedEntity instanceof com.evecual.evecualmc.entity.RcRobotEntity) {
             return EvecualMCClient.getRcCameraDistance();
         }
         return distance;

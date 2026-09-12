@@ -38,8 +38,6 @@ public class TurretAmmoContainerBlockEntity extends BlockEntity implements Sided
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
     private final Set<BlockPos> linkedStationaryTurrets = new HashSet<>();
-    private final Set<UUID> linkedFlyingTurrets = new HashSet<>();
-
     public TurretAmmoContainerBlockEntity(BlockPos pos, BlockState state) {
         super(EvecualMC.TURRET_AMMO_CONTAINER_BLOCK_ENTITY, pos, state);
     }
@@ -56,24 +54,8 @@ public class TurretAmmoContainerBlockEntity extends BlockEntity implements Sided
         sync();
     }
 
-    public synchronized void linkFlyingTurret(UUID droneUuid) {
-        linkedFlyingTurrets.add(droneUuid);
-        markDirty();
-        sync();
-    }
-
-    public synchronized void unlinkFlyingTurret(UUID droneUuid) {
-        linkedFlyingTurrets.remove(droneUuid);
-        markDirty();
-        sync();
-    }
-
     public Set<BlockPos> getLinkedStationaryTurrets() {
         return linkedStationaryTurrets;
-    }
-
-    public Set<UUID> getLinkedFlyingTurrets() {
-        return linkedFlyingTurrets;
     }
 
     public synchronized boolean hasAmmo() {
@@ -213,14 +195,6 @@ public class TurretAmmoContainerBlockEntity extends BlockEntity implements Sided
                 linkedStationaryTurrets.add(NbtHelper.toBlockPos(list.getCompound(i)));
             }
         }
-
-        linkedFlyingTurrets.clear();
-        if (nbt.contains("LinkedFlying", NbtElement.LIST_TYPE)) {
-            NbtList list = nbt.getList("LinkedFlying", NbtElement.INT_ARRAY_TYPE);
-            for (int i = 0; i < list.size(); i++) {
-                linkedFlyingTurrets.add(list.getCompound(i).getUuid("UUID"));
-            }
-        }
     }
 
     @Override
@@ -233,14 +207,6 @@ public class TurretAmmoContainerBlockEntity extends BlockEntity implements Sided
             stationaryList.add(NbtHelper.fromBlockPos(p));
         }
         nbt.put("LinkedStationary", stationaryList);
-
-        NbtList flyingList = new NbtList();
-        for (UUID uuid : linkedFlyingTurrets) {
-            NbtCompound tag = new NbtCompound();
-            tag.putUuid("UUID", uuid);
-            flyingList.add(tag);
-        }
-        nbt.put("LinkedFlying", flyingList);
     }
 
     @Nullable

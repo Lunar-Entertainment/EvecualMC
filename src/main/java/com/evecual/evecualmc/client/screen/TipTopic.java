@@ -820,7 +820,7 @@ public enum TipTopic {
         if (item == EvecualMC.HELI_CONTROLLER_ITEM) return HELI_CONTROLLER;
         if (item == EvecualMC.HELI_MINING_ARM || item == EvecualMC.HELI_WEAPON_ARM) return EV_HELI;
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
-        if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
+        if (item == EvecualMC.RC_DRONE_ITEM || item == EvecualMC.PICKUP_DRONE_ITEM) return RC_DRONE;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
         if (item == EvecualMC.STATIONARY_RC_CONTROLLER_ITEM) return STATIONARY_RC_CONTROLLER;

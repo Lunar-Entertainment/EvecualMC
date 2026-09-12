@@ -172,15 +172,10 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "turret_linker"),
             new com.evecual.evecualmc.item.TurretLinkerItem(new Item.Settings().maxCount(1)));
 
-    public static final Item FLYING_TURRET_ITEM = Registry.register(
+    public static final Item PICKUP_DRONE_ITEM = Registry.register(
             Registries.ITEM,
-            new Identifier(MOD_ID, "flying_turret"),
-            new com.evecual.evecualmc.item.FlyingTurretItem(new Item.Settings().maxCount(1)));
-
-    public static final Item FLYING_TURRET_CONTROLLER_ITEM = Registry.register(
-            Registries.ITEM,
-            new Identifier(MOD_ID, "flying_turret_controller"),
-            new com.evecual.evecualmc.item.FlyingTurretControllerItem(new Item.Settings().maxCount(1)));
+            new Identifier(MOD_ID, "pickup_drone"),
+            new com.evecual.evecualmc.item.PickupDroneItem(new Item.Settings().maxCount(1)));
 
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
@@ -513,13 +508,6 @@ public class EvecualMC implements ModInitializer {
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.StationaryTurretScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
-    public static final ScreenHandlerType<com.evecual.evecualmc.screen.FlyingTurretScreenHandler> FLYING_TURRET_SCREEN_HANDLER = Registry
-            .register(
-                    Registries.SCREEN_HANDLER,
-                    new Identifier(MOD_ID, "flying_turret"),
-                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.FlyingTurretScreenHandler::new,
-                            FeatureFlags.VANILLA_FEATURES));
-
     public static final ScreenHandlerType<com.evecual.evecualmc.screen.TurretAmmoContainerScreenHandler> TURRET_AMMO_CONTAINER_SCREEN_HANDLER = Registry
             .register(
                     Registries.SCREEN_HANDLER,
@@ -582,13 +570,13 @@ public class EvecualMC implements ModInitializer {
                     .trackedUpdateRate(1)
                     .build());
 
-    public static final EntityType<com.evecual.evecualmc.entity.FlyingTurretEntity> FLYING_TURRET_ENTITY = Registry.register(
+    public static final EntityType<com.evecual.evecualmc.entity.PickupDroneEntity> PICKUP_DRONE_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
-            new Identifier(MOD_ID, "flying_turret"),
-            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.FlyingTurretEntity>create(SpawnGroup.MISC,
-                    com.evecual.evecualmc.entity.FlyingTurretEntity::new)
-                    .dimensions(EntityDimensions.fixed(1.0f, 0.8f))
-                    .trackRangeChunks(64)
+            new Identifier(MOD_ID, "pickup_drone"),
+            FabricEntityTypeBuilder.<com.evecual.evecualmc.entity.PickupDroneEntity>create(SpawnGroup.MISC,
+                    com.evecual.evecualmc.entity.PickupDroneEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.8f, 0.35f))
+                    .trackRangeChunks(34)
                     .build());
 
     // Creative Inventory Tab: "evecual" with lightning icon
@@ -612,6 +600,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(HELI_WEAPON_ARM);
                 entries.add(RC_CAR_ITEM);
                 entries.add(RC_DRONE_ITEM);
+                entries.add(PICKUP_DRONE_ITEM);
                 entries.add(RC_ROBOT_ITEM);
                 entries.add(RC_CONTROLLER_ITEM);
                 entries.add(STATIONARY_RC_CONTROLLER_ITEM);
@@ -641,8 +630,6 @@ public class EvecualMC implements ModInitializer {
                 entries.add(DIAMOND_AMMO);
                 entries.add(TURRET_LINKER);
                 entries.add(STATIONARY_TURRET_ITEM);
-                entries.add(FLYING_TURRET_ITEM);
-                entries.add(FLYING_TURRET_CONTROLLER_ITEM);
                 entries.add(TURRET_AMMO_CONTAINER_ITEM);
             })
             .build();
@@ -677,9 +664,6 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier HELI_CONTROLLER_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_controller_input");
     public static final Identifier HELI_CONTROLLER_ARM_ACTION_PACKET_ID = new Identifier(MOD_ID, "heli_controller_arm_action");
     public static final Identifier HELI_CONTROLLER_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "heli_controller_auto_dock");
-    public static final Identifier FLYING_TURRET_INPUT_PACKET_ID = new Identifier(MOD_ID, "flying_turret_input");
-    public static final Identifier FLYING_TURRET_FIRE_PACKET_ID = new Identifier(MOD_ID, "flying_turret_fire");
-    public static final Identifier FLYING_TURRET_RECALL_PACKET_ID = new Identifier(MOD_ID, "flying_turret_recall");
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -693,11 +677,6 @@ public class EvecualMC implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(Registries.ITEM_GROUP, EVECUAL_ITEM_GROUP_KEY, EVECUAL_ITEM_GROUP);
-
-        net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(
-                FLYING_TURRET_ENTITY,
-                com.evecual.evecualmc.entity.FlyingTurretEntity.createFlyingTurretAttributes()
-        );
 
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CAR_INPUT_PACKET_ID,
                 (server, player, handler, buf, responseSender) -> {
@@ -1298,65 +1277,6 @@ public class EvecualMC implements ModInitializer {
                     });
                 });
 
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_INPUT_PACKET_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    java.util.UUID droneUuid = buf.readUuid();
-                    boolean forward = buf.readBoolean();
-                    boolean back = buf.readBoolean();
-                    boolean left = buf.readBoolean();
-                    boolean right = buf.readBoolean();
-                    boolean up = buf.readBoolean();
-                    boolean down = buf.readBoolean();
-                    boolean sprint = buf.readBoolean();
-                    float yaw = buf.readFloat();
-                    float pitch = buf.readFloat();
-
-                    server.execute(() -> {
-                        if (player.getServerWorld() != null) {
-                            Entity target = player.getServerWorld().getEntity(droneUuid);
-                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
-                                if (player.squaredDistanceTo(drone) <= 1048576.0) { // 1024 blocks
-                                    drone.setRemoteInputs(forward, back, left, right, up, down, sprint, yaw, pitch);
-                                }
-                            }
-                        }
-                    });
-                });
-
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_FIRE_PACKET_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    java.util.UUID droneUuid = buf.readUuid();
-                    double dirX = buf.readDouble();
-                    double dirY = buf.readDouble();
-                    double dirZ = buf.readDouble();
-
-                    server.execute(() -> {
-                        if (player.getServerWorld() != null) {
-                            Entity target = player.getServerWorld().getEntity(droneUuid);
-                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
-                                if (player.squaredDistanceTo(drone) <= 1048576.0) {
-                                    drone.fireManual(new net.minecraft.util.math.Vec3d(dirX, dirY, dirZ).normalize());
-                                }
-                            }
-                        }
-                    });
-                });
-
-        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(FLYING_TURRET_RECALL_PACKET_ID,
-                (server, player, handler, buf, responseSender) -> {
-                    java.util.UUID droneUuid = buf.readUuid();
-                    server.execute(() -> {
-                        if (player.getServerWorld() != null) {
-                            Entity target = player.getServerWorld().getEntity(droneUuid);
-                            if (target instanceof com.evecual.evecualmc.entity.FlyingTurretEntity drone) {
-                                if (player.squaredDistanceTo(drone) <= 1048576.0) {
-                                    drone.recallTo(player.getBlockPos().up(12));
-                                    player.sendMessage(Text.literal("§a🚁 Flying Defense Drone recalled to your position!"), true);
-                                }
-                            }
-                        }
-                    });
-                });
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");

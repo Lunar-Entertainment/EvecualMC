@@ -64,7 +64,8 @@ public class RcControllerItem extends Item {
             drone.onPairFromParkingSpot();
         }
 
-        player.sendMessage(Text.literal("§a📡 RC Controller paired to RC Drone! §7(Range: 512m)"), true);
+        String droneName = (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity) ? "Pickup Drone" : "RC Drone";
+        player.sendMessage(Text.literal("§a📡 RC Controller paired to " + droneName + "! §7(Range: 512m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
         return true;
