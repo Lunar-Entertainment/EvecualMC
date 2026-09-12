@@ -1,5 +1,22 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.22] - 2026-09-12
+### Fixed & Improved
+- **Auto Pickup Drone Parking Spot Sinking Fix**:
+  - Restricted `isParkingSpotBlock` to dedicated landing pads (`PICKUP_DRONE_PARKING_SPOT_BLOCK` and `DRONE_PARKING_SPOT_BLOCK`), preventing full base blocks below (`DRONE_PICKUP_BLOCK` and `AUTO_PICKUP_BLOCK`) from misidentifying the docking position and pulling drones into the ground.
+  - Implemented dynamic landing pad height offsets (`getParkingSpotPadHeight`): dynamically sets `+0.125m` (2 pixels) for `PICKUP_DRONE_PARKING_SPOT_BLOCK` and `+0.0625m` (1 pixel) for `DRONE_PARKING_SPOT_BLOCK`, ensuring drone landing gear rests flush on top of pads.
+- **RC Controller Pairing & Takeoff on Parking Spot**:
+  - Resolved immediate unpairing bug where right-clicking an RC Controller on a parked drone instantly unpaired the player on the subsequent tick.
+  - Added `explicitlyPairedInSpot` tracking so player manual pairing remains active while docked on a charging or landing pad.
+  - Permitted immediate takeoff: pressing vertical or directional movement keys (`Space`, `W`, `A`, `S`, `D`) or triggering autonomous harvest breaks the parked clamp and grants full flight control.
+- **Autonomous Drone Navigation & Indoor Clearance**:
+  - Replaced world top surface heightmap lookups with local ground floor raycasts (`+1.0m`), preventing drones in indoor or roofed rooms from pushing up into ceilings or stalling.
+  - Added collision-aware return-to-base ascending stages: ceiling or obstruction contacts (`verticalCollision`) immediately transition from ascension to horizontal cruising.
+  - Differentiated indoor vs outdoor return cruise altitudes (`2.2m` indoor vs `4.5m` outdoor).
+  - Broadened `AutoPickupBlockEntity` item detection to any valid dropped item without requiring open air above, enabling indoor item scavenging.
+  - Added manual RC override protection in `AutoPickupBlockEntity` so active player piloting is never hijacked by radar scans.
+  - Automatic `homeHelipadPos` binding to the closest pickup parking spot on link.
+
 ## [1.8.21] - 2026-09-12
 ### Changed & Tuned
 - **Lightning Item Durability Balancing**:

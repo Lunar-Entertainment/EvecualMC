@@ -72,6 +72,12 @@ public class AutoPickupBlockEntity extends BlockEntity {
         if (be.scanCooldown <= 0) {
             be.scanCooldown = 20; // Check every second
 
+            // If player is manually controlling the drone with RC Controller, do not interrupt
+            if (!drone.getPairedPlayerUuid().isEmpty()) {
+                be.lastStatus = "🎮 Manual Override: Pickup Drone currently controlled by player";
+                return;
+            }
+
             // If drone is dead or completely unpowered, do not dispatch
             if (drone.getEnergy() <= 10) {
                 be.lastStatus = "⚡ Low Battery: Pickup Drone requires charging (≤ 10 EU)";
@@ -82,6 +88,7 @@ public class AutoPickupBlockEntity extends BlockEntity {
             if (drone.isCargoFull()) {
                 be.lastStatus = "📦 Cargo Full: Drone returning to base to unload into Storage Unit";
                 if (!drone.isAutoReturning() && !drone.isInParkingSpot()) {
+                    drone.cancelAutoHarvest();
                     drone.startAutoReturnToCharger();
                 }
                 return;
@@ -93,6 +100,15 @@ public class AutoPickupBlockEntity extends BlockEntity {
                     item -> isItemHarvestable(serverWorld, item));
 
             if (!items.isEmpty()) {
+                // If drone is already harvesting and its target is still valid, don't interrupt
+                if (drone.isAutoHarvesting() && drone.getHarvestTargetItemUuid() != null) {
+                    Entity currentTarget = serverWorld.getEntity(drone.getHarvestTargetItemUuid());
+                    if (currentTarget instanceof ItemEntity ie && isItemHarvestable(serverWorld, ie)) {
+                        be.lastStatus = "🎯 Mission Active: Harvesting " + ie.getStack().getName().getString() + " (" + items.size() + " in radar)";
+                        return;
+                    }
+                }
+
                 // Prioritize reachable item closest to the drone
                 Vec3d dronePos = drone.getPos();
                 ItemEntity closest = items.stream()
@@ -121,6 +137,8 @@ public class AutoPickupBlockEntity extends BlockEntity {
                     drone.cancelAutoHarvest();
                     drone.startAutoReturnToCharger();
                     be.lastStatus = "🟢 Area Clear: Drone returning to dock on Drone Pickup Station";
+                } else if (drone.isAutoReturning()) {
+                    be.lastStatus = "🟢 Area Clear: Drone returning to landing pad";
                 } else if (drone.isInParkingSpot()) {
                     be.lastStatus = "🟢 Standby: Radar scanning (96m radius | Drone docked & ready)";
                 } else {
@@ -136,29 +154,25 @@ public class AutoPickupBlockEntity extends BlockEntity {
 
     public static boolean isItemHarvestable(ServerWorld world, ItemEntity item) {
         if (!item.isAlive() || item.cannotPickup() || item.getStack().isEmpty()) return false;
-
         BlockPos itemPos = item.getBlockPos();
-        if (itemPos.getY() < world.getBottomY() + 4 || itemPos.getY() > world.getTopY()) return false;
+        if (itemPos.getY() < world.getBottomY() || itemPos.getY() > world.getTopY()) return false;
         if (world.getFluidState(itemPos).isIn(net.minecraft.registry.tag.FluidTags.LAVA)) return false;
-
-        // Ensure item is not enclosed inside solid rock/underground:
-        // Must have at least 2 consecutive non-solid blocks above it for aerial drone access
-        int openAir = 0;
-        for (int dy = 1; dy <= 5; dy++) {
-            BlockPos check = itemPos.up(dy);
-            if (!world.getBlockState(check).isSolidBlock(world, check)) {
-                openAir++;
-            } else {
-                break;
-            }
-        }
-        return openAir >= 2;
+        return true;
     }
 
     public void setLinkedDrone(UUID uuid, String name) {
         this.linkedDroneUuid = uuid;
         this.linkedDroneName = name != null ? name : "Pickup Drone";
         this.lastStatus = "🟢 Linked to " + this.linkedDroneName + " (Radar active)";
+        if (this.world instanceof ServerWorld sw) {
+            Entity ent = sw.getEntity(uuid);
+            if (ent instanceof PickupDroneEntity drone) {
+                if (drone.getHomeHelipadPos() == null) {
+                    BlockPos.findClosest(this.pos, 16, 8, p -> sw.getBlockState(p).isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK))
+                            .ifPresent(drone::setHomeHelipadPos);
+                }
+            }
+        }
         markDirty();
         sync();
     }

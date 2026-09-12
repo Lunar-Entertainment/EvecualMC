@@ -292,14 +292,26 @@ public class RcDroneEntity extends Entity {
         return bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
     }
 
+    public double getParkingSpotPadHeight(BlockPos spotPos) {
+        if (spotPos == null) return 0.0625;
+        BlockState state = this.getWorld().getBlockState(spotPos);
+        if (state.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)) {
+            return 0.125;
+        }
+        return 0.0625;
+    }
+
     public boolean isInParkingSpot() {
         if (isAutoReturning()) return false;
+        if (this instanceof PickupDroneEntity pickup && pickup.isAutoHarvesting()) return false;
+        if (this.inputUp || this.inputForward || this.inputBack || this.inputLeft || this.inputRight) return false;
         BlockPos spotPos = getParkingSpotPos();
         if (spotPos == null) return false;
         this.homeHelipadPos = spotPos;
         double dx = Math.abs(this.getX() - (spotPos.getX() + 0.5));
         double dz = Math.abs(this.getZ() - (spotPos.getZ() + 0.5));
-        double dy = Math.abs(this.getY() - (spotPos.getY() + 0.0625));
+        double padHeight = getParkingSpotPadHeight(spotPos);
+        double dy = Math.abs(this.getY() - (spotPos.getY() + padHeight));
         // Must be squarely centered horizontally and resting on or close to the pad
         return dx <= 0.40 && dz <= 0.40 && (dy <= 0.45 || this.isOnGround());
     }
@@ -309,49 +321,23 @@ public class RcDroneEntity extends Entity {
     }
 
     public void onPairFromParkingSpot() {
-        this.wasInParkingSpot = false;
+        this.wasInParkingSpot = true;
         this.explicitlyPairedInSpot = true;
 
         BlockPos spotPos = getParkingSpotPos();
-        float yaw = this.getYaw();
         if (spotPos != null) {
             this.homeHelipadPos = spotPos;
             BlockState bs = this.getWorld().getBlockState(spotPos);
             if (bs.contains(net.minecraft.block.HorizontalFacingBlock.FACING)) {
-                yaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
+                float yaw = bs.get(net.minecraft.block.HorizontalFacingBlock.FACING).asRotation();
                 this.setYaw(yaw);
                 this.setBodyYaw(yaw);
                 this.setHeadYaw(yaw);
+                this.prevYaw = yaw;
             }
-        }
-
-        // If this is a Pickup Drone, keep it calmly parked on the pad until an explicit move command
-        if (this instanceof PickupDroneEntity) {
-            return;
-        }
-
-        float rad = (float) Math.toRadians(yaw);
-        double forwardX = -Math.sin(rad);
-        double forwardZ = Math.cos(rad);
-
-        double newX = this.getX() + forwardX * 1.0;
-        double newZ = this.getZ() + forwardZ * 1.0;
-        double newY = this.getY();
-
-        BlockPos targetPos = new BlockPos((int) Math.floor(newX), (int) Math.floor(newY), (int) Math.floor(newZ));
-        if (this.getWorld().getBlockState(targetPos).isSolidBlock(this.getWorld(), targetPos)) {
-            newY += 1.0;
-        }
-
-        this.setPosition(newX, newY, newZ);
-        this.setVelocity(forwardX * 0.1, 0.05, forwardZ * 0.1);
-        this.velocityDirty = true;
-        this.velocityModified = true;
-
-        if (this.getWorld().isClient()) {
-            this.prevX = newX;
-            this.prevY = newY;
-            this.prevZ = newZ;
+            double padHeight = getParkingSpotPadHeight(spotPos);
+            this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + padHeight, spotPos.getZ() + 0.5);
+            this.setVelocity(0.0, 0.0, 0.0);
         }
     }
 
@@ -380,6 +366,9 @@ public class RcDroneEntity extends Entity {
         this.explicitlyPairedInSpot = false;
 
         BlockPos spotPos = getParkingSpotPos();
+        if (spotPos == null) {
+            spotPos = this.homeHelipadPos;
+        }
         if (spotPos != null) {
             this.homeHelipadPos = spotPos;
             BlockState bs = this.getWorld().getBlockState(spotPos);
@@ -390,7 +379,8 @@ public class RcDroneEntity extends Entity {
                 this.setHeadYaw(targetYaw);
                 this.prevYaw = targetYaw;
             }
-            this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + 0.0625, spotPos.getZ() + 0.5);
+            double padHeight = getParkingSpotPadHeight(spotPos);
+            this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + padHeight, spotPos.getZ() + 0.5);
         }
 
         String pUuid = getPairedPlayerUuid();
@@ -402,10 +392,18 @@ public class RcDroneEntity extends Entity {
             try {
                 PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuid));
                 if (player != null) {
-                    player.sendMessage(Text.literal("§a⚡ RC Drone landed & charging!"), true);
+                    player.sendMessage(Text.literal("§a⚡ " + (this instanceof PickupDroneEntity ? "Pickup Drone" : "RC Drone") + " landed on pad!"), true);
                 }
             } catch (Exception ignored) {}
         }
+    }
+
+    public BlockPos getHomeHelipadPos() {
+        return this.homeHelipadPos;
+    }
+
+    public void setHomeHelipadPos(BlockPos pos) {
+        this.homeHelipadPos = pos;
     }
 
     public boolean startAutoReturnToCharger() {
@@ -487,7 +485,8 @@ public class RcDroneEntity extends Entity {
             this.homeHelipadPos = bestCharger;
             this.autoReturnTicks = 0;
             this.autoReturnStage = 0;
-            this.cruiseAltitude = Math.max(this.getY() + 3.0, bestCharger.getY() + 7.5);
+            double clearance = this.getWorld().isSkyVisible(bestCharger) ? 4.5 : 2.2;
+            this.cruiseAltitude = Math.max(this.getY() + 1.2, bestCharger.getY() + clearance);
             setFlying(true);
             if (!this.getWorld().isClient) {
                 this.dataTracker.set(AUTO_RETURNING, true);
@@ -581,34 +580,36 @@ public class RcDroneEntity extends Entity {
                     this.setHeadYaw(targetYaw);
                     this.prevYaw = targetYaw;
                 }
-                this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + 0.0625, spotPos.getZ() + 0.5);
+                double padHeight = getParkingSpotPadHeight(spotPos);
+                this.setPosition(spotPos.getX() + 0.5, spotPos.getY() + padHeight, spotPos.getZ() + 0.5);
                 this.setVelocity(0.0, 0.0, 0.0);
             }
             if (!this.wasInParkingSpot) {
                 this.wasInParkingSpot = true;
-                this.explicitlyPairedInSpot = false;
-                setFlying(false);
-                this.inputUp = false;
-                this.inputDown = false;
-                this.inputForward = false;
-                this.inputBack = false;
-                this.inputLeft = false;
-                this.inputRight = false;
-                this.inputSprint = false;
-                this.propSpeed = 0.0F;
-                this.setVelocity(0.0, Math.min(this.getVelocity().y, 0.0), 0.0);
-                if (!this.getWorld().isClient) {
-                    String pUuidStr = getPairedPlayerUuid();
-                    if (pUuidStr != null && !pUuidStr.isEmpty()) {
-                        com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuidStr);
-                        try {
-                            PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuidStr));
-                            if (player != null) {
-                                player.sendMessage(Text.literal("§e🅿️ RC Drone docked! Motors turned off and unpaired."), true);
-                            }
-                        } catch (Exception ignored) {}
+                if (!this.explicitlyPairedInSpot) {
+                    setFlying(false);
+                    this.inputUp = false;
+                    this.inputDown = false;
+                    this.inputForward = false;
+                    this.inputBack = false;
+                    this.inputLeft = false;
+                    this.inputRight = false;
+                    this.inputSprint = false;
+                    this.propSpeed = 0.0F;
+                    this.setVelocity(0.0, Math.min(this.getVelocity().y, 0.0), 0.0);
+                    if (!this.getWorld().isClient) {
+                        String pUuidStr = getPairedPlayerUuid();
+                        if (pUuidStr != null && !pUuidStr.isEmpty()) {
+                            com.evecual.evecualmc.item.RcControllerItem.unpairVehicleFromPlayer(this.getWorld(), this.getUuid(), pUuidStr);
+                            try {
+                                PlayerEntity player = this.getWorld().getPlayerByUuid(java.util.UUID.fromString(pUuidStr));
+                                if (player != null) {
+                                    player.sendMessage(Text.literal("§e🅿️ " + (this instanceof PickupDroneEntity ? "Pickup Drone" : "RC Drone") + " docked! Motors turned off and unpaired."), true);
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        setPairedPlayerUuid("");
                     }
-                    setPairedPlayerUuid("");
                 }
             }
             if (!this.explicitlyPairedInSpot) {
@@ -651,7 +652,8 @@ public class RcDroneEntity extends Entity {
                 cancelAutoReturn();
             } else {
                 double targetX = this.targetChargerPos.getX() + 0.5;
-                double targetY = this.targetChargerPos.getY() + 0.0625;
+                double padHeight = getParkingSpotPadHeight(this.targetChargerPos);
+                double targetY = this.targetChargerPos.getY() + padHeight;
                 double targetZ = this.targetChargerPos.getZ() + 0.5;
 
                 double dx = targetX - this.getX();
@@ -662,6 +664,9 @@ public class RcDroneEntity extends Entity {
                 if (this.autoReturnStage == 0) {
                     if (this.getY() < this.cruiseAltitude - 0.4) {
                         vel = new Vec3d(vel.x * 0.7, 0.35, vel.z * 0.7);
+                        if (this.verticalCollision || this.horizontalCollision) {
+                            this.autoReturnStage = 1;
+                        }
                     } else {
                         this.autoReturnStage = 1;
                     }
@@ -722,7 +727,7 @@ public class RcDroneEntity extends Entity {
                         MathHelper.lerp(0.3, vel.z, targetVel.z)
                     );
 
-                    if (horizDist <= 0.35 && (Math.abs(dy) <= 0.40 || this.isOnGround())) {
+                    if (horizDist <= 0.35 && (Math.abs(dy) <= 0.30 || this.isOnGround())) {
                         this.setPosition(targetX, targetY, targetZ);
                         onReachedCharger();
                         this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),

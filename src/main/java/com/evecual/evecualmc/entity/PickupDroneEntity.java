@@ -71,16 +71,19 @@ public class PickupDroneEntity extends RcDroneEntity {
     }
 
     public void dispatchAutoHarvest(Vec3d target, UUID itemUuid) {
-        if (getEnergy() <= 10) return;
+        if (getEnergy() <= 10 || isCargoFull()) return;
+        BlockPos currentSpot = getParkingSpotPos();
+        if (currentSpot != null) {
+            this.homeHelipadPos = currentSpot;
+        }
+        cancelAutoReturn();
         this.harvestTargetPos = target;
         this.harvestTargetItemUuid = itemUuid;
         this.isAutoHarvesting = true;
         this.harvestTimeoutTicks = 0;
         setFlying(true);
-        if (isInParkingSpot() || this.wasInParkingSpot) {
-            this.wasInParkingSpot = false;
-            this.explicitlyPairedInSpot = true;
-        }
+        this.wasInParkingSpot = false;
+        this.explicitlyPairedInSpot = false;
     }
 
     public void cancelAutoHarvest() {
@@ -92,6 +95,10 @@ public class PickupDroneEntity extends RcDroneEntity {
 
     public boolean isAutoHarvesting() {
         return this.isAutoHarvesting;
+    }
+
+    public UUID getHarvestTargetItemUuid() {
+        return this.harvestTargetItemUuid;
     }
 
     public boolean isCargoFull() {
@@ -112,6 +119,9 @@ public class PickupDroneEntity extends RcDroneEntity {
                 for (int dz = -1; dz <= 1; dz++) {
                     desired.add(new ChunkPos(center.x + dx, center.z + dz));
                 }
+            }
+            if (this.homeHelipadPos != null) {
+                desired.add(new ChunkPos(this.homeHelipadPos));
             }
             if (!desired.equals(this.forcedPickupChunks)) {
                 for (ChunkPos old : this.forcedPickupChunks) {
@@ -229,17 +239,28 @@ public class PickupDroneEntity extends RcDroneEntity {
                             return;
                         }
 
-                        // Stable cruise height based on terrain surface and target height (NO ratcheting Math.max(this.getY())!)
-                        int curX = (int) Math.floor(this.getX());
-                        int curZ = (int) Math.floor(this.getZ());
-                        int tgtX = (int) Math.floor(targetX);
-                        int tgtZ = (int) Math.floor(targetZ);
+                        // Local ground detection beneath drone
+                        BlockPos currentPos = this.getBlockPos();
+                        double localGroundY = this.getY();
+                        for (int checkY = currentPos.getY(); checkY >= currentPos.getY() - 4 && checkY >= this.getWorld().getBottomY(); checkY--) {
+                            BlockPos bp = new BlockPos(currentPos.getX(), checkY, currentPos.getZ());
+                            if (this.getWorld().getBlockState(bp).isSolidBlock(this.getWorld(), bp)) {
+                                localGroundY = checkY + 1.0;
+                                break;
+                            }
+                        }
 
-                        int curSurfaceY = this.getWorld().getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, curX, curZ);
-                        int tgtSurfaceY = this.getWorld().getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, tgtX, tgtZ);
-                        double terrainClearance = Math.max(curSurfaceY, tgtSurfaceY) + 3.2;
-                        double cruiseY = Math.max(targetY + 3.5, terrainClearance);
-                        double desiredY = horizDist > 3.0 ? cruiseY : targetY + 0.25;
+                        double desiredY = Math.max(localGroundY + 1.0, targetY + (horizDist > 1.5 ? 1.0 : 0.20));
+
+                        // Forward obstacle detection & avoidance raycast
+                        double avoidUp = 0.0;
+                        Vec3d checkVec = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(1.5) : Vec3d.ZERO;
+                        BlockPos forwardPos = new BlockPos((int) Math.floor(this.getX() + checkVec.x), (int) Math.floor(this.getY()), (int) Math.floor(this.getZ() + checkVec.z));
+                        BlockPos forwardUpPos = forwardPos.up();
+                        if (this.getWorld().getBlockState(forwardPos).isSolidBlock(this.getWorld(), forwardPos) ||
+                            this.getWorld().getBlockState(forwardUpPos).isSolidBlock(this.getWorld(), forwardUpPos)) {
+                            avoidUp = 0.40; // Smoothly hop up over obstacle
+                        }
 
                         float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                         float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
@@ -253,29 +274,21 @@ public class PickupDroneEntity extends RcDroneEntity {
                         this.setPitchTilt(MathHelper.lerp(0.25F, this.getPitchTilt(), -15.0F));
 
                         double topSpeed = getTopSpeed(true);
-                        double speed = MathHelper.clamp(horizDist * 0.35, 0.25, topSpeed);
+                        double speed = MathHelper.clamp(horizDist * 0.45, 0.25, topSpeed);
                         Vec3d hDir = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
 
-                        // Forward obstacle detection & avoidance raycast
-                        double avoidUp = 0.0;
-                        Vec3d checkVec = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(1.8) : Vec3d.ZERO;
-                        BlockPos forwardPos = new BlockPos((int) Math.floor(this.getX() + checkVec.x), (int) Math.floor(this.getY()), (int) Math.floor(this.getZ() + checkVec.z));
-                        BlockPos forwardUpPos = forwardPos.up();
-                        if (this.getWorld().getBlockState(forwardPos).isSolidBlock(this.getWorld(), forwardPos) ||
-                            this.getWorld().getBlockState(forwardUpPos).isSolidBlock(this.getWorld(), forwardUpPos)) {
-                            avoidUp = 0.40; // Smoothly hop up over obstacle
-                        }
-
-                        double dy = desiredY - this.getY();
-                        double yVel = MathHelper.clamp(dy * 0.30, -0.65, 0.65) + avoidUp;
+                        double dy = desiredY - this.getY() + avoidUp;
+                        double yVel = MathHelper.clamp(dy * 0.35, -0.65, 0.65);
                         Vec3d targetVel = new Vec3d(hDir.x, yVel, hDir.z);
 
                         Vec3d curVel = this.getVelocity();
                         this.setVelocity(
-                                MathHelper.lerp(0.35, curVel.x, targetVel.x),
-                                MathHelper.lerp(0.35, curVel.y, targetVel.y),
-                                MathHelper.lerp(0.35, curVel.z, targetVel.z)
+                                MathHelper.lerp(0.40, curVel.x, targetVel.x),
+                                MathHelper.lerp(0.40, curVel.y, targetVel.y),
+                                MathHelper.lerp(0.40, curVel.z, targetVel.z)
                         );
+                        this.velocityDirty = true;
+                        this.velocityModified = true;
 
                         // Drain battery periodically
                         if (this.age % getBatteryDrainInterval(true) == 0) {
@@ -323,9 +336,7 @@ public class PickupDroneEntity extends RcDroneEntity {
     @Override
     protected boolean isParkingSpotBlock(net.minecraft.block.BlockState bs) {
         return bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)
-                || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)
-                || bs.isOf(EvecualMC.DRONE_PICKUP_BLOCK)
-                || bs.isOf(EvecualMC.AUTO_PICKUP_BLOCK);
+                || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
     }
 
     @Override
