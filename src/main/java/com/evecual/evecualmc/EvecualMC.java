@@ -718,6 +718,13 @@ public class EvecualMC implements ModInitializer {
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.TurretAmmoContainerScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.AutoPickupScreenHandler> AUTO_PICKUP_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "auto_pickup"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.AutoPickupScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
     // Entity Types
     public static final EntityType<CarEntity> CAR_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,

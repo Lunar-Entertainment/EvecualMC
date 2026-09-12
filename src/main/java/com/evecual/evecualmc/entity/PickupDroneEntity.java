@@ -31,11 +31,19 @@ public class PickupDroneEntity extends RcDroneEntity {
 
     private final Set<ChunkPos> forcedPickupChunks = new HashSet<>();
     private final Set<UUID> blacklistedItemUuids = new HashSet<>();
+    private final Set<net.minecraft.item.Item> ignoredItemTypes = new HashSet<>();
 
     private Vec3d harvestTargetPos = null;
     private UUID harvestTargetItemUuid = null;
     private boolean isAutoHarvesting = false;
     private int harvestTimeoutTicks = 0;
+
+    public void setIgnoredItems(Set<net.minecraft.item.Item> items) {
+        this.ignoredItemTypes.clear();
+        if (items != null) {
+            this.ignoredItemTypes.addAll(items);
+        }
+    }
 
     public PickupDroneEntity(EntityType<? extends PickupDroneEntity> type, World world) {
         super(type, world);
@@ -171,7 +179,7 @@ public class PickupDroneEntity extends RcDroneEntity {
                     ItemEntity::isAlive
             );
             for (ItemEntity item : nearbyItems) {
-                if (item.cannotPickup()) continue;
+                if (item.cannotPickup() || this.ignoredItemTypes.contains(item.getStack().getItem())) continue;
                 ItemStack stack = item.getStack();
                 ItemStack remainder = this.getTrunk().addStack(stack);
                 if (remainder.getCount() != stack.getCount()) {
@@ -201,13 +209,13 @@ public class PickupDroneEntity extends RcDroneEntity {
                     if (this.harvestTargetItemUuid != null && this.getWorld() instanceof ServerWorld sw) {
                         currentTarget = sw.getEntity(this.harvestTargetItemUuid);
                     }
-                    if (currentTarget instanceof ItemEntity ie && ie.isAlive() && !ie.cannotPickup() && !ie.getStack().isEmpty()) {
+                    if (currentTarget instanceof ItemEntity ie && ie.isAlive() && !ie.cannotPickup() && !ie.getStack().isEmpty() && !this.ignoredItemTypes.contains(ie.getStack().getItem())) {
                         this.harvestTargetPos = ie.getPos();
                     } else if (this.harvestTargetPos != null && (currentTarget == null || !currentTarget.isAlive())) {
                         // Current target item was picked up or despawned: find next nearby item immediately!
                         List<ItemEntity> nearbyItemsList = this.getWorld().getEntitiesByClass(ItemEntity.class,
                                 this.getBoundingBox().expand(64.0),
-                                i -> i.isAlive() && !i.cannotPickup() && !i.getStack().isEmpty() && !blacklistedItemUuids.contains(i.getUuid()));
+                                i -> i.isAlive() && !i.cannotPickup() && !i.getStack().isEmpty() && !blacklistedItemUuids.contains(i.getUuid()) && !this.ignoredItemTypes.contains(i.getStack().getItem()));
                         ItemEntity nextItem = nearbyItemsList.stream()
                                 .min(Comparator.comparingDouble(i -> i.squaredDistanceTo(PickupDroneEntity.this)))
                                 .orElse(null);
@@ -237,6 +245,18 @@ public class PickupDroneEntity extends RcDroneEntity {
                             this.harvestTargetItemUuid = null;
                             this.harvestTargetPos = null;
                             return;
+                        }
+
+                        // If blocked by solid ground/wall trying to reach subterranean or blocked target
+                        if ((this.horizontalCollision || (this.verticalCollision && this.getY() > targetY + 1.2)) && this.harvestTimeoutTicks > 35) {
+                            if (this.harvestTargetItemUuid != null) {
+                                blacklistedItemUuids.add(this.harvestTargetItemUuid);
+                                this.harvestTargetItemUuid = null;
+                                this.harvestTargetPos = null;
+                                cancelAutoHarvest();
+                                startAutoReturnToCharger();
+                                return;
+                            }
                         }
 
                         // Local ground detection beneath drone

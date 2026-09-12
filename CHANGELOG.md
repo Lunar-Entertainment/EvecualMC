@@ -1,5 +1,17 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.25] - 2026-09-12
+### Added & Improved
+- **Auto Pickup Item Blacklist Filter & RMB Configuration GUI**:
+  - Right-clicking (RMB) on the Auto Pickup Station now opens a dedicated **Auto Pickup Filter Configuration GUI**.
+  - Provides 9 dedicated filter slots where players can place items they want the drone to ignore / blacklist (e.g. Glow Ink Sacs, Cobblestone, Seeds, Rotten Flesh).
+  - Shift-click support for easily moving filter items between player inventory and configuration slots.
+  - Blacklist filter items are stored in block entity NBT, synced with the linked Pickup Drone, and safely dropped on block break.
+- **Subterranean & Submerged Item Prevention (Fixing Glow Ink Sacs)**:
+  - Added water & fluid checks: aerial drones will never target items submerged in water or touching water (such as glow ink sacs dropped by glow squids in aquifers).
+  - Added subterranean cavern filter: items buried deep beneath solid ground (> 5 blocks below terrain surface) are excluded from surface radar scans, preventing drones from trying to dive into the ground.
+  - Added obstacle collision abort: if the drone collides with solid ground or a wall while its target is below it for > 35 ticks, the mission is safely aborted and blacklisted to prevent grinding against terrain.
+
 ## [1.8.24] - 2026-09-12
 ### Added & Improved
 - **Auto Pickup Drone Camera Monitoring (LMB View)**:

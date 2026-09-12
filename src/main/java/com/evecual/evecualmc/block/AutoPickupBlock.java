@@ -115,14 +115,25 @@ public class AutoPickupBlock extends BlockWithEntity {
                     }
                 }
 
-                // 3. Inspect telemetry
-                if (player instanceof ServerPlayerEntity serverPlayer) {
-                    String status = autoPickup.getStatusMessage();
-                    EvecualMC.sendOpenTipScreen(serverPlayer, "auto_pickup", autoPickup.isLinked() ? 100 : 0, 100, status);
-                }
+                // 3. Open Configuration Screen
+                player.openHandledScreen(autoPickup);
+                return ActionResult.SUCCESS;
             }
         }
         return ActionResult.SUCCESS;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.isOf(newState.getBlock())) {
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof AutoPickupBlockEntity autoPickup) {
+                net.minecraft.util.ItemScatterer.spawn(world, pos, autoPickup);
+                world.updateComparators(pos, this);
+            }
+            super.onStateReplaced(state, world, pos, newState, moved);
+        }
     }
 
     @Override

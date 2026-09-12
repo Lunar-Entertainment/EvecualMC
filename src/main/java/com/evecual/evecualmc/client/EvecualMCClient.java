@@ -561,6 +561,7 @@ public class EvecualMCClient implements ClientModInitializer {
         HandledScreens.register(EvecualMC.STATIONARY_TURRET_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.StationaryTurretScreen::new);
         HandledScreens.register(EvecualMC.TURRET_AMMO_CONTAINER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.TurretAmmoContainerScreen::new);
         HandledScreens.register(EvecualMC.STORAGE_UNIT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.StorageUnitScreen::new);
+        HandledScreens.register(EvecualMC.AUTO_PICKUP_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.AutoPickupScreen::new);
 
         // Register Car Entity Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);

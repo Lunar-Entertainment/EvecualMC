@@ -3,18 +3,29 @@ package com.evecual.evecualmc.block.entity;
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.block.AutoPickupBlock;
 import com.evecual.evecualmc.entity.PickupDroneEntity;
+import com.evecual.evecualmc.screen.AutoPickupScreenHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -22,12 +33,16 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-public class AutoPickupBlockEntity extends BlockEntity {
+public class AutoPickupBlockEntity extends BlockEntity implements Inventory, NamedScreenHandlerFactory {
     public static final double SCAN_RADIUS = 96.0;
+    public static final int FILTER_SIZE = 9;
 
+    private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(FILTER_SIZE, ItemStack.EMPTY);
     private UUID linkedDroneUuid = null;
     private String linkedDroneName = "None";
     private int scanCooldown = 0;
@@ -69,6 +84,9 @@ public class AutoPickupBlockEntity extends BlockEntity {
             world.setBlockState(pos, state.with(AutoPickupBlock.ACTIVE, true), 3);
         }
 
+        // Sync filter blacklist items to drone so it also ignores them in local searches
+        drone.setIgnoredItems(be.getBlacklistedItems());
+
         if (be.scanCooldown <= 0) {
             be.scanCooldown = 20; // Check every second
 
@@ -97,13 +115,13 @@ public class AutoPickupBlockEntity extends BlockEntity {
             // Safe harvest radius (128 blocks = 256m wide active radar zone)
             Box scanArea = new Box(pos).expand(128.0);
             List<ItemEntity> items = serverWorld.getEntitiesByClass(ItemEntity.class, scanArea,
-                    item -> isItemHarvestable(serverWorld, item));
+                    item -> isItemHarvestable(serverWorld, item, be));
 
             if (!items.isEmpty()) {
                 // If drone is already harvesting and its target is still valid, don't interrupt
                 if (drone.isAutoHarvesting() && drone.getHarvestTargetItemUuid() != null) {
                     Entity currentTarget = serverWorld.getEntity(drone.getHarvestTargetItemUuid());
-                    if (currentTarget instanceof ItemEntity ie && isItemHarvestable(serverWorld, ie)) {
+                    if (currentTarget instanceof ItemEntity ie && isItemHarvestable(serverWorld, ie, be)) {
                         be.lastStatus = "🎯 Mission Active: Harvesting " + ie.getStack().getName().getString() + " (" + items.size() + " in radar)";
                         return;
                     }
@@ -152,11 +170,32 @@ public class AutoPickupBlockEntity extends BlockEntity {
         }
     }
 
-    public static boolean isItemHarvestable(ServerWorld world, ItemEntity item) {
+    public static boolean isItemHarvestable(ServerWorld world, ItemEntity item, @Nullable AutoPickupBlockEntity be) {
         if (!item.isAlive() || item.cannotPickup() || item.getStack().isEmpty()) return false;
+        if (be != null && be.isBlacklisted(item.getStack())) return false;
+
         BlockPos itemPos = item.getBlockPos();
         if (itemPos.getY() < world.getBottomY() || itemPos.getY() > world.getTopY()) return false;
-        if (world.getFluidState(itemPos).isIn(net.minecraft.registry.tag.FluidTags.LAVA)) return false;
+
+        // 1. Water / Lava check: flying drone cannot dive into water/lava (e.g. glow ink sacs in underground water caverns)
+        if (item.isTouchingWater() || item.isSubmergedInWater()
+                || world.getFluidState(itemPos).isIn(net.minecraft.registry.tag.FluidTags.WATER)
+                || world.getFluidState(itemPos).isIn(net.minecraft.registry.tag.FluidTags.LAVA)) {
+            return false;
+        }
+
+        // 2. Trapped inside solid block
+        if (world.getBlockState(itemPos).isSolidBlock(world, itemPos)) return false;
+
+        // 3. Subterranean check: if item is deep underground while station is on surface
+        if (be != null) {
+            BlockPos stationPos = be.getPos();
+            int topY = world.getTopPosition(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, itemPos).getY();
+            if (topY - itemPos.getY() > 5 && itemPos.getY() < stationPos.getY() - 4) {
+                return false; // Buried deep underground under solid terrain
+            }
+        }
+
         return true;
     }
 
@@ -207,6 +246,7 @@ public class AutoPickupBlockEntity extends BlockEntity {
     @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
+        Inventories.writeNbt(nbt, this.inventory);
         if (this.linkedDroneUuid != null) {
             nbt.putUuid("LinkedDrone", this.linkedDroneUuid);
         }
@@ -218,6 +258,7 @@ public class AutoPickupBlockEntity extends BlockEntity {
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
+        Inventories.readNbt(nbt, this.inventory);
         if (nbt.contains("LinkedDrone")) {
             this.linkedDroneUuid = nbt.getUuid("LinkedDrone");
         } else {
@@ -232,6 +273,94 @@ public class AutoPickupBlockEntity extends BlockEntity {
         if (nbt.contains("LastStatus")) {
             this.lastStatus = nbt.getString("LastStatus");
         }
+    }
+
+    public boolean isBlacklisted(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        for (ItemStack filter : this.inventory) {
+            if (!filter.isEmpty() && filter.isOf(stack.getItem())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Set<Item> getBlacklistedItems() {
+        Set<Item> set = new HashSet<>();
+        for (ItemStack filter : this.inventory) {
+            if (!filter.isEmpty()) {
+                set.add(filter.getItem());
+            }
+        }
+        return set;
+    }
+
+    @Override
+    public Text getDisplayName() {
+        return Text.literal("📡 Auto Pickup Filter");
+    }
+
+    @Nullable
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        return new AutoPickupScreenHandler(syncId, playerInventory, this);
+    }
+
+    @Override
+    public int size() {
+        return this.inventory.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        for (ItemStack stack : this.inventory) {
+            if (!stack.isEmpty()) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public ItemStack getStack(int slot) {
+        return this.inventory.get(slot);
+    }
+
+    @Override
+    public ItemStack removeStack(int slot, int amount) {
+        ItemStack result = Inventories.splitStack(this.inventory, slot, amount);
+        if (!result.isEmpty()) markDirty();
+        return result;
+    }
+
+    @Override
+    public ItemStack removeStack(int slot) {
+        ItemStack result = Inventories.removeStack(this.inventory, slot);
+        if (!result.isEmpty()) markDirty();
+        return result;
+    }
+
+    @Override
+    public void setStack(int slot, ItemStack stack) {
+        this.inventory.set(slot, stack);
+        if (stack.getCount() > getMaxCountPerStack()) {
+            stack.setCount(getMaxCountPerStack());
+        }
+        markDirty();
+    }
+
+    @Override
+    public int getMaxCountPerStack() {
+        return 1;
+    }
+
+    @Override
+    public boolean canPlayerUse(PlayerEntity player) {
+        return Inventory.canPlayerUse(this, player);
+    }
+
+    @Override
+    public void clear() {
+        this.inventory.clear();
+        markDirty();
     }
 
     @Nullable
