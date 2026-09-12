@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class AutoPickupBlockEntity extends BlockEntity {
-    public static final double SCAN_RADIUS = 256.0;
+    public static final double SCAN_RADIUS = 96.0;
 
     private UUID linkedDroneUuid = null;
     private String linkedDroneName = "None";
@@ -87,13 +87,13 @@ public class AutoPickupBlockEntity extends BlockEntity {
                 return;
             }
 
-            // Scan for any dropped item entities across the area
-            Box scanArea = new Box(pos).expand(SCAN_RADIUS);
+            // Safe harvest radius (96 blocks = 192m wide active radar zone)
+            Box scanArea = new Box(pos).expand(96.0);
             List<ItemEntity> items = serverWorld.getEntitiesByClass(ItemEntity.class, scanArea,
-                    item -> item.isAlive() && !item.cannotPickup() && !item.getStack().isEmpty());
+                    item -> isItemHarvestable(serverWorld, item));
 
             if (!items.isEmpty()) {
-                // Find closest item to the drone
+                // Prioritize reachable item closest to the drone
                 Vec3d dronePos = drone.getPos();
                 ItemEntity closest = items.stream()
                         .min(Comparator.comparingDouble(i -> i.squaredDistanceTo(dronePos)))
@@ -122,12 +122,37 @@ public class AutoPickupBlockEntity extends BlockEntity {
                     drone.startAutoReturnToCharger();
                     be.lastStatus = "🟢 Area Clear: Drone returning to dock on Drone Pickup Station";
                 } else if (drone.isInParkingSpot()) {
-                    be.lastStatus = "🟢 Standby: Radar scanning (256m radius | Drone docked & ready)";
+                    be.lastStatus = "🟢 Standby: Radar scanning (96m radius | Drone docked & ready)";
                 } else {
-                    be.lastStatus = "🟢 Radar Active: Scanning for dropped items across " + (int)SCAN_RADIUS + "m radius";
+                    // Area is clear and drone is undocked/floating: ensure it returns home and docks!
+                    if (!drone.isAutoReturning()) {
+                        drone.startAutoReturnToCharger();
+                    }
+                    be.lastStatus = "🟢 Area Clear: Drone returning to dock on Drone Pickup Station";
                 }
             }
         }
+    }
+
+    public static boolean isItemHarvestable(ServerWorld world, ItemEntity item) {
+        if (!item.isAlive() || item.cannotPickup() || item.getStack().isEmpty()) return false;
+
+        BlockPos itemPos = item.getBlockPos();
+        if (itemPos.getY() < world.getBottomY() + 4 || itemPos.getY() > world.getTopY()) return false;
+        if (world.getFluidState(itemPos).isIn(net.minecraft.registry.tag.FluidTags.LAVA)) return false;
+
+        // Ensure item is not enclosed inside solid rock/underground:
+        // Must have at least 2 consecutive non-solid blocks above it for aerial drone access
+        int openAir = 0;
+        for (int dy = 1; dy <= 5; dy++) {
+            BlockPos check = itemPos.up(dy);
+            if (!world.getBlockState(check).isSolidBlock(world, check)) {
+                openAir++;
+            } else {
+                break;
+            }
+        }
+        return openAir >= 2;
     }
 
     public void setLinkedDrone(UUID uuid, String name) {

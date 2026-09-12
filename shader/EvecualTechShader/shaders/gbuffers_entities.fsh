@@ -3,6 +3,8 @@
 uniform sampler2D texture;
 uniform sampler2D lightmap;
 uniform vec4 entityColor;
+uniform vec3 sunPosition;
+uniform vec3 upPosition;
 
 varying vec4 color;
 varying vec2 texcoord;
@@ -20,13 +22,14 @@ void main() {
 
     vec4 light = texture2D(lightmap, lmcoord);
 
-    // Directional lighting with specular automotive sheen
-    vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
+    // Directional lighting with dynamic sun/moon vector and specular automotive sheen
+    float sunElev = dot(normalize(sunPosition), normalize(upPosition));
+    vec3 lightDir = normalize(sunElev > -0.05 ? sunPosition : -sunPosition);
     vec3 viewDir = vec3(0.0, 0.0, 1.0);
     vec3 halfDir = normalize(lightDir + viewDir);
 
     float NdotL = clamp(dot(normal, lightDir), 0.0, 1.0);
-    float diffuse = mix(0.72, 1.08, pow(NdotL * 0.5 + 0.5, 1.2));
+    float diffuse = mix(0.72, 1.08, pow(NdotL * 0.5 + 0.5, 1.25));
 
     // High-tech automotive clearcoat: Specular highlight and Fresnel rim reflection
     float NdotH = max(dot(normal, halfDir), 0.0);

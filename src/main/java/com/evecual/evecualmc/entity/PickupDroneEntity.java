@@ -1,6 +1,7 @@
 package com.evecual.evecualmc.entity;
 
 import com.evecual.evecualmc.EvecualMC;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -29,6 +30,7 @@ public class PickupDroneEntity extends RcDroneEntity {
     private final net.minecraft.inventory.SimpleInventory cargo = new net.minecraft.inventory.SimpleInventory(CARGO_SIZE);
 
     private final Set<ChunkPos> forcedPickupChunks = new HashSet<>();
+    private final Set<UUID> blacklistedItemUuids = new HashSet<>();
 
     private Vec3d harvestTargetPos = null;
     private UUID harvestTargetItemUuid = null;
@@ -155,7 +157,7 @@ public class PickupDroneEntity extends RcDroneEntity {
         if (!this.getWorld().isClient && this.isAlive() && !this.isRemoved()) {
             List<ItemEntity> nearbyItems = this.getWorld().getEntitiesByClass(
                     ItemEntity.class,
-                    this.getBoundingBox().expand(1.8),
+                    this.getBoundingBox().expand(2.6),
                     ItemEntity::isAlive
             );
             for (ItemEntity item : nearbyItems) {
@@ -168,6 +170,10 @@ public class PickupDroneEntity extends RcDroneEntity {
                 }
                 if (remainder.isEmpty()) {
                     item.discard();
+                    if (item.getUuid().equals(this.harvestTargetItemUuid)) {
+                        this.harvestTargetItemUuid = null;
+                        this.harvestTargetPos = null;
+                    }
                 } else {
                     item.setStack(remainder);
                 }
@@ -176,72 +182,125 @@ public class PickupDroneEntity extends RcDroneEntity {
             // Autonomous Harvest Navigation
             if (this.isAutoHarvesting && !isAutoReturning() && getEnergy() > 0) {
                 this.harvestTimeoutTicks++;
-                if (this.harvestTimeoutTicks > 1200 || isCargoFull()) { // 60s timeout or full
+                if (this.harvestTimeoutTicks > 600 || isCargoFull()) { // 30s timeout or full
                     cancelAutoHarvest();
                     startAutoReturnToCharger();
-                } else if (this.harvestTargetPos != null) {
-                    double targetX = this.harvestTargetPos.x;
-                    double targetY = this.harvestTargetPos.y;
-                    double targetZ = this.harvestTargetPos.z;
-
-                    double dx = targetX - this.getX();
-                    double dz = targetZ - this.getZ();
-                    double horizDist = Math.sqrt(dx * dx + dz * dz);
-
-                    // Desired cruising height vs descent height
-                    double cruiseY = Math.max(this.getY(), targetY + 3.5);
-                    double desiredY = horizDist > 2.5 ? cruiseY : targetY + 0.3;
-
-                    float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-                    float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
-                    this.setYaw(MathHelper.wrapDegrees(this.getYaw() + MathHelper.clamp(yawDiff * 0.45F, -14.0F, 14.0F)));
-                    this.setBodyYaw(this.getYaw());
-                    this.setHeadYaw(this.getYaw());
-
-                    // Banking tilt
-                    float targetRoll = MathHelper.clamp(-yawDiff * 0.8F, -25.0F, 25.0F);
-                    this.setRollTilt(MathHelper.lerp(0.25F, this.getRollTilt(), targetRoll));
-                    this.setPitchTilt(MathHelper.lerp(0.25F, this.getPitchTilt(), -15.0F));
-
-                    double topSpeed = getTopSpeed(true); // Auto harvest uses boost speed (40 m/s or 15 m/s low batt)
-                    double speed = MathHelper.clamp(horizDist * 0.35, 0.25, topSpeed);
-                    Vec3d hDir = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
-
-                    double dy = desiredY - this.getY();
-                    double yVel = MathHelper.clamp(dy * 0.30, -0.65, 0.65);
-                    Vec3d targetVel = new Vec3d(hDir.x, yVel, hDir.z);
-
-                    Vec3d curVel = this.getVelocity();
-                    this.setVelocity(
-                            MathHelper.lerp(0.35, curVel.x, targetVel.x),
-                            MathHelper.lerp(0.35, curVel.y, targetVel.y),
-                            MathHelper.lerp(0.35, curVel.z, targetVel.z)
-                    );
-
-                    // Drain battery periodically
-                    if (this.age % getBatteryDrainInterval(true) == 0) {
-                        setEnergy(getEnergy() - 1);
+                } else {
+                    // Check if current target item is still valid in world
+                    Entity currentTarget = null;
+                    if (this.harvestTargetItemUuid != null && this.getWorld() instanceof ServerWorld sw) {
+                        currentTarget = sw.getEntity(this.harvestTargetItemUuid);
                     }
-
-                    // Once reached close enough (< 1.5m) or item collected: search next item
-                    if (horizDist < 1.5 && Math.abs(this.getY() - targetY) < 1.8) {
-                        // Look for next nearby item
-                        List<ItemEntity> items = this.getWorld().getEntitiesByClass(ItemEntity.class,
-                                this.getBoundingBox().expand(48.0),
-                                i -> i.isAlive() && !i.cannotPickup() && !i.getStack().isEmpty());
-
-                        ItemEntity nextItem = items.stream()
+                    if (currentTarget instanceof ItemEntity ie && ie.isAlive() && !ie.cannotPickup() && !ie.getStack().isEmpty()) {
+                        this.harvestTargetPos = ie.getPos();
+                    } else if (this.harvestTargetPos != null && (currentTarget == null || !currentTarget.isAlive())) {
+                        // Current target item was picked up or despawned: find next nearby item immediately!
+                        List<ItemEntity> nearbyItemsList = this.getWorld().getEntitiesByClass(ItemEntity.class,
+                                this.getBoundingBox().expand(64.0),
+                                i -> i.isAlive() && !i.cannotPickup() && !i.getStack().isEmpty() && !blacklistedItemUuids.contains(i.getUuid()));
+                        ItemEntity nextItem = nearbyItemsList.stream()
                                 .min(Comparator.comparingDouble(i -> i.squaredDistanceTo(PickupDroneEntity.this)))
                                 .orElse(null);
-
                         if (nextItem != null && !isCargoFull()) {
                             this.harvestTargetPos = nextItem.getPos();
                             this.harvestTargetItemUuid = nextItem.getUuid();
                             this.harvestTimeoutTicks = 0;
                         } else {
-                            // No more items or full: initiate return to base!
                             cancelAutoHarvest();
                             startAutoReturnToCharger();
+                            return;
+                        }
+                    }
+
+                    if (this.harvestTargetPos != null) {
+                        double targetX = this.harvestTargetPos.x;
+                        double targetY = this.harvestTargetPos.y;
+                        double targetZ = this.harvestTargetPos.z;
+
+                        double dx = targetX - this.getX();
+                        double dz = targetZ - this.getZ();
+                        double horizDist = Math.sqrt(dx * dx + dz * dz);
+
+                        // If stuck near item for > 80 ticks (4 sec) without picking up (e.g. trapped under slab/glass), blacklist and move on
+                        if (horizDist < 2.5 && this.harvestTimeoutTicks > 80 && this.harvestTargetItemUuid != null) {
+                            blacklistedItemUuids.add(this.harvestTargetItemUuid);
+                            this.harvestTargetItemUuid = null;
+                            this.harvestTargetPos = null;
+                            return;
+                        }
+
+                        // Stable cruise height based on terrain surface and target height (NO ratcheting Math.max(this.getY())!)
+                        int curX = (int) Math.floor(this.getX());
+                        int curZ = (int) Math.floor(this.getZ());
+                        int tgtX = (int) Math.floor(targetX);
+                        int tgtZ = (int) Math.floor(targetZ);
+
+                        int curSurfaceY = this.getWorld().getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, curX, curZ);
+                        int tgtSurfaceY = this.getWorld().getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING, tgtX, tgtZ);
+                        double terrainClearance = Math.max(curSurfaceY, tgtSurfaceY) + 3.2;
+                        double cruiseY = Math.max(targetY + 3.5, terrainClearance);
+                        double desiredY = horizDist > 3.0 ? cruiseY : targetY + 0.25;
+
+                        float desiredYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                        float yawDiff = MathHelper.wrapDegrees(desiredYaw - this.getYaw());
+                        this.setYaw(MathHelper.wrapDegrees(this.getYaw() + MathHelper.clamp(yawDiff * 0.45F, -14.0F, 14.0F)));
+                        this.setBodyYaw(this.getYaw());
+                        this.setHeadYaw(this.getYaw());
+
+                        // Banking tilt
+                        float targetRoll = MathHelper.clamp(-yawDiff * 0.8F, -25.0F, 25.0F);
+                        this.setRollTilt(MathHelper.lerp(0.25F, this.getRollTilt(), targetRoll));
+                        this.setPitchTilt(MathHelper.lerp(0.25F, this.getPitchTilt(), -15.0F));
+
+                        double topSpeed = getTopSpeed(true);
+                        double speed = MathHelper.clamp(horizDist * 0.35, 0.25, topSpeed);
+                        Vec3d hDir = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed) : Vec3d.ZERO;
+
+                        // Forward obstacle detection & avoidance raycast
+                        double avoidUp = 0.0;
+                        Vec3d checkVec = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(1.8) : Vec3d.ZERO;
+                        BlockPos forwardPos = new BlockPos((int) Math.floor(this.getX() + checkVec.x), (int) Math.floor(this.getY()), (int) Math.floor(this.getZ() + checkVec.z));
+                        BlockPos forwardUpPos = forwardPos.up();
+                        if (this.getWorld().getBlockState(forwardPos).isSolidBlock(this.getWorld(), forwardPos) ||
+                            this.getWorld().getBlockState(forwardUpPos).isSolidBlock(this.getWorld(), forwardUpPos)) {
+                            avoidUp = 0.40; // Smoothly hop up over obstacle
+                        }
+
+                        double dy = desiredY - this.getY();
+                        double yVel = MathHelper.clamp(dy * 0.30, -0.65, 0.65) + avoidUp;
+                        Vec3d targetVel = new Vec3d(hDir.x, yVel, hDir.z);
+
+                        Vec3d curVel = this.getVelocity();
+                        this.setVelocity(
+                                MathHelper.lerp(0.35, curVel.x, targetVel.x),
+                                MathHelper.lerp(0.35, curVel.y, targetVel.y),
+                                MathHelper.lerp(0.35, curVel.z, targetVel.z)
+                        );
+
+                        // Drain battery periodically
+                        if (this.age % getBatteryDrainInterval(true) == 0) {
+                            setEnergy(getEnergy() - 1);
+                        }
+
+                        // Once reached close enough (< 1.6m) or item collected: search next item
+                        if (horizDist < 1.6 && Math.abs(this.getY() - targetY) < 1.8) {
+                            List<ItemEntity> items = this.getWorld().getEntitiesByClass(ItemEntity.class,
+                                    this.getBoundingBox().expand(48.0),
+                                    i -> i.isAlive() && !i.cannotPickup() && !i.getStack().isEmpty() && !blacklistedItemUuids.contains(i.getUuid()));
+
+                            ItemEntity nextItem = items.stream()
+                                    .min(Comparator.comparingDouble(i -> i.squaredDistanceTo(PickupDroneEntity.this)))
+                                    .orElse(null);
+
+                            if (nextItem != null && !isCargoFull()) {
+                                this.harvestTargetPos = nextItem.getPos();
+                                this.harvestTargetItemUuid = nextItem.getUuid();
+                                this.harvestTimeoutTicks = 0;
+                            } else {
+                                // No more items or full: initiate return to base!
+                                cancelAutoHarvest();
+                                startAutoReturnToCharger();
+                            }
                         }
                     }
                 }
@@ -263,7 +322,10 @@ public class PickupDroneEntity extends RcDroneEntity {
 
     @Override
     protected boolean isParkingSpotBlock(net.minecraft.block.BlockState bs) {
-        return bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
+        return bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)
+                || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)
+                || bs.isOf(EvecualMC.DRONE_PICKUP_BLOCK)
+                || bs.isOf(EvecualMC.AUTO_PICKUP_BLOCK);
     }
 
     @Override

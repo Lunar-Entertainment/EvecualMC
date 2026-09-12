@@ -1,5 +1,29 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.15] - 2026-09-12
+### Fixed & Improved
+- **Drone Autonomous Pathfinding & Flight Control**:
+  - Fixed issue where the Pickup Drone flew away into the stratosphere when Auto Pickup was linked without nearby items.
+  - Eliminated monotonic altitude ratcheting bug (`Math.max(this.getY())`), replacing it with terrain-surface adaptive cruising clearance and target-level descent.
+  - Replaced infinite 256m blind item sweep with a focused 96m operational radar zone (192m wide) with reachability validation: verifies dropped items are not buried under solid stone, deep underground, or in lava, and ensures at least 2 blocks of open vertical air clearance for drone approach.
+  - Implemented dynamic obstacle detection and avoidance: drone sweeps forward trajectory vectors and smoothly pitches up to clear walls, fences, roofs, and cliffs.
+  - Added dead/despawned target verification: immediately re-targets next available item or returns home if the target item disappears instead of chasing phantom coordinates for 60 seconds.
+  - Added stuck-item blacklist: skips unreachable items (e.g. trapped under slabs or behind glass) after 4 seconds to prevent stalling.
+  - Expanded vacuum pickup range to 2.6 blocks.
+  - Automated return-to-dock fail-safe: when radar reports no items, an undocked or floating drone is immediately commanded to return home and dock cleanly.
+  - Stationary parking stability: pairing with RC Controller no longer throws the Pickup Drone off its parking pad.
+  - Recognized `DRONE_PICKUP_BLOCK` and `AUTO_PICKUP_BLOCK` as valid landing and docking locations.
+- **Stationary Defense Turret Head Model Fix**:
+  - Elevated the swiveling turret head, sensor visor, and dual heavy barrels cleanly on top of the block model (`Y = 1.0+`), resolving the bug where the turret head was submerged inside the solid cube block model.
+  - Designed heavy-duty armored mounting collar and swivel ring resting directly on top of the base pedestal.
+  - Updated `VoxelShape` collision and selection outline to encompass the full pedestal and elevated turret head (`Y = 0 to 25/16`).
+  - Adjusted projectile muzzle origin to `Y + 1.36` so bullets shoot straight out of the physical barrels.
+- **EvecualTechShader Graphics & Shadow Overhaul (Ultra-Performant)**:
+  - Implemented real-time **Screen-Space Contact Shadows (SSCS)** with early-exit 8-step raymarching: casts crisp, directional ground contact shadows under vehicles (RC cars, drones, robots), player feet, vegetation, and architecture with virtually zero performance impact.
+  - Added dynamic world-space sun/moon lighting to `gbuffers_terrain.fsh` and `gbuffers_entities.fsh`: block face lighting and specular reflections dynamically track the actual position of the sun and moon across the sky.
+  - Enhanced water shading in `gbuffers_water.fsh` with dynamic underwater sunlight caustics, multi-wave perturbation, and refined Fresnel sky reflection.
+  - Re-packaged and verified `EvecualTechShader.zip` with clean forward-slash paths for immediate Iris and OptiFine compatibility.
+
 ## [1.8.14] - 2026-09-12
 ### Added & Improved
 - **Auto Pickup Logistics Radar Block (`auto_pickup`)**:

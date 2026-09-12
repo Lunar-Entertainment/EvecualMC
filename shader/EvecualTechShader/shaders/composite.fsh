@@ -7,6 +7,7 @@
 #define QUALITY 2             // [0 1 2 3]
 #define VOLUMETRIC_RAYS       // [true false]
 #define SSAO                  // [true false]
+#define CONTACT_SHADOWS       // [true false]
 #define BLOOM 2               // [0 1 2]
 #define CLOUDS                // [true false]
 #define VIGNETTE              // [true false]
@@ -165,6 +166,50 @@ void main() {
 
         float aoFactor = clamp(1.0 - (totalAO / 11.2) * 0.42, 0.58, 1.0);
         sceneColor *= aoFactor;
+    }
+    #endif
+
+    #ifdef CONTACT_SHADOWS
+    // Dynamic Directional Screen-Space Contact Shadows (SSCS)
+    if (depth < 0.9999) {
+        vec4 clipPos = vec4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+        vec4 viewPos = gbufferProjectionInverse * clipPos;
+        if (abs(viewPos.w) > 0.0001) {
+            viewPos /= viewPos.w;
+
+            float trueSunElev = dot(normalize(sunPosition), normalize(upPosition));
+            vec3 lightViewDir = normalize(trueSunElev > -0.05 ? sunPosition : -sunPosition);
+
+            // Project light vector into screen space
+            vec4 lightTargetPos = viewPos + vec4(lightViewDir * 1.5, 0.0);
+            vec4 lightClip = gbufferProjection * lightTargetPos;
+            if (abs(lightClip.w) > 0.0001) {
+                vec2 lightScreen = (lightClip.xy / lightClip.w) * 0.5 + 0.5;
+                vec2 lightDirScreen = (lightScreen - texcoord);
+
+                float rayLen = length(lightDirScreen);
+                if (rayLen > 0.0001) {
+                    vec2 stepUV = (lightDirScreen / rayLen) * min(rayLen, 0.035) / 8.0;
+                    float occlusion = 0.0;
+                    float centerLin = linearizeDepth(depth);
+
+                    for (int s = 1; s <= 8; s++) {
+                        vec2 sampleCoord = clamp(texcoord + stepUV * float(s), 0.0, 1.0);
+                        float sampleD = texture2D(depthtex0, sampleCoord).r;
+                        float sampleLin = linearizeDepth(sampleD);
+
+                        float diff = centerLin - sampleLin;
+                        if (diff > 0.00020 && diff < 0.015) {
+                            occlusion += (1.0 - float(s) / 8.5);
+                            break; // Early exit for performance
+                        }
+                    }
+
+                    float shadowMult = clamp(1.0 - (occlusion * 0.42), 0.52, 1.0);
+                    sceneColor *= shadowMult;
+                }
+            }
+        }
     }
     #endif
 

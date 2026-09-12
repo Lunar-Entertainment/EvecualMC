@@ -7,6 +7,9 @@
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
+uniform vec3 sunPosition;
+uniform vec3 upPosition;
+uniform mat4 gbufferModelViewInverse;
 
 varying vec4 color;
 varying vec2 texcoord;
@@ -25,15 +28,18 @@ void main() {
 
     vec4 light = texture2D(lightmap, lmcoord);
 
-    // Dynamic sun/ambient directional lighting in world space
-    vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
+    // Dynamic sun/moon directional lighting in world space
+    vec3 worldSun = normalize((gbufferModelViewInverse * vec4(sunPosition, 0.0)).xyz);
+    vec3 worldUp = normalize((gbufferModelViewInverse * vec4(upPosition, 0.0)).xyz);
+    float sunElev = dot(worldSun, worldUp);
+    vec3 lightDir = normalize(sunElev > -0.05 ? worldSun : -worldSun);
     vec3 viewDir = normalize(-worldPos);
     vec3 halfDir = normalize(lightDir + viewDir);
 
     float NdotL = clamp(dot(geoNormal, lightDir), 0.0, 1.0);
     // Half-Lambert wrap diffuse for rich volumetric shadows without pitch-black faces
-    float wrapDiffuse = pow(NdotL * 0.5 + 0.5, 1.3);
-    float diffuse = mix(0.72, 1.08, wrapDiffuse);
+    float wrapDiffuse = pow(NdotL * 0.5 + 0.5, 1.35);
+    float diffuse = mix(0.70, 1.10, wrapDiffuse);
 
     // Wires and tech machines: full uniform illumination so sides are never culled or black
     if (abs(blockId - 10005.0) < 0.5) {

@@ -5,6 +5,8 @@
 uniform sampler2D texture;
 uniform sampler2D lightmap;
 uniform float frameTimeCounter;
+uniform vec3 sunPosition;
+uniform vec3 upPosition;
 
 varying vec4 color;
 varying vec2 texcoord;
@@ -19,16 +21,23 @@ void main() {
     vec4 light = texture2D(lightmap, lmcoord);
 
     vec3 viewDir = normalize(-worldPos);
-    vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
+    float sunElev = dot(normalize(sunPosition), normalize(upPosition));
+    vec3 lightDir = normalize(sunElev > -0.05 ? sunPosition : -sunPosition);
 
-    // High-Fidelity Multi-frequency Animated Water Waves
+    // High-Fidelity Multi-frequency Animated Water Waves & Caustics
     vec3 perturbedNormal = normal;
+    float causticGlint = 0.0;
     #ifdef WAVING_WATER
     float time = frameTimeCounter * 2.2;
     float w1 = sin(worldPos.x * 2.8 + time) * cos(worldPos.z * 2.2 + time * 0.85) * 0.10;
     float w2 = cos(worldPos.x * 1.6 - time * 0.75) * sin(worldPos.z * 3.2 + time * 1.15) * 0.08;
     float w3 = sin((worldPos.x + worldPos.z) * 4.2 + time * 1.6) * 0.04;
     perturbedNormal = normalize(normal + vec3(w1 + w3, 0.0, w2 + w3));
+
+    // Underwater sunlight caustics
+    float caustics = (sin(worldPos.x * 3.5 + time * 1.5) * cos(worldPos.z * 3.5 + time * 1.2)
+                    + sin((worldPos.x + worldPos.z) * 5.0 - time * 1.8)) * 0.5 + 0.5;
+    causticGlint = pow(caustics, 3.2) * 0.28 * light.a;
     #endif
 
     // Water sun specular glint & Fresnel reflection
@@ -41,7 +50,7 @@ void main() {
     vec3 waterColor = mix(albedo.rgb, vec3(0.08, 0.52, 0.82), 0.55);
     vec3 skyReflect = mix(vec3(0.60, 0.82, 0.98), vec3(1.0, 1.0, 1.0), fresnel);
 
-    vec3 shaded = waterColor * light.rgb * 0.92 + skyReflect * fresnel * 0.55 + vec3((specSharp + specBroad) * light.a);
+    vec3 shaded = waterColor * light.rgb * 0.92 + skyReflect * fresnel * 0.55 + vec3((specSharp + specBroad + causticGlint) * light.a);
     float alpha = clamp(albedo.a * 0.60 + fresnel * 0.40, 0.28, 0.88);
 
     gl_FragData[0] = vec4(shaded, alpha);

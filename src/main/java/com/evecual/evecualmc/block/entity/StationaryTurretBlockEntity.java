@@ -122,7 +122,7 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
 
         // Aim & Shoot
         if (be.currentTarget != null && be.currentTarget.isAlive()) {
-            Vec3d turretOrigin = Vec3d.ofCenter(pos).add(0, 0.6, 0);
+            Vec3d turretOrigin = Vec3d.ofCenter(pos).add(0, 0.86, 0);
             Vec3d targetEye = be.currentTarget.getEyePos().subtract(0, 0.2, 0);
             Vec3d aimVec = targetEye.subtract(turretOrigin);
 

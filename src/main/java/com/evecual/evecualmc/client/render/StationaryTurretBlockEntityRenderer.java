@@ -21,40 +21,44 @@ public class StationaryTurretBlockEntityRenderer implements BlockEntityRenderer<
     @Override
     public void render(StationaryTurretBlockEntity turret, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         matrices.push();
-        matrices.translate(0.5, 0.0, 0.5);
+        // Position on top of the block pedestal model (Y = 1.0)
+        matrices.translate(0.5, 1.0, 0.5);
 
         VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(TEXTURE));
         MatrixStack.Entry entry = matrices.peek();
 
-        // 1. Static Base Plate (y: 0.0 to 0.25)
-        drawBox(consumer, entry, -0.45F, 0.0F, -0.45F, 0.45F, 0.25F, 0.45F, 0.2F, 0.25F, 0.3F, light);
+        // 1. Armored Mounting Collar & Turret Swivel Ring (rests on top face of block model)
+        drawBox(consumer, entry, -0.42F, 0.0F, -0.42F, 0.42F, 0.08F, 0.42F, 0.22F, 0.26F, 0.32F, light);
+        drawBox(consumer, entry, -0.32F, 0.08F, -0.32F, 0.32F, 0.14F, 0.32F, 0.16F, 0.20F, 0.25F, light);
 
         // 2. Swiveling Turret Head (Rotates on Y axis)
-        matrices.translate(0.0, 0.25, 0.0);
+        matrices.translate(0.0, 0.14, 0.0);
         float yaw = MathHelper.lerpAngleDegrees(tickDelta, turret.curYaw, turret.curYaw);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(yaw));
 
         entry = matrices.peek();
-        // Turret Center Housing
-        drawBox(consumer, entry, -0.3F, 0.0F, -0.3F, 0.3F, 0.35F, 0.3F, 0.15F, 0.2F, 0.25F, light);
-        // Cyan Cyber Core Eye
-        drawBox(consumer, entry, -0.1F, 0.1F, 0.29F, 0.1F, 0.25F, 0.31F, 0.0F, 0.9F, 1.0F, light);
+        // Turret Center Armored Housing
+        drawBox(consumer, entry, -0.30F, 0.0F, -0.30F, 0.30F, 0.36F, 0.30F, 0.15F, 0.19F, 0.24F, light);
+        // Armored Top Cap
+        drawBox(consumer, entry, -0.24F, 0.36F, -0.24F, 0.24F, 0.42F, 0.24F, 0.12F, 0.15F, 0.20F, light);
+        // Cyan Cyber Core Eye / Target Sensor Visor
+        drawBox(consumer, entry, -0.11F, 0.12F, 0.29F, 0.11F, 0.26F, 0.32F, 0.0F, 0.95F, 1.0F, light);
 
         // 3. Elevating Dual Barrels (Rotates on X axis)
-        matrices.translate(0.0, 0.2, 0.0);
+        matrices.translate(0.0, 0.22, 0.0);
         float pitch = MathHelper.lerp(tickDelta, turret.curPitch, turret.curPitch);
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pitch));
 
         entry = matrices.peek();
-        // Left Barrel
-        drawBox(consumer, entry, -0.22F, -0.06F, 0.1F, -0.10F, 0.06F, 0.75F, 0.1F, 0.12F, 0.15F, light);
-        // Left Muzzle Brake
-        drawBox(consumer, entry, -0.24F, -0.08F, 0.70F, -0.08F, 0.08F, 0.82F, 0.0F, 0.8F, 0.9F, light);
+        // Left Heavy Barrel
+        drawBox(consumer, entry, -0.23F, -0.06F, 0.12F, -0.09F, 0.06F, 0.82F, 0.10F, 0.12F, 0.16F, light);
+        // Left Tactical Muzzle Brake
+        drawBox(consumer, entry, -0.25F, -0.08F, 0.78F, -0.07F, 0.08F, 0.92F, 0.0F, 0.85F, 0.95F, light);
 
-        // Right Barrel
-        drawBox(consumer, entry, 0.10F, -0.06F, 0.1F, 0.22F, 0.06F, 0.75F, 0.1F, 0.12F, 0.15F, light);
-        // Right Muzzle Brake
-        drawBox(consumer, entry, 0.08F, -0.08F, 0.70F, 0.24F, 0.08F, 0.82F, 0.0F, 0.8F, 0.9F, light);
+        // Right Heavy Barrel
+        drawBox(consumer, entry, 0.09F, -0.06F, 0.12F, 0.23F, 0.06F, 0.82F, 0.10F, 0.12F, 0.16F, light);
+        // Right Tactical Muzzle Brake
+        drawBox(consumer, entry, 0.07F, -0.08F, 0.78F, 0.25F, 0.08F, 0.92F, 0.0F, 0.85F, 0.95F, light);
 
         matrices.pop();
     }

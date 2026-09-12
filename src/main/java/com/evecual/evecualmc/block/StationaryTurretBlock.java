@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class StationaryTurretBlock extends BlockWithEntity {
     private static final VoxelShape SHAPE = VoxelShapes.union(
-            createCuboidShape(1, 0, 1, 15, 4, 15),
-            createCuboidShape(3, 4, 3, 13, 14, 13)
+            createCuboidShape(0, 0, 0, 16, 16, 16),
+            createCuboidShape(2, 16, 2, 14, 25, 14)
     );
 
     public StationaryTurretBlock(Settings settings) {

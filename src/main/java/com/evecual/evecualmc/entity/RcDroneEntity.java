@@ -322,8 +322,12 @@ public class RcDroneEntity extends Entity {
                 this.setYaw(yaw);
                 this.setBodyYaw(yaw);
                 this.setHeadYaw(yaw);
-                this.prevYaw = yaw;
             }
+        }
+
+        // If this is a Pickup Drone, keep it calmly parked on the pad until an explicit move command
+        if (this instanceof PickupDroneEntity) {
+            return;
         }
 
         float rad = (float) Math.toRadians(yaw);
@@ -678,9 +682,18 @@ public class RcDroneEntity extends Entity {
                     double speed = MathHelper.clamp(horizDist * 0.22, 0.15, 0.65);
                     Vec3d dir = new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(speed);
 
-                    // Maintain cruise altitude
+                    // Maintain cruise altitude with obstacle avoidance
+                    double avoidUp = 0.0;
+                    Vec3d checkVec = horizDist > 0.01 ? new Vec3d(dx / horizDist, 0, dz / horizDist).multiply(2.0) : Vec3d.ZERO;
+                    BlockPos forwardPos = new BlockPos((int) Math.floor(this.getX() + checkVec.x), (int) Math.floor(this.getY()), (int) Math.floor(this.getZ() + checkVec.z));
+                    BlockPos forwardUpPos = forwardPos.up();
+                    if (this.getWorld().getBlockState(forwardPos).isSolidBlock(this.getWorld(), forwardPos) ||
+                        this.getWorld().getBlockState(forwardUpPos).isSolidBlock(this.getWorld(), forwardUpPos)) {
+                        avoidUp = 0.35; // Lift over obstacle
+                    }
+
                     double dy = this.cruiseAltitude - this.getY();
-                    double yVel = MathHelper.clamp(dy * 0.25, -0.25, 0.25);
+                    double yVel = MathHelper.clamp(dy * 0.25, -0.25, 0.25) + avoidUp;
                     Vec3d targetVel = new Vec3d(dir.x, yVel, dir.z);
                     vel = new Vec3d(
                         MathHelper.lerp(0.25, vel.x, targetVel.x),
