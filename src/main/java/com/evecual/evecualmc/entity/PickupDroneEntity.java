@@ -22,6 +22,7 @@ public class PickupDroneEntity extends RcDroneEntity {
 
     public PickupDroneEntity(EntityType<? extends PickupDroneEntity> type, World world) {
         super(type, world);
+        this.setColorVariant(6); // 6 = Tactical Defense (Pure Gunmetal & Hazard)
     }
 
     @Override

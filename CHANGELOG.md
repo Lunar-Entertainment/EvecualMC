@@ -1,5 +1,18 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.10] - 2026-09-12
+### Added & Improved
+- **Defense System Overhaul for Pickup Drone (`pickup_drone`)**:
+  - Redesigned the 3D entity model (`PickupDroneEntityModel`) and pixel textures to give the Pickup Drone an authentic high-tech military defense system aesthetic:
+    - **Stealth Composite Armor Hull**: Angular chiseled gunmetal fuselage with armored top canopy and structural spine.
+    - **Tactical Sensor Radome**: Top-mounted tactical radar dome with communication mast and sensor optics.
+    - **FLIR Targeting Optics Gimbal**: Front armored sensor aperture with illuminated cyan targeting lens.
+    - **Magnetic Vacuum Harvester Pod**: Underslung magnetic suction cowl with illuminated cyan vortex rings and yellow-black industrial hazard stripes.
+    - **Dual Defense Conduit Pods**: Armored lateral sensor pods with heatsink ventilation grilles and status LEDs.
+    - **Heavy Carbon Motor Booms & Motor Cowlings**: Reinforced angular carbon fiber motor pylons with heavy-duty brushless motor housings and rotor blade safety stripes.
+  - **Pixel Art Item Icon**: Remade the `pickup_drone` item icon with matching defense system gunmetal hull, carbon booms, glowing cyan optics, and magnetic intake ring.
+  - **Default Tactical Coating**: Initialized default appearance to Tactical Defense Gunmetal with full custom dyeing support.
+
 ## [1.8.9] - 2026-09-12
 ### Added & Improved
 - **Pickup Drone (`pickup_drone`)**:

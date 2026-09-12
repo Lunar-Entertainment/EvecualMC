@@ -15,12 +15,12 @@ import net.minecraft.util.math.RotationAxis;
 public class PickupDroneEntityRenderer extends EntityRenderer<PickupDroneEntity> {
     private static final Identifier TEXTURE = new Identifier("evecualmc", "textures/entity/pickup_drone.png");
 
-    private final RcDroneEntityModel model;
+    private final PickupDroneEntityModel model;
 
     public PickupDroneEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
-        this.shadowRadius = 0.30F;
-        this.model = new RcDroneEntityModel(context.getPart(RcDroneEntityModel.MODEL_LAYER));
+        this.shadowRadius = 0.35F;
+        this.model = new PickupDroneEntityModel(context.getPart(PickupDroneEntityModel.MODEL_LAYER));
     }
 
     @Override
@@ -49,14 +49,15 @@ public class PickupDroneEntityRenderer extends EntityRenderer<PickupDroneEntity>
         this.model.setAngles(drone, 0.0F, 0.0F, drone.age + tickDelta, 0.0F, 0.0F);
 
         // 4. Color tint based on drone color variant
-        float r = 0.30F, g = 0.75F, b = 1.00F; // Default Cyber Blue
+        float r = 1.00F, g = 1.00F, b = 1.00F; // Default: Tactical Defense Gunmetal
         switch (drone.getColorVariant()) {
-            case 0 -> { r = 1.00F; g = 0.20F; b = 0.20F; } // Crimson Red
-            case 2 -> { r = 0.35F; g = 0.35F; b = 0.38F; } // Stealth Black
-            case 3 -> { r = 0.30F; g = 1.00F; b = 0.35F; } // Neon Lime
-            case 4 -> { r = 1.15F; g = 1.15F; b = 1.15F; } // Pearl White
-            case 5 -> { r = 1.00F; g = 0.90F; b = 0.20F; } // Racing Yellow
-            default -> { r = 0.30F; g = 0.75F; b = 1.00F; } // Cyber Blue
+            case 0 -> { r = 1.00F; g = 0.25F; b = 0.25F; } // Crimson Red
+            case 1 -> { r = 0.35F; g = 0.80F; b = 1.00F; } // Cyber Blue
+            case 2 -> { r = 0.45F; g = 0.45F; b = 0.48F; } // Stealth Black
+            case 3 -> { r = 0.35F; g = 1.00F; b = 0.40F; } // Neon Lime
+            case 4 -> { r = 1.20F; g = 1.20F; b = 1.20F; } // Pearl White
+            case 5 -> { r = 1.00F; g = 0.90F; b = 0.25F; } // Hazard Yellow
+            default -> { r = 1.00F; g = 1.00F; b = 1.00F; } // Tactical Defense Gunmetal
         }
 
         // Render main body and propellers

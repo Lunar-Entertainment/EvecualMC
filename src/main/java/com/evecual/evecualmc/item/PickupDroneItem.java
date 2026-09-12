@@ -76,7 +76,7 @@ public class PickupDroneItem extends Item {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         int energy = PickupDroneEntity.MAX_ENERGY;
-        int color = 1; // Default Cyber Blue
+        int color = 6; // Default Tactical Defense Gunmetal
         NbtCompound nbt = stack.getNbt();
         if (nbt != null) {
             if (nbt.contains("Energy")) energy = nbt.getInt("Energy");
@@ -85,14 +85,15 @@ public class PickupDroneItem extends Item {
 
         String colorName = switch (color) {
             case 0 -> "Crimson Red";
+            case 1 -> "Cyber Blue";
             case 2 -> "Stealth Black";
             case 3 -> "Neon Lime";
             case 4 -> "Pearl White";
-            case 5 -> "Racing Yellow";
-            default -> "Cyber Blue";
+            case 5 -> "Hazard Yellow";
+            default -> "Tactical Defense Gunmetal";
         };
 
-        tooltip.add(Text.literal("§7Body Color: §f" + colorName));
+        tooltip.add(Text.literal("§7Chassis Coating: §f" + colorName));
         tooltip.add(Text.literal("§e⚡ Battery: §f" + energy + " / " + PickupDroneEntity.MAX_ENERGY + " E"));
 
         if (nbt != null && nbt.contains("TrunkItems")) {

@@ -569,6 +569,7 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register RC Drone and Pickup Drone Models and Renderers
         EntityModelLayerRegistry.registerModelLayer(RcDroneEntityModel.MODEL_LAYER, RcDroneEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.RC_DRONE_ENTITY, RcDroneEntityRenderer::new);
+        EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.PickupDroneEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.PickupDroneEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.PICKUP_DRONE_ENTITY, com.evecual.evecualmc.client.render.PickupDroneEntityRenderer::new);
 
         // Register RC Robot Model and Renderer
