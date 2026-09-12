@@ -1,5 +1,11 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.21] - 2026-09-12
+### Changed & Tuned
+- **Lightning Item Durability Balancing**:
+  - Adjusted the maximum durability of the `LightningItem` from 64 to **25 uses**.
+  - Updated tooltips and item durability bar to reflect 25 maximum lightning strikes.
+
 ## [1.8.20] - 2026-09-12
 ### Added & Improved
 - **Swedish (Svenska) Localization (`sv_se.json`, `sv-SE.json`)**:
