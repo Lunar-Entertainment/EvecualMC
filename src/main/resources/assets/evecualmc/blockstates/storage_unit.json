@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,powered=false": { "model": "evecualmc:block/storage_unit" },
+    "facing=south,powered=false": { "model": "evecualmc:block/storage_unit", "y": 180 },
+    "facing=west,powered=false":  { "model": "evecualmc:block/storage_unit", "y": 270 },
+    "facing=east,powered=false":  { "model": "evecualmc:block/storage_unit", "y": 90 },
+    "facing=north,powered=true":  { "model": "evecualmc:block/storage_unit_powered" },
+    "facing=south,powered=true":  { "model": "evecualmc:block/storage_unit_powered", "y": 180 },
+    "facing=west,powered=true":   { "model": "evecualmc:block/storage_unit_powered", "y": 270 },
+    "facing=east,powered=true":   { "model": "evecualmc:block/storage_unit_powered", "y": 90 }
+  }
+}

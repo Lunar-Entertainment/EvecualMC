@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "evecualmc:block/pickup_drone_parking_spot" },
+    "facing=south": { "model": "evecualmc:block/pickup_drone_parking_spot", "y": 180 },
+    "facing=west":  { "model": "evecualmc:block/pickup_drone_parking_spot", "y": 270 },
+    "facing=east":  { "model": "evecualmc:block/pickup_drone_parking_spot", "y": 90 }
+  }
+}

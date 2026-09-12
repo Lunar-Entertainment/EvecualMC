@@ -343,6 +343,50 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "charger_cable"),
             new Item(new Item.Settings().maxCount(1)));
 
+    public static final Block DRONE_PICKUP_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "drone_pickup"),
+            new com.evecual.evecualmc.block.DronePickupBlock(
+                    FabricBlockSettings.create().strength(1.5f).sounds(BlockSoundGroup.METAL)));
+
+    public static final Item DRONE_PICKUP_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "drone_pickup"),
+            new BlockItem(DRONE_PICKUP_BLOCK, new Item.Settings()));
+
+    public static final Block PICKUP_DRONE_PARKING_SPOT_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "pickup_drone_parking_spot"),
+            new com.evecual.evecualmc.block.PickupDroneParkingSpotBlock(
+                    FabricBlockSettings.create().strength(0.5f).sounds(BlockSoundGroup.METAL).nonOpaque().noCollision()));
+
+    public static final Item PICKUP_DRONE_PARKING_SPOT_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "pickup_drone_parking_spot"),
+            new BlockItem(PICKUP_DRONE_PARKING_SPOT_BLOCK, new Item.Settings()));
+
+    public static final Block ELECTRIC_CHUTE_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "electric_chute"),
+            new com.evecual.evecualmc.block.ElectricChuteBlock(
+                    FabricBlockSettings.create().strength(1.0f).sounds(BlockSoundGroup.COPPER).nonOpaque()));
+
+    public static final Item ELECTRIC_CHUTE_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electric_chute"),
+            new BlockItem(ELECTRIC_CHUTE_BLOCK, new Item.Settings()));
+
+    public static final Block STORAGE_UNIT_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "storage_unit"),
+            new com.evecual.evecualmc.block.StorageUnitBlock(
+                    FabricBlockSettings.create().strength(2.0f).sounds(BlockSoundGroup.NETHERITE)));
+
+    public static final Item STORAGE_UNIT_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "storage_unit"),
+            new com.evecual.evecualmc.item.StorageUnitItem(STORAGE_UNIT_BLOCK, new Item.Settings().maxCount(1)));
+
     public static final Block STATIONARY_TURRET_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "stationary_turret"),
@@ -466,7 +510,37 @@ public class EvecualMC implements ModInitializer {
                                     TURRET_AMMO_CONTAINER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.DronePickupBlockEntity> DRONE_PICKUP_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "drone_pickup"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.DronePickupBlockEntity::new, DRONE_PICKUP_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ElectricChuteBlockEntity> ELECTRIC_CHUTE_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "electric_chute"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ElectricChuteBlockEntity::new, ELECTRIC_CHUTE_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.StorageUnitBlockEntity> STORAGE_UNIT_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "storage_unit"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.StorageUnitBlockEntity::new, STORAGE_UNIT_BLOCK)
+                            .build());
+
     // Screen Handlers
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.StorageUnitScreenHandler> STORAGE_UNIT_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "storage_unit"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.StorageUnitScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
     public static final ScreenHandlerType<ElectronicCombinerScreenHandler> ELECTRONIC_COMBINER_SCREEN_HANDLER = Registry
             .register(
                     Registries.SCREEN_HANDLER,
@@ -609,6 +683,10 @@ public class EvecualMC implements ModInitializer {
                 entries.add(RC_CHARGER_ITEM);
                 entries.add(RC_PARKING_SPOT_ITEM);
                 entries.add(DRONE_PARKING_SPOT_ITEM);
+                entries.add(PICKUP_DRONE_PARKING_SPOT_ITEM);
+                entries.add(DRONE_PICKUP_ITEM);
+                entries.add(ELECTRIC_CHUTE_ITEM);
+                entries.add(STORAGE_UNIT_ITEM);
                 entries.add(ROBOT_PARKING_SPOT_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(WIND_TURBINE_ITEM);

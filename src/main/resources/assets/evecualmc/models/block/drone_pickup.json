@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/drone_pickup_top",
+    "up": "evecualmc:block/drone_pickup_top",
+    "down": "evecualmc:block/drone_pickup_bottom",
+    "north": "evecualmc:block/drone_pickup_side",
+    "south": "evecualmc:block/drone_pickup_side",
+    "west": "evecualmc:block/drone_pickup_side",
+    "east": "evecualmc:block/drone_pickup_side"
+  }
+}

@@ -66,6 +66,11 @@ public class PickupDroneEntity extends RcDroneEntity {
     }
 
     @Override
+    protected boolean isParkingSpotBlock(net.minecraft.block.BlockState bs) {
+        return bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
+    }
+
+    @Override
     public ItemStack asItemStack() {
         ItemStack stack = new ItemStack(EvecualMC.PICKUP_DRONE_ITEM);
         NbtCompound nbt = new NbtCompound();

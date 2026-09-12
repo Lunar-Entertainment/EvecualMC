@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "evecualmc:drone_parking_spot" },
+    { "item": "evecualmc:steel_ingot" },
+    { "item": "minecraft:gold_ingot" }
+  ],
+  "result": {
+    "item": "evecualmc:pickup_drone_parking_spot",
+    "count": 1
+  }
+}

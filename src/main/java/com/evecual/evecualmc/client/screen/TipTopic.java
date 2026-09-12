@@ -340,6 +340,131 @@ public enum TipTopic {
             }
     ),
 
+    PICKUP_DRONE(
+            "pickup_drone",
+            "Pickup Drone",
+            "🛡️ Tactical Defense Harvester",
+            () -> new ItemStack(EvecualMC.PICKUP_DRONE_ITEM),
+            "Military-grade defense system quadcopter featuring composite armor plating, FLIR optics, automated magnetic item vacuum, special Drone Pickup station docking, and electric chute cargo unloading.",
+            new String[]{
+                    "Equipped with composite armor and an underslung magnetic vacuum harvester.",
+                    "Automatically sweeps and vacuums nearby dropped items within 1.8m directly into its cargo bay.",
+                    "Requires a special landing spot: place a Pickup Drone Parking Spot directly on top of a Drone Pickup station.",
+                    "Docking on the station allows Electric Chutes to pneumatically offload cargo into high-capacity Storage Units."
+            },
+            new String[][]{
+                    {"W / S", "Pitch Forward / Backward"},
+                    {"A / D (FP Mode)", "Lateral Strafe Left / Right"},
+                    {"Mouse", "Steer Yaw & Aim FLIR Camera"},
+                    {"Space / Shift", "Ascend / Descend Altitude"},
+                    {"Ctrl (Sprint)", "Engage High-Speed Propulsion Boost"},
+                    {"F", "Toggle FLIR FPV Remote Camera Feed"},
+                    {"RMB (In Cam)", "Toggle First-Person / Third-Person view"},
+                    {"L", "Toggle High-Power Spotlight (Level 15)"},
+                    {"C", "Autopilot return & land on Drone Pickup Station"},
+                    {"Shift + Right-Click", "Retrieve drone back into inventory"}
+            },
+            new String[]{
+                    "Press C while flying to automatically locate and dock onto the nearest Pickup Drone Station.",
+                    "When docked on top of a Drone Pickup, items are rapidly sucked through connected Electric Chutes.",
+                    "Operates seamlessly with both the handheld RC Controller and Stationary RC Controller terminal.",
+                    "Underslung suction core emits genuine item pickup sound effects as it clears battlefield debris."
+            }
+    ),
+
+    DRONE_PICKUP(
+            "drone_pickup",
+            "Drone Pickup Station",
+            "📥 Automated Ground Base",
+            () -> new ItemStack(EvecualMC.DRONE_PICKUP_ITEM),
+            "Industrial logistics base engineered to receive docked Pickup Drones and interface with Electric Chutes for automated cargo offloading.",
+            new String[]{
+                    "Place on the ground as the foundation for the Pickup Drone landing dock.",
+                    "Requires a Pickup Drone Parking Spot placed directly on top of it.",
+                    "Detects when a Pickup Drone touches down and anchors its cargo bay for extraction.",
+                    "Attach Electric Chutes to the sides to pneumatically transfer items to nearby Storage Units."
+            },
+            new String[][]{
+                    {"Right-Click", "View Station Diagnostics & Cargo State"},
+                    {"Top Placement", "Place Pickup Drone Parking Spot on top"},
+                    {"Sides", "Attach Electric Chutes for item routing"}
+            },
+            new String[]{
+                    "Electric Chutes connected to this base will automatically siphon cargo into Storage Units.",
+                    "Emits electric cyan beacon particles when a Pickup Drone is securely docked.",
+                    "Can be combined with Wireless RC Chargers to keep docked drones fully powered."
+            }
+    ),
+
+    PICKUP_DRONE_PARKING_SPOT(
+            "pickup_drone_parking_spot",
+            "Pickup Drone Landing Pad",
+            "🛡️ Specialized Helipad",
+            () -> new ItemStack(EvecualMC.PICKUP_DRONE_PARKING_SPOT_ITEM),
+            "High-precision magnetic landing plate engineered exclusively to sit on top of a Drone Pickup station.",
+            new String[]{
+                    "MUST be placed directly on top of a Drone Pickup block.",
+                    "Provides millimeter-accurate alignment and magnetic grounding for the Pickup Drone.",
+                    "Serves as the primary homing target for the drone's automated Return-to-Base (C) autopilot."
+            },
+            new String[][]{
+                    {"Place on Drone Pickup", "Locks onto station below and activates landing beacon"},
+                    {"'C' Key (Drone Flight)", "Autopilot homing and vertical touchdown"}
+            },
+            new String[]{
+                    "If the Drone Pickup beneath is destroyed, this landing pad safely breaks and drops.",
+                    "Pickup Drones prioritize this special helipad over standard civilian drone landing pads."
+            }
+    ),
+
+    ELECTRIC_CHUTE(
+            "electric_chute",
+            "Electric Chute",
+            "⚡ Pneumatic Conduit",
+            () -> new ItemStack(EvecualMC.ELECTRIC_CHUTE_ITEM),
+            "High-voltage pneumatic transfer conduit that extracts items from the Drone Pickup station and pipes them into Storage Units.",
+            new String[]{
+                    "Connect between a Drone Pickup station and a Storage Unit (or chain multiple chutes).",
+                    "Requires electricity to operate (consumes 5 EU per transfer).",
+                    "Automatically draws power from adjacent Wires, Batteries, Generators, or Storage Units.",
+                    "Transfers items at rapid pneumatic speeds with sound and electrical particle effects."
+            },
+            new String[][]{
+                    {"Right-Click", "Check power status, upstream source, and downstream storage"},
+                    {"Placement", "Faces in the direction of placement to route item flow"}
+            },
+            new String[]{
+                    "Can form continuous conduit pipelines up to 8 blocks long between stations and vaults.",
+                    "Draws energy directly from the destination Storage Unit if it has stored charge."
+            }
+    ),
+
+    STORAGE_UNIT(
+            "storage_unit",
+            "Storage Unit",
+            "🔋 Quantum Multi-Space Vault",
+            () -> new ItemStack(EvecualMC.STORAGE_UNIT_ITEM),
+            "Colossal multi-block expandable electric storage vault with 108 slots per unit. Placing adjacent units merges them into a massive unified bank. Acts as a high-capacity Shulker Box when mined while charged.",
+            new String[]{
+                    "Provides 108 slots per single unit—more space than anything in vanilla Minecraft.",
+                    "Place multiple Storage Units adjacent to each other to combine them into an expandable bank.",
+                    "Use the [◀] and [▶] page buttons in the vault screen to browse through all connected compartments.",
+                    "Charged Shulker: When broken while powered (≥ 200 EU), retains all contents inside its drop item.",
+                    "Uncharged warning: If broken with 0 EU, the quantum field collapses and spills all items.",
+                    "Requires 200 EU initialization electricity when placed down with stored items."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Quantum Multi-Space Vault UI"},
+                    {"[◀] / [▶] Buttons", "Navigate pages across connected storage units"},
+                    {"Shift + Click", "Quick-transfer items into vault compartments"}
+            },
+            new String[]{
+                    "Connect Wires, Solar Panels, or Batteries to ensure the unit stays charged before mining.",
+                    "When placed down with stored items, simply connect electricity to initialize and unlock.",
+                    "Electric Chutes directly deposit vacuumed drone cargo into this vault automatically."
+            }
+    ),
+
     RC_ROBOT(
             "rc_robot",
             "RC Robot",
@@ -810,6 +935,10 @@ public enum TipTopic {
         if (block == EvecualMC.ELECTRONIC_DUPER_BLOCK) return ELECTRONIC_DUPER;
         if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
         if (block == EvecualMC.HELI_CHARGER_BLOCK) return HELI_CHARGER;
+        if (block == EvecualMC.DRONE_PICKUP_BLOCK) return DRONE_PICKUP;
+        if (block == EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) return PICKUP_DRONE_PARKING_SPOT;
+        if (block == EvecualMC.ELECTRIC_CHUTE_BLOCK) return ELECTRIC_CHUTE;
+        if (block == EvecualMC.STORAGE_UNIT_BLOCK) return STORAGE_UNIT;
         return null;
     }
 
@@ -820,7 +949,12 @@ public enum TipTopic {
         if (item == EvecualMC.HELI_CONTROLLER_ITEM) return HELI_CONTROLLER;
         if (item == EvecualMC.HELI_MINING_ARM || item == EvecualMC.HELI_WEAPON_ARM) return EV_HELI;
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
-        if (item == EvecualMC.RC_DRONE_ITEM || item == EvecualMC.PICKUP_DRONE_ITEM) return RC_DRONE;
+        if (item == EvecualMC.PICKUP_DRONE_ITEM) return PICKUP_DRONE;
+        if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
+        if (item == EvecualMC.DRONE_PICKUP_ITEM) return DRONE_PICKUP;
+        if (item == EvecualMC.PICKUP_DRONE_PARKING_SPOT_ITEM) return PICKUP_DRONE_PARKING_SPOT;
+        if (item == EvecualMC.ELECTRIC_CHUTE_ITEM) return ELECTRIC_CHUTE;
+        if (item == EvecualMC.STORAGE_UNIT_ITEM) return STORAGE_UNIT;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
         if (item == EvecualMC.STATIONARY_RC_CONTROLLER_ITEM) return STATIONARY_RC_CONTROLLER;

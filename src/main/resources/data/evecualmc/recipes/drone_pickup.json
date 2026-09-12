@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SHS",
+    "SRS",
+    "SWS"
+  ],
+  "key": {
+    "S": { "item": "evecualmc:steel_ingot" },
+    "H": { "item": "minecraft:hopper" },
+    "R": { "item": "minecraft:redstone" },
+    "W": { "item": "evecualmc:wire" }
+  },
+  "result": {
+    "item": "evecualmc:drone_pickup",
+    "count": 1
+  }
+}

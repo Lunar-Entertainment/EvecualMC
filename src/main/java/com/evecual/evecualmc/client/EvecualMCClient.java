@@ -546,6 +546,8 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register Wire Cutout Render Layer & Wind Turbine Renderer
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.WIRE_BLOCK, RenderLayer.getCutout());
         BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.STATIONARY_TURRET_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(EvecualMC.ELECTRIC_CHUTE_BLOCK, RenderLayer.getCutout());
         BlockEntityRendererFactories.register(EvecualMC.WIND_TURBINE_BLOCK_ENTITY, WindTurbineBlockEntityRenderer::new);
         BlockEntityRendererFactories.register(EvecualMC.STATIONARY_TURRET_BLOCK_ENTITY, com.evecual.evecualmc.client.render.StationaryTurretBlockEntityRenderer::new);
 
@@ -557,6 +559,7 @@ public class EvecualMCClient implements ClientModInitializer {
         HandledScreens.register(EvecualMC.RC_ROBOT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.RcRobotScreen::new);
         HandledScreens.register(EvecualMC.STATIONARY_TURRET_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.StationaryTurretScreen::new);
         HandledScreens.register(EvecualMC.TURRET_AMMO_CONTAINER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.TurretAmmoContainerScreen::new);
+        HandledScreens.register(EvecualMC.STORAGE_UNIT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.StorageUnitScreen::new);
 
         // Register Car Entity Model and Renderer
         EntityModelLayerRegistry.registerModelLayer(CarEntityModel.MODEL_LAYER, CarEntityModel::getTexturedModelData);

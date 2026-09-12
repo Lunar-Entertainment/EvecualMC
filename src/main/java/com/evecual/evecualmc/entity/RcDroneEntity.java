@@ -64,12 +64,12 @@ public class RcDroneEntity extends Entity {
     private float prevPropAngle = 0.0F;
     private float propSpeed = 0.0F;
 
-    private boolean autoReturning = false;
-    private BlockPos targetChargerPos = null;
-    private BlockPos homeHelipadPos = null;
-    private int autoReturnTicks = 0;
-    private int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
-    private double cruiseAltitude = 0.0;
+    protected boolean autoReturning = false;
+    protected BlockPos targetChargerPos = null;
+    protected BlockPos homeHelipadPos = null;
+    protected int autoReturnTicks = 0;
+    protected int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
+    protected double cruiseAltitude = 0.0;
 
     private boolean wasInParkingSpot = false;
     private boolean explicitlyPairedInSpot = false;
@@ -213,7 +213,7 @@ public class RcDroneEntity extends Entity {
     }
 
     public void setColorVariant(int variant) {
-        this.dataTracker.set(COLOR_VARIANT, variant % 6);
+        this.dataTracker.set(COLOR_VARIANT, MathHelper.clamp(variant, 0, 6));
     }
 
     public String getPairedPlayerUuid() {
@@ -266,14 +266,18 @@ public class RcDroneEntity extends Entity {
 
     public BlockPos getParkingSpotPos() {
         BlockPos pos = this.getBlockPos();
-        if (Math.abs(this.getY() - pos.getY()) <= 0.5 && this.getWorld().getBlockState(pos).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+        if (Math.abs(this.getY() - pos.getY()) <= 0.5 && isParkingSpotBlock(this.getWorld().getBlockState(pos))) {
             return pos;
         }
         BlockPos down = pos.down();
-        if (Math.abs(this.getY() - (down.getY() + 1.0)) <= 0.5 && this.getWorld().getBlockState(down).isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+        if (Math.abs(this.getY() - (down.getY() + 1.0)) <= 0.5 && isParkingSpotBlock(this.getWorld().getBlockState(down))) {
             return down;
         }
         return null;
+    }
+
+    protected boolean isParkingSpotBlock(BlockState bs) {
+        return bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
     }
 
     public boolean isInParkingSpot() {
@@ -399,7 +403,7 @@ public class RcDroneEntity extends Entity {
             int cz = this.homeHelipadPos.getZ() >> 4;
             if (this.getWorld().isChunkLoaded(cx, cz)) {
                 BlockState bs = this.getWorld().getBlockState(this.homeHelipadPos);
-                if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK) && !isSpotOccupied(this.getWorld(), this.homeHelipadPos, this)) {
+                if (isParkingSpotBlock(bs) && !isSpotOccupied(this.getWorld(), this.homeHelipadPos, this)) {
                     bestCharger = this.homeHelipadPos;
                     bestDistSq = this.homeHelipadPos.getSquaredDistance(dronePos);
                 }
@@ -429,7 +433,7 @@ public class RcDroneEntity extends Entity {
                     for (int secIdx = minSec; secIdx <= maxSec; secIdx++) {
                         net.minecraft.world.chunk.ChunkSection section = chunk.getSectionArray()[secIdx];
                         if (section == null || section.isEmpty()) continue;
-                        if (!section.hasAny(bs -> bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK))) continue;
+                        if (!section.hasAny(this::isParkingSpotBlock)) continue;
 
                         int secY = chunk.sectionIndexToCoord(secIdx) << 4;
                         for (int lx = 0; lx < 16; lx++) {
@@ -443,7 +447,7 @@ public class RcDroneEntity extends Entity {
                                     if (wy < minY || wy > maxY) continue;
 
                                     BlockState bs = section.getBlockState(lx, ly, lz);
-                                    if (bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK)) {
+                                    if (isParkingSpotBlock(bs)) {
                                         BlockPos p = new BlockPos(wx, wy, wz);
                                         if (isSpotOccupied(this.getWorld(), p, this)) continue;
 

@@ -60,8 +60,8 @@ public class PickupDroneEntityRenderer extends EntityRenderer<PickupDroneEntity>
             default -> { r = 1.00F; g = 1.00F; b = 1.00F; } // Tactical Defense Gunmetal
         }
 
-        // Render main body and propellers
-        VertexConsumer solidVertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
+        // Render main body and propellers without backface culling to eliminate any visible gaps or missing interior faces
+        VertexConsumer solidVertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURE));
         this.model.renderBodyAndProps(matrices, solidVertices, light, OverlayTexture.DEFAULT_UV, r, g, b, 1.0F);
 
         // 5. High-speed Propeller Motion Blur

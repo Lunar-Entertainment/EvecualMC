@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "evecualmc:block/drone_pickup" },
+    "facing=south": { "model": "evecualmc:block/drone_pickup", "y": 180 },
+    "facing=west":  { "model": "evecualmc:block/drone_pickup", "y": 270 },
+    "facing=east":  { "model": "evecualmc:block/drone_pickup", "y": 90 }
+  }
+}

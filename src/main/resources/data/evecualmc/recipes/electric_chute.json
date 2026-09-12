@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CWC",
+    "GHG",
+    "SRS"
+  ],
+  "key": {
+    "C": { "item": "minecraft:copper_ingot" },
+    "W": { "item": "evecualmc:wire" },
+    "G": { "item": "minecraft:glass" },
+    "H": { "item": "minecraft:hopper" },
+    "S": { "item": "evecualmc:steel_ingot" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "result": {
+    "item": "evecualmc:electric_chute",
+    "count": 2
+  }
+}

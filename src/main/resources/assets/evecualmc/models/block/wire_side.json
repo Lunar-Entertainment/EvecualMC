@@ -13,8 +13,9 @@
         "down":  { "uv": [6, 0, 10, 6], "texture": "#wire" },
         "up":    { "uv": [6, 0, 10, 6], "texture": "#wire" },
         "north": { "uv": [6, 6, 10, 10], "texture": "#wire" },
-        "west":  { "uv": [0, 6, 6, 10], "texture": "#wire" },
-        "east":  { "uv": [10, 6, 16, 10], "texture": "#wire" }
+        "south": { "uv": [6, 6, 10, 10], "texture": "#wire" },
+        "west":  { "uv": [6, 0, 10, 6], "texture": "#wire" },
+        "east":  { "uv": [6, 0, 10, 6], "texture": "#wire" }
       }
     }
   ]

@@ -12,6 +12,7 @@ varying vec4 color;
 varying vec2 texcoord;
 varying vec2 lmcoord;
 varying vec3 normal;
+varying vec3 geoNormal;
 varying float blockId;
 varying vec2 faceUV;
 varying vec3 worldPos;
@@ -24,15 +25,20 @@ void main() {
 
     vec4 light = texture2D(lightmap, lmcoord);
 
-    // Dynamic sun/ambient directional lighting
+    // Dynamic sun/ambient directional lighting in world space
     vec3 lightDir = normalize(vec3(0.35, 0.85, 0.40));
     vec3 viewDir = normalize(-worldPos);
     vec3 halfDir = normalize(lightDir + viewDir);
 
-    float NdotL = clamp(dot(normal, lightDir), 0.0, 1.0);
+    float NdotL = clamp(dot(geoNormal, lightDir), 0.0, 1.0);
     // Half-Lambert wrap diffuse for rich volumetric shadows without pitch-black faces
     float wrapDiffuse = pow(NdotL * 0.5 + 0.5, 1.3);
     float diffuse = mix(0.72, 1.08, wrapDiffuse);
+
+    // Wires and tech machines: full uniform illumination so sides are never culled or black
+    if (abs(blockId - 10005.0) < 0.5) {
+        diffuse = 1.0;
+    }
 
     vec3 shaded = albedo.rgb * light.rgb * diffuse;
 

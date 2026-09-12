@@ -73,23 +73,23 @@ public class PickupDroneEntityModel extends EntityModel<PickupDroneEntity> {
                 .uv(38, 28).cuboid(4.5F, 19.3F, -4.0F, 1.5F, 2.2F, 8.0F)
                 .uv(38, 28).cuboid(5.5F, 20.0F, -4.8F, 1.0F, 1.0F, 1.0F) // Forward sensor
 
-                // Heavy Structural Carbon Motor Booms (reinforced angular trusses)
+                // Heavy Structural Carbon Motor Booms (reinforced continuous trusses without holes)
                 // Front-Left Boom
-                .uv(0, 34).cuboid(-9.0F, 19.5F, -8.5F, 5.0F, 1.0F, 2.0F)
-                .uv(0, 34).cuboid(-8.5F, 19.5F, -9.0F, 2.0F, 1.0F, 4.0F)
-                .uv(0, 34).cuboid(-5.0F, 19.5F, -5.0F, 2.0F, 1.0F, 2.0F)
+                .uv(0, 34).cuboid(-5.5F, 19.2F, -5.5F, 2.0F, 1.4F, 2.0F)
+                .uv(0, 34).cuboid(-8.0F, 19.2F, -7.5F, 4.0F, 1.2F, 2.5F)
+                .uv(0, 34).cuboid(-8.5F, 19.2F, -8.5F, 2.5F, 1.2F, 3.5F)
                 // Front-Right Boom
-                .uv(0, 34).cuboid(4.0F, 19.5F, -8.5F, 5.0F, 1.0F, 2.0F)
-                .uv(0, 34).cuboid(6.5F, 19.5F, -9.0F, 2.0F, 1.0F, 4.0F)
-                .uv(0, 34).cuboid(3.0F, 19.5F, -5.0F, 2.0F, 1.0F, 2.0F)
+                .uv(0, 34).cuboid(3.5F, 19.2F, -5.5F, 2.0F, 1.4F, 2.0F)
+                .uv(0, 34).cuboid(4.0F, 19.2F, -7.5F, 4.0F, 1.2F, 2.5F)
+                .uv(0, 34).cuboid(6.0F, 19.2F, -8.5F, 2.5F, 1.2F, 3.5F)
                 // Rear-Left Boom
-                .uv(0, 34).cuboid(-9.0F, 19.5F, 6.5F, 5.0F, 1.0F, 2.0F)
-                .uv(0, 34).cuboid(-8.5F, 19.5F, 5.0F, 2.0F, 1.0F, 4.0F)
-                .uv(0, 34).cuboid(-5.0F, 19.5F, 3.0F, 2.0F, 1.0F, 2.0F)
+                .uv(0, 34).cuboid(-5.5F, 19.2F, 3.5F, 2.0F, 1.4F, 2.0F)
+                .uv(0, 34).cuboid(-8.0F, 19.2F, 5.0F, 4.0F, 1.2F, 2.5F)
+                .uv(0, 34).cuboid(-8.5F, 19.2F, 5.0F, 2.5F, 1.2F, 3.5F)
                 // Rear-Right Boom
-                .uv(0, 34).cuboid(4.0F, 19.5F, 6.5F, 5.0F, 1.0F, 2.0F)
-                .uv(0, 34).cuboid(6.5F, 19.5F, 5.0F, 2.0F, 1.0F, 4.0F)
-                .uv(0, 34).cuboid(3.0F, 19.5F, 3.0F, 2.0F, 1.0F, 2.0F)
+                .uv(0, 34).cuboid(3.5F, 19.2F, 3.5F, 2.0F, 1.4F, 2.0F)
+                .uv(0, 34).cuboid(4.0F, 19.2F, 5.0F, 4.0F, 1.2F, 2.5F)
+                .uv(0, 34).cuboid(6.0F, 19.2F, 5.0F, 2.5F, 1.2F, 3.5F)
 
                 // Armored Heavy Brushless Motor Housings
                 .uv(44, 0).cuboid(-9.5F, 18.0F, -9.5F, 3.0F, 3.0F, 3.0F)
@@ -98,18 +98,18 @@ public class PickupDroneEntityModel extends EntityModel<PickupDroneEntity> {
                 .uv(44, 0).cuboid(6.5F, 18.0F, 6.5F, 3.0F, 3.0F, 3.0F)
 
                 // Tactical Shock-Absorbing Landing Struts and Skid Rails
-                .uv(0, 42).cuboid(-4.0F, 22.0F, -3.5F, 1.0F, 2.5F, 1.0F)
-                .uv(0, 42).cuboid(-4.0F, 22.0F, 2.5F, 1.0F, 2.5F, 1.0F)
-                .uv(0, 42).cuboid(3.0F, 22.0F, -3.5F, 1.0F, 2.5F, 1.0F)
-                .uv(0, 42).cuboid(3.0F, 22.0F, 2.5F, 1.0F, 2.5F, 1.0F)
+                .uv(0, 42).cuboid(-4.0F, 21.5F, -3.5F, 1.5F, 3.0F, 1.5F)
+                .uv(0, 42).cuboid(-4.0F, 21.5F, 2.0F, 1.5F, 3.0F, 1.5F)
+                .uv(0, 42).cuboid(2.5F, 21.5F, -3.5F, 1.5F, 3.0F, 1.5F)
+                .uv(0, 42).cuboid(2.5F, 21.5F, 2.0F, 1.5F, 3.0F, 1.5F)
                 // Skid Rails
-                .uv(14, 38).cuboid(-4.5F, 24.5F, -6.0F, 1.5F, 0.8F, 12.0F)
-                .uv(14, 38).cuboid(3.0F, 24.5F, -6.0F, 1.5F, 0.8F, 12.0F)
+                .uv(14, 38).cuboid(-4.5F, 24.2F, -6.5F, 1.8F, 1.0F, 13.0F)
+                .uv(14, 38).cuboid(2.7F, 24.2F, -6.5F, 1.8F, 1.0F, 13.0F)
                 // Upturned tips
-                .uv(14, 38).cuboid(-4.5F, 23.7F, -7.0F, 1.5F, 0.8F, 1.0F)
-                .uv(14, 38).cuboid(3.0F, 23.7F, -7.0F, 1.5F, 0.8F, 1.0F)
-                .uv(14, 38).cuboid(-4.5F, 23.7F, 6.0F, 1.5F, 0.8F, 1.0F)
-                .uv(14, 38).cuboid(3.0F, 23.7F, 6.0F, 1.5F, 0.8F, 1.0F);
+                .uv(14, 38).cuboid(-4.5F, 23.4F, -7.5F, 1.8F, 1.0F, 1.2F)
+                .uv(14, 38).cuboid(2.7F, 23.4F, -7.5F, 1.8F, 1.0F, 1.2F)
+                .uv(14, 38).cuboid(-4.5F, 23.4F, 6.3F, 1.8F, 1.0F, 1.2F)
+                .uv(14, 38).cuboid(2.7F, 23.4F, 6.3F, 1.8F, 1.0F, 1.2F);
 
         root.addChild("body", bodyBuilder, ModelTransform.NONE);
 

@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/storage_unit_front_powered",
+    "north": "evecualmc:block/storage_unit_front_powered",
+    "south": "evecualmc:block/storage_unit_side",
+    "west": "evecualmc:block/storage_unit_side",
+    "east": "evecualmc:block/storage_unit_side",
+    "up": "evecualmc:block/storage_unit_top",
+    "down": "evecualmc:block/drone_pickup_bottom"
+  }
+}

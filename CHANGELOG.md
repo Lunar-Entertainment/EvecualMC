@@ -1,5 +1,35 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.11] - 2026-09-12
+### Added & Improved
+- **Drone Pickup Station (`drone_pickup`) & Special Parking Spot (`pickup_drone_parking_spot`)**:
+  - Added dedicated **Drone Pickup Station** base and **Pickup Drone Parking Spot** helipad.
+  - The special parking spot requires placement directly on top of a Drone Pickup Station.
+  - Pickup Drones prioritize this special helipad when triggering Autopilot Return (C Key).
+  - When landed, the station docks the drone, establishes a magnetic lock, and provides automated cargo offloading.
+- **Electric Chute (`electric_chute`)**:
+  - High-voltage pneumatic transfer conduit that connects between Drone Pickup Stations and Storage Units (or chains multiple conduits together).
+  - Requires electricity (5 EU/transfer) and automatically draws power from wires, batteries, generators, or attached storage units.
+  - Automatically draws harvested items from the docked Pickup Drone's cargo bay and deposits them into connected Storage Units with authentic pneumatic dispense audio and cyan electric spark VFX.
+- **Storage Unit (`storage_unit`) & Multiblock Quantum Vault**:
+  - Colossal expandable electric storage unit with **108 slots** per unit—more space than anything in vanilla Minecraft.
+  - **Multiblock Expansion**: Placing multiple Storage Units adjacent to each other automatically links them into a single unified multi-block storage bank (2 units = 216 slots, 3 units = 324 slots, etc.).
+  - **Paginated Vault UI**: Sleek screen displaying 54 slots per page with `[◀]` and `[▶]` page buttons, live energy meter, and connected unit telemetry.
+  - **Electric Shulker Box Mechanics**: When broken while electrically charged (≥ 200 EU), the unit retains all 108 slots and energy inside its item drop without spilling. If broken uncharged, the containment field collapses and spills its contents.
+  - **Power Initialization**: When placed down with stored items, consumes 200 EU of electricity to initialize and unlock the quantum storage matrix.
+- **Pickup Drone Model & Texture Fixes**:
+  - Sealed all geometric gaps and holes on the Pickup Drone motor booms, struts, and landing skids with solid overlapping trusses.
+  - Eliminated transparent texture UV cutouts by reinforcing carbon-weave pylon and side pod textures.
+  - Upgraded model rendering to `getEntityCutoutNoCull` so interior geometry and thin shrouds are never culled.
+- **Shader Pack & Cable Shader Fix**:
+  - Fixed `EvecualTechShader.zip` packaging: replaced Windows backslash directory separators with standard forward slash paths (`shaders/...`), resolving Iris console error *"Pack EvecualTechShader.zip is not valid! Can't load it"*.
+  - Fixed wire cable face rendering: corrected `wire_side.json` UV mapping on west and east faces from transparent space (`[0,6,6,10]` and `[10,6,16,10]`) to valid wire texture pixels (`[6,0,10,6]`), restoring missing faces when shaders are enabled.
+  - Upgraded `gbuffers_terrain.vsh` and `gbuffers_terrain.fsh` with world-space `geoNormal` and uniform lighting on mod blocks so wire cables never render with only one face illuminated.
+- **Remade Tip Menus for Pickup Drone & Logistics**:
+  - Remade the Tip Menu for the Pickup Drone (`pickup_drone`) with comprehensive defense harvester specifications, docking procedures, and flight controls.
+  - Added dedicated Field Guide Tip Menus for Drone Pickup Station, Pickup Drone Parking Spot, Electric Chute, and Storage Unit.
+  - Updated Shift + Right-Click on Pickup Drone Item to directly open the new Pickup Drone Tip Menu.
+
 ## [1.8.10] - 2026-09-12
 ### Added & Improved
 - **Defense System Overhaul for Pickup Drone (`pickup_drone`)**:

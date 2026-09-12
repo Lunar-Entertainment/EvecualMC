@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SCS",
+    "BCB",
+    "SWS"
+  ],
+  "key": {
+    "S": { "item": "evecualmc:steel_ingot" },
+    "C": { "item": "minecraft:chest" },
+    "B": { "item": "evecualmc:battery" },
+    "W": { "item": "evecualmc:wire" }
+  },
+  "result": {
+    "item": "evecualmc:storage_unit",
+    "count": 1
+  }
+}

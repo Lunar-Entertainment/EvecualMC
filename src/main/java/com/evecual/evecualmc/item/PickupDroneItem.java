@@ -66,7 +66,7 @@ public class PickupDroneItem extends Item {
     public net.minecraft.util.TypedActionResult<ItemStack> use(World world, net.minecraft.entity.player.PlayerEntity user, net.minecraft.util.Hand hand) {
         if (user.isSneaking()) {
             if (!world.isClient && user instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-                EvecualMC.sendOpenTipScreen(serverPlayer, "rc_drone", 0, PickupDroneEntity.MAX_ENERGY, "🚁 Pickup Drone: Remote control drone with automated item vacuum pickup");
+                EvecualMC.sendOpenTipScreen(serverPlayer, "pickup_drone", 0, PickupDroneEntity.MAX_ENERGY, "🛡️ Pickup Drone: Tactical defense harvester with automated item vacuum pickup");
             }
             return net.minecraft.util.TypedActionResult.success(user.getStackInHand(hand));
         }
