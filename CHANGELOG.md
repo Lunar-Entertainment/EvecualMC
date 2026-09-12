@@ -1,5 +1,28 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.13] - 2026-09-12
+### Added & Improved
+- **Electric Chute 6-Directional Cornering & Multipart Models**:
+  - Re-engineered Electric Chute models into modular core and arm assets (`electric_chute_core.json`, `electric_chute_arm.json`) with multipart blockstates.
+  - Chutes now dynamically connect in all 6 directions (North, South, East, West, Up, Down), supporting 90° corners, L-bends, T-junctions, and multi-way networks.
+  - Implemented Breadth-First Search (BFS) routing up to 64 blocks for upstream Drone Pickups and downstream Storage Units, allowing items to automatically navigate corners, turns, and elevation changes.
+- **Electric Chute Power Grid Intake & Equalization**:
+  - Added Electric Chute to `WireBlock.canConnectTo`, allowing power grid wires to physically and logically connect to chutes.
+  - Implemented BFS wire network power extraction in `ElectricChuteBlockEntity.drawAdjacentEnergy`, pulling power from distant batteries, solar panels, and wind turbines.
+  - Enabled energy equalization across chained chutes so powering any section of the chute pipeline supplies the whole network.
+  - Added real-time client block entity synchronization on energy intake so HUD overlays and tip screens accurately reflect power levels.
+- **Storage Unit Real-Time Item Count Synchronization**:
+  - Resolved issue where Storage Unit tips were stuck displaying "1 item".
+  - Overrode `markDirty()` in `StorageUnitBlockEntity` to dynamically recalculate stored items and filled slots, and immediately notify tracking clients via `markForUpdate`.
+  - Serialized `TotalItems` and `FilledSlots` directly into NBT for fast client HUD querying.
+  - Upgraded HUD overlays and inspection screens to query synchronized slot and item counts across connected storage clusters.
+  - Added BFS wire network power extraction to Storage Units so they can charge directly from wire grids.
+- **Pickup Drone 27-Slot Cargo Capacity Upgrade**:
+  - Upgraded Pickup Drone cargo bay from 9 slots to a full 27-slot chest capacity (`CARGO_SIZE = 27`).
+  - Updated cargo GUI to 3 full rows (`GenericContainerScreenHandler` with `GENERIC_9X3`).
+  - Updated NBT serialization/deserialization for 27 slots on entities and item stacks with backward compatibility.
+  - Updated HUD overlays and Field Guide documentation to reflect the 27-slot capacity.
+
 ## [1.8.12] - 2026-09-12
 ### Fixed & Improved
 - **Electric Chute Connection & Pipeline Fix**:

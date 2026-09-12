@@ -495,7 +495,7 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 totalItems += stack.getCount();
             }
         }
-        String status = "🛡️ Cargo: " + totalItems + " items (" + filledSlots + "/9 slots) | Vacuum Active";
+        String status = "🛡️ Cargo: " + totalItems + " items (" + filledSlots + "/" + drone.getTrunk().size() + " slots) | Vacuum Active";
 
         renderUnifiedHud(context, client, "🛡️", "Pickup Drone", 0xFF38BDF8,
                 energy + " / " + max + " E", 0xFFFFFFFF, status, 0xFF67E8F9,
@@ -540,13 +540,19 @@ public class EnergyHudOverlay implements HudRenderCallback {
         int filledSlots = 0;
         int totalItems = 0;
         for (var unit : cluster) {
-            for (int i = 0; i < unit.size(); i++) {
-                ItemStack s = unit.getStack(i);
-                if (!s.isEmpty()) {
-                    filledSlots++;
-                    totalItems += s.getCount();
+            int uFilled = unit.getFilledSlotCount();
+            int uTotal = unit.getTotalItemCount();
+            if (uTotal == 0 && uFilled == 0) {
+                for (int i = 0; i < unit.size(); i++) {
+                    ItemStack s = unit.getStack(i);
+                    if (!s.isEmpty()) {
+                        uFilled++;
+                        uTotal += s.getCount();
+                    }
                 }
             }
+            filledSlots += uFilled;
+            totalItems += uTotal;
         }
         String status;
         int color;
@@ -557,7 +563,7 @@ public class EnergyHudOverlay implements HudRenderCallback {
             status = "⚡ Charged (" + totalItems + " items in " + filledSlots + "/" + totalSlots + " slots) | Retention OK";
             color = 0xFF86EFAC;
         } else {
-            status = "⚠️ Uncharged (" + totalItems + " items) | Needs ≥ 200 EU to retain on mine";
+            status = "⚠️ Uncharged (" + totalItems + " items in " + filledSlots + "/" + totalSlots + " slots) | Needs ≥ 200 EU to retain";
             color = 0xFFFBBF24;
         }
 

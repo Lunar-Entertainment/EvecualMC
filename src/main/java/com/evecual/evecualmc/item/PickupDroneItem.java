@@ -41,9 +41,10 @@ public class PickupDroneItem extends Item {
                     if (nbt.contains("Energy")) drone.setEnergy(nbt.getInt("Energy"));
                     if (nbt.contains("ColorVariant")) drone.setColorVariant(nbt.getInt("ColorVariant"));
                     if (nbt.contains("PairedPlayer")) drone.setPairedPlayerUuid(nbt.getString("PairedPlayer"));
-                    if (nbt.contains("TrunkItems")) {
-                        DefaultedList<ItemStack> list = DefaultedList.ofSize(9, ItemStack.EMPTY);
-                        Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
+                    if (nbt.contains("CargoItems") || nbt.contains("TrunkItems")) {
+                        DefaultedList<ItemStack> list = DefaultedList.ofSize(PickupDroneEntity.CARGO_SIZE, ItemStack.EMPTY);
+                        NbtCompound itemsTag = nbt.contains("CargoItems") ? nbt.getCompound("CargoItems") : nbt.getCompound("TrunkItems");
+                        Inventories.readNbt(itemsTag, list);
                         for (int i = 0; i < list.size(); ++i) {
                             drone.getTrunk().setStack(i, list.get(i));
                         }
@@ -96,19 +97,20 @@ public class PickupDroneItem extends Item {
         tooltip.add(Text.literal("§7Chassis Coating: §f" + colorName));
         tooltip.add(Text.literal("§e⚡ Battery: §f" + energy + " / " + PickupDroneEntity.MAX_ENERGY + " E"));
 
-        if (nbt != null && nbt.contains("TrunkItems")) {
-            DefaultedList<ItemStack> list = DefaultedList.ofSize(9, ItemStack.EMPTY);
-            Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
+        if (nbt != null && (nbt.contains("CargoItems") || nbt.contains("TrunkItems"))) {
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(PickupDroneEntity.CARGO_SIZE, ItemStack.EMPTY);
+            NbtCompound itemsTag = nbt.contains("CargoItems") ? nbt.getCompound("CargoItems") : nbt.getCompound("TrunkItems");
+            Inventories.readNbt(itemsTag, list);
             int count = 0;
             for (ItemStack s : list) {
                 if (!s.isEmpty()) count += s.getCount();
             }
             if (count > 0) {
-                tooltip.add(Text.literal("§6📦 Cargo: §e" + count + " items"));
+                tooltip.add(Text.literal("§6📦 Cargo: §e" + count + " items (27 Slots)"));
             }
         }
 
-        tooltip.add(Text.literal("§a🧲 Item Vacuum: §7Automatically collects nearby items into cargo"));
+        tooltip.add(Text.literal("§a🧲 Item Vacuum: §7Automatically collects nearby items into 27-slot cargo bay"));
         tooltip.add(Text.literal("§8• §7Right-click on ground to deploy"));
         tooltip.add(Text.literal("§8• §7Shift + Right-Click in air for Help & Field Guide"));
         tooltip.add(Text.literal("§8• §7Pair using handheld RC Controller or Ground Station"));

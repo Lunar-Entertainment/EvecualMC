@@ -1,10 +1,31 @@
 {
-  "variants": {
-    "facing=north": { "model": "evecualmc:block/electric_chute" },
-    "facing=south": { "model": "evecualmc:block/electric_chute", "y": 180 },
-    "facing=west":  { "model": "evecualmc:block/electric_chute", "y": 270 },
-    "facing=east":  { "model": "evecualmc:block/electric_chute", "y": 90 },
-    "facing=up":    { "model": "evecualmc:block/electric_chute", "x": 270 },
-    "facing=down":  { "model": "evecualmc:block/electric_chute", "x": 90 }
-  }
+  "multipart": [
+    {
+      "apply": { "model": "evecualmc:block/electric_chute_core" }
+    },
+    {
+      "when": { "north": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm" }
+    },
+    {
+      "when": { "south": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm", "y": 180 }
+    },
+    {
+      "when": { "west": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm", "y": 270 }
+    },
+    {
+      "when": { "east": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm", "y": 90 }
+    },
+    {
+      "when": { "up": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm", "x": 270 }
+    },
+    {
+      "when": { "down": "true" },
+      "apply": { "model": "evecualmc:block/electric_chute_arm", "x": 90 }
+    }
+  ]
 }

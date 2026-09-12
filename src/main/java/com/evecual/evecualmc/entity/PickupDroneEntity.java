@@ -20,16 +20,24 @@ import java.util.List;
 
 public class PickupDroneEntity extends RcDroneEntity {
 
+    public static final int CARGO_SIZE = 27;
+    private final net.minecraft.inventory.SimpleInventory cargo = new net.minecraft.inventory.SimpleInventory(CARGO_SIZE);
+
     public PickupDroneEntity(EntityType<? extends PickupDroneEntity> type, World world) {
         super(type, world);
         this.setColorVariant(6); // 6 = Tactical Defense (Pure Gunmetal & Hazard)
     }
 
     @Override
+    public net.minecraft.inventory.SimpleInventory getTrunk() {
+        return this.cargo;
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
-        // Server-side automated item pickup / vacuum into 9-slot cargo bay
+        // Server-side automated item pickup / vacuum into 27-slot cargo bay
         if (!this.getWorld().isClient && this.isAlive() && !this.isRemoved()) {
             List<ItemEntity> nearbyItems = this.getWorld().getEntitiesByClass(
                     ItemEntity.class,
@@ -57,8 +65,8 @@ public class PickupDroneEntity extends RcDroneEntity {
     public void openTrunk(PlayerEntity player) {
         if (!this.getWorld().isClient) {
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
-                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, this.getTrunk(), 1),
-                    Text.literal("Pickup Drone Cargo (9 Slots)")
+                    (syncId, playerInventory, p) -> new GenericContainerScreenHandler(ScreenHandlerType.GENERIC_9X3, syncId, playerInventory, this.cargo, 3),
+                    Text.literal("Pickup Drone Cargo (27 Slots)")
             ));
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(),
                     SoundEvents.BLOCK_CHEST_OPEN, SoundCategory.PLAYERS, 0.6f, 2.0f);
@@ -68,6 +76,37 @@ public class PickupDroneEntity extends RcDroneEntity {
     @Override
     protected boolean isParkingSpotBlock(net.minecraft.block.BlockState bs) {
         return bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) || bs.isOf(EvecualMC.DRONE_PARKING_SPOT_BLOCK);
+    }
+
+    @Override
+    protected void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        if (nbt.contains("CargoItems")) {
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(CARGO_SIZE, ItemStack.EMPTY);
+            Inventories.readNbt(nbt.getCompound("CargoItems"), list);
+            for (int i = 0; i < list.size(); ++i) {
+                this.cargo.setStack(i, list.get(i));
+            }
+        } else if (nbt.contains("TrunkItems")) {
+            DefaultedList<ItemStack> list = DefaultedList.ofSize(CARGO_SIZE, ItemStack.EMPTY);
+            Inventories.readNbt(nbt.getCompound("TrunkItems"), list);
+            for (int i = 0; i < list.size(); ++i) {
+                this.cargo.setStack(i, list.get(i));
+            }
+        }
+    }
+
+    @Override
+    protected void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(CARGO_SIZE, ItemStack.EMPTY);
+        for (int i = 0; i < CARGO_SIZE; ++i) {
+            list.set(i, this.cargo.getStack(i));
+        }
+        NbtCompound cargoNbt = new NbtCompound();
+        Inventories.writeNbt(cargoNbt, list);
+        nbt.put("CargoItems", cargoNbt);
+        nbt.put("TrunkItems", cargoNbt);
     }
 
     @Override
@@ -81,10 +120,10 @@ public class PickupDroneEntity extends RcDroneEntity {
         }
 
         // Save cargo items into item stack NBT
-        DefaultedList<ItemStack> list = DefaultedList.ofSize(this.getTrunk().size(), ItemStack.EMPTY);
+        DefaultedList<ItemStack> list = DefaultedList.ofSize(CARGO_SIZE, ItemStack.EMPTY);
         boolean hasItems = false;
-        for (int i = 0; i < this.getTrunk().size(); ++i) {
-            ItemStack s = this.getTrunk().getStack(i);
+        for (int i = 0; i < CARGO_SIZE; ++i) {
+            ItemStack s = this.cargo.getStack(i);
             list.set(i, s);
             if (!s.isEmpty()) hasItems = true;
         }
@@ -92,6 +131,7 @@ public class PickupDroneEntity extends RcDroneEntity {
             NbtCompound trunkNbt = new NbtCompound();
             Inventories.writeNbt(trunkNbt, list);
             nbt.put("TrunkItems", trunkNbt);
+            nbt.put("CargoItems", trunkNbt);
         }
 
         stack.setNbt(nbt);

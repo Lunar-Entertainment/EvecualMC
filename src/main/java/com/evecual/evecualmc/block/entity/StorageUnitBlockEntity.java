@@ -37,6 +37,8 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
     private DefaultedList<ItemStack> items = DefaultedList.ofSize(SLOTS_PER_UNIT, ItemStack.EMPTY);
     private int energy = 0;
     private boolean lockedDueToPower = false;
+    private int totalItemCount = 0;
+    private int filledSlotCount = 0;
 
     public StorageUnitBlockEntity(BlockPos pos, BlockState state) {
         super(EvecualMC.STORAGE_UNIT_BLOCK_ENTITY, pos, state);
@@ -69,17 +71,57 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
     private void drawAdjacentEnergy(World world, BlockPos pos) {
         if (this.energy >= MAX_ENERGY) return;
 
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        java.util.Queue<BlockPos> wireQueue = new java.util.LinkedList<>();
+        visited.add(pos);
+
+        // 1. Direct adjacent blocks
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = pos.offset(dir);
+            if (!visited.add(neighborPos)) continue;
+
+            BlockState neighborState = world.getBlockState(neighborPos);
             BlockEntity neighbor = world.getBlockEntity(neighborPos);
 
-            if (neighbor instanceof com.evecual.evecualmc.energy.EnergyStorage storage
+            if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
+                wireQueue.add(neighborPos);
+            } else if (neighbor instanceof com.evecual.evecualmc.energy.EnergyStorage storage
                     && !(neighbor instanceof StorageUnitBlockEntity)) {
                 int needed = MAX_ENERGY - this.energy;
                 long extracted = storage.extractEnergy(Math.min(needed, 50), false);
                 if (extracted > 0) {
                     this.energy += (int) extracted;
                     markDirty();
+                    if (this.energy >= MAX_ENERGY) return;
+                }
+            }
+        }
+
+        // 2. BFS traverse connected wire network
+        while (!wireQueue.isEmpty() && visited.size() <= 64) {
+            BlockPos wirePos = wireQueue.poll();
+            for (Direction dir : Direction.values()) {
+                BlockPos next = wirePos.offset(dir);
+                if (!visited.add(next)) continue;
+
+                BlockState nextState = world.getBlockState(next);
+                BlockEntity nextBe = world.getBlockEntity(next);
+
+                if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
+                    wireQueue.add(next);
+                } else if (nextBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage
+                        && !(nextBe instanceof StorageUnitBlockEntity)) {
+                    int needed = MAX_ENERGY - this.energy;
+                    long extracted = storage.extractEnergy(Math.min(needed, 50), false);
+                    if (extracted > 0) {
+                        this.energy += (int) extracted;
+                        BlockEntity wireBe = world.getBlockEntity(wirePos);
+                        if (wireBe instanceof com.evecual.evecualmc.block.entity.WireBlockEntity wbe) {
+                            wbe.recordEnergyTransfer(extracted);
+                        }
+                        markDirty();
+                        if (this.energy >= MAX_ENERGY) return;
+                    }
                 }
             }
         }
@@ -322,11 +364,48 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
     }
 
     @Override
+    public void markDirty() {
+        super.markDirty();
+        recalculateCounts();
+        if (this.world instanceof ServerWorld sw) {
+            sw.getChunkManager().markForUpdate(this.pos);
+        }
+    }
+
+    public void recalculateCounts() {
+        int total = 0;
+        int filled = 0;
+        for (ItemStack s : this.items) {
+            if (!s.isEmpty()) {
+                total += s.getCount();
+                filled++;
+            }
+        }
+        this.totalItemCount = total;
+        this.filledSlotCount = filled;
+    }
+
+    public int getTotalItemCount() {
+        return this.totalItemCount;
+    }
+
+    public int getFilledSlotCount() {
+        return this.filledSlotCount;
+    }
+
+    public void sync() {
+        markDirty();
+    }
+
+    @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
         Inventories.writeNbt(nbt, this.items);
         nbt.putInt("Energy", this.energy);
         nbt.putBoolean("LockedDueToPower", this.lockedDueToPower);
+        recalculateCounts();
+        nbt.putInt("TotalItems", this.totalItemCount);
+        nbt.putInt("FilledSlots", this.filledSlotCount);
     }
 
     @Override
@@ -336,6 +415,14 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
         Inventories.readNbt(nbt, this.items);
         this.energy = nbt.getInt("Energy");
         this.lockedDueToPower = nbt.getBoolean("LockedDueToPower");
+        if (nbt.contains("TotalItems")) {
+            this.totalItemCount = nbt.getInt("TotalItems");
+        } else {
+            recalculateCounts();
+        }
+        if (nbt.contains("FilledSlots")) {
+            this.filledSlotCount = nbt.getInt("FilledSlots");
+        }
     }
 
     @Nullable

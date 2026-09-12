@@ -1425,7 +1425,10 @@ public class EvecualMCClient implements ClientModInitializer {
                 } else if (be instanceof com.evecual.evecualmc.block.entity.StorageUnitBlockEntity storage) {
                     curE = (int) storage.getEnergy();
                     maxE = (int) storage.getMaxEnergy();
-                    status = storage.isLockedDueToPower() ? "🔒 Locked: Connect ≥ 200 EU" : "⚡ " + (storage.isElectricallyCharged() ? "Retention Charged" : "Uncharged");
+                    int totalItems = storage.getTotalItemCount();
+                    int filledSlots = storage.getFilledSlotCount();
+                    status = storage.isLockedDueToPower() ? "🔒 Locked: Connect ≥ 200 EU to initialize"
+                            : "⚡ " + (storage.isElectricallyCharged() ? "Retention Charged" : "Uncharged") + " (" + totalItems + " items in " + filledSlots + " slots)";
                 } else if (be instanceof com.evecual.evecualmc.block.entity.DronePickupBlockEntity dpbe) {
                     status = dpbe.getStatusMessage();
                 } else if (bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)) {

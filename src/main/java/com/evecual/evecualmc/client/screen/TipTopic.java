@@ -345,10 +345,11 @@ public enum TipTopic {
             "Pickup Drone",
             "🛡️ Tactical Defense Harvester",
             () -> new ItemStack(EvecualMC.PICKUP_DRONE_ITEM),
-            "Military-grade defense system quadcopter featuring composite armor plating, FLIR optics, automated magnetic item vacuum, special Drone Pickup station docking, and electric chute cargo unloading.",
+            "Military-grade defense system quadcopter featuring composite armor plating, FLIR optics, automated magnetic item vacuum, expansive 27-slot cargo bay, Drone Pickup station docking, and pneumatic chute unloading.",
             new String[]{
                     "Equipped with composite armor and an underslung magnetic vacuum harvester.",
-                    "Automatically sweeps and vacuums nearby dropped items within 1.8m directly into its cargo bay.",
+                    "Features an expansive 27-slot cargo bay (3 full chest rows) for high-capacity material collection.",
+                    "Automatically sweeps and vacuums nearby dropped items within 1.8m directly into its cargo hold.",
                     "Requires a special landing spot: place a Pickup Drone Parking Spot directly on top of a Drone Pickup station.",
                     "Docking on the station allows Electric Chutes to pneumatically offload cargo into high-capacity Storage Units."
             },
@@ -362,11 +363,12 @@ public enum TipTopic {
                     {"RMB (In Cam)", "Toggle First-Person / Third-Person view"},
                     {"L", "Toggle High-Power Spotlight (Level 15)"},
                     {"C", "Autopilot return & land on Drone Pickup Station"},
+                    {"Right-Click / Z", "Open 27-slot Cargo Inventory"},
                     {"Shift + Right-Click", "Retrieve drone back into inventory"}
             },
             new String[]{
                     "Press C while flying to automatically locate and dock onto the nearest Pickup Drone Station.",
-                    "When docked on top of a Drone Pickup, items are rapidly sucked through connected Electric Chutes.",
+                    "When docked on top of a Drone Pickup, items are rapidly sucked through connected Electric Chutes into Storage Units.",
                     "Operates seamlessly with both the handheld RC Controller and Stationary RC Controller terminal.",
                     "Underslung suction core emits genuine item pickup sound effects as it clears battlefield debris."
             }
@@ -381,7 +383,7 @@ public enum TipTopic {
             new String[]{
                     "Place on the ground as the foundation for the Pickup Drone landing dock.",
                     "Requires a Pickup Drone Parking Spot placed directly on top of it.",
-                    "Detects when a Pickup Drone touches down and anchors its cargo bay for extraction.",
+                    "Detects when a Pickup Drone touches down and anchors its 27-slot cargo bay for extraction.",
                     "Attach Electric Chutes to the sides to pneumatically transfer items to nearby Storage Units."
             },
             new String[][]{
@@ -422,20 +424,21 @@ public enum TipTopic {
             "Electric Chute",
             "⚡ Pneumatic Conduit",
             () -> new ItemStack(EvecualMC.ELECTRIC_CHUTE_ITEM),
-            "High-voltage pneumatic transfer conduit that extracts items from the Drone Pickup station and pipes them into Storage Units.",
+            "High-voltage pneumatic transfer conduit that extracts items from the Drone Pickup station and pipes them into Storage Units with full cornering and network routing.",
             new String[]{
-                    "Connect between a Drone Pickup station and a Storage Unit (or chain multiple chutes).",
-                    "Requires electricity to operate (consumes 5 EU per transfer).",
-                    "Automatically draws power from adjacent Wires, Batteries, Generators, or Storage Units.",
+                    "Multi-directional cornering: Connects in all 6 directions (North, South, East, West, Up, Down).",
+                    "Forms 90° bends, T-junctions, and multi-way networks; automatically routes items around corners.",
+                    "Consumes 5 EU per item transfer burst (stores up to 2000 EU).",
+                    "Takes power directly from connected Wires, Batteries, Generators, adjacent Chutes, or Storage Units.",
                     "Transfers items at rapid pneumatic speeds with sound and electrical particle effects."
             },
             new String[][]{
                     {"Right-Click", "Check power status, upstream source, and downstream storage"},
-                    {"Placement", "Faces in the direction of placement to route item flow"}
+                    {"Placement", "Automatically connects to adjacent chutes, stations, and storage units"}
             },
             new String[]{
-                    "Can form continuous conduit pipelines up to 8 blocks long between stations and vaults.",
-                    "Draws energy directly from the destination Storage Unit if it has stored charge."
+                    "Can form continuous conduit pipelines up to 64 blocks long, turning corners and climbing heights.",
+                    "Automatically balances energy across adjacent chutes and draws power from connected wire grids."
             }
     ),
 
