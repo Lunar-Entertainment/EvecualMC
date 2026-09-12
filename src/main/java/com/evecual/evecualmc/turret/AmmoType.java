@@ -7,7 +7,9 @@ import net.minecraft.item.Items;
 public enum AmmoType {
     COPPER(6.0f, 0.0f, "Copper Ammo", 0xFFD97706, 0.8f),
     IRON(14.0f, 0.2f, "Iron Ammo", 0xFFE2E8F0, 1.2f),
-    DIAMOND(30.0f, 0.6f, "Diamond Ammo", 0xFF00E5FF, 1.8f);
+    STEEL(22.0f, 0.45f, "Steel Ammo", 0xFF64748B, 1.5f),
+    DIAMOND(30.0f, 0.6f, "Diamond Ammo", 0xFF00E5FF, 1.8f),
+    ELACTORITE(48.0f, 0.95f, "Elactorite Ammo", 0xFFC084FC, 2.4f);
 
     private final float damage;
     private final float armorPenetration;
@@ -45,7 +47,9 @@ public enum AmmoType {
 
     public static AmmoType fromStack(ItemStack stack) {
         if (stack.isEmpty()) return null;
+        if (stack.isOf(EvecualMC.ELACTORITE_AMMO) || stack.isOf(EvecualMC.ELACTORITE)) return ELACTORITE;
         if (stack.isOf(EvecualMC.DIAMOND_AMMO) || stack.isOf(Items.DIAMOND)) return DIAMOND;
+        if (stack.isOf(EvecualMC.STEEL_AMMO) || stack.isOf(EvecualMC.STEEL_INGOT)) return STEEL;
         if (stack.isOf(EvecualMC.IRON_AMMO) || stack.isOf(Items.IRON_INGOT)) return IRON;
         if (stack.isOf(EvecualMC.COPPER_AMMO) || stack.isOf(Items.COPPER_INGOT)) return COPPER;
         return null;

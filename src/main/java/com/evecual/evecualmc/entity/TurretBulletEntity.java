@@ -126,11 +126,20 @@ public class TurretBulletEntity extends Entity {
             Vector3f pColor = switch (type) {
                 case COPPER -> new Vector3f(0.85F, 0.45F, 0.05F);
                 case IRON -> new Vector3f(0.9F, 0.9F, 0.95F);
+                case STEEL -> new Vector3f(0.40F, 0.48F, 0.60F);
                 case DIAMOND -> new Vector3f(0.0F, 0.9F, 1.0F);
+                case ELACTORITE -> new Vector3f(0.75F, 0.25F, 1.0F);
             };
             this.getWorld().addParticle(new DustParticleEffect(pColor, 0.8F), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
-            if (type == AmmoType.DIAMOND) {
+            if (type == AmmoType.STEEL) {
+                this.getWorld().addParticle(ParticleTypes.CRIT, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            } else if (type == AmmoType.DIAMOND) {
                 this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            } else if (type == AmmoType.ELACTORITE) {
+                this.getWorld().addParticle(ParticleTypes.ELECTRIC_SPARK, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                if (this.random.nextFloat() < 0.3F) {
+                    this.getWorld().addParticle(ParticleTypes.REVERSE_PORTAL, this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                }
             }
         }
 
@@ -151,8 +160,27 @@ public class TurretBulletEntity extends Entity {
 
             if (this.getWorld() instanceof ServerWorld serverWorld) {
                 serverWorld.spawnParticles(ParticleTypes.CRIT, hit.getPos().x, hit.getPos().y, hit.getPos().z, 8, 0.1, 0.1, 0.1, 0.15);
-                if (type == AmmoType.DIAMOND) {
+                if (type == AmmoType.STEEL) {
+                    serverWorld.spawnParticles(ParticleTypes.CRIT, hit.getPos().x, hit.getPos().y, hit.getPos().z, 14, 0.2, 0.2, 0.2, 0.2);
+                    this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.PLAYERS, 0.5F, 1.8F);
+                } else if (type == AmmoType.DIAMOND) {
                     serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, hit.getPos().x, hit.getPos().y, hit.getPos().z, 12, 0.2, 0.2, 0.2, 0.2);
+                } else if (type == AmmoType.ELACTORITE) {
+                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, hit.getPos().x, hit.getPos().y, hit.getPos().z, 24, 0.3, 0.3, 0.3, 0.15);
+                    serverWorld.spawnParticles(ParticleTypes.FLASH, hit.getPos().x, hit.getPos().y, hit.getPos().z, 1, 0, 0, 0, 0);
+                    this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.8F, 1.8F);
+
+                    // AOE Shock arc to up to 2 nearby entities
+                    Box shockBox = target.getBoundingBox().expand(5.0);
+                    List<LivingEntity> nearby = this.getWorld().getEntitiesByClass(LivingEntity.class, shockBox,
+                            e -> e != target && e.isAlive());
+                    int chained = 0;
+                    for (LivingEntity chainTarget : nearby) {
+                        if (chained >= 2) break;
+                        chainTarget.damage(source, 12.0F);
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, chainTarget.getX(), chainTarget.getY() + 0.5, chainTarget.getZ(), 8, 0.2, 0.2, 0.2, 0.05);
+                        chained++;
+                    }
                 }
             }
             this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ARROW_HIT, SoundCategory.PLAYERS, 1.0F, 1.4F);

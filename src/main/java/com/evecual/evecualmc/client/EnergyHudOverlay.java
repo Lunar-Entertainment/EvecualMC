@@ -689,18 +689,27 @@ public class EnergyHudOverlay implements HudRenderCallback {
         int count = 0;
         int copper = 0;
         int iron = 0;
+        int steel = 0;
         int diamond = 0;
+        int elactorite = 0;
         for (int i = 0; i < container.size(); i++) {
             ItemStack stack = container.getStack(i);
             if (!stack.isEmpty()) {
                 count += stack.getCount();
                 if (stack.isOf(EvecualMC.COPPER_AMMO)) copper += stack.getCount();
                 else if (stack.isOf(EvecualMC.IRON_AMMO)) iron += stack.getCount();
+                else if (stack.isOf(EvecualMC.STEEL_AMMO)) steel += stack.getCount();
                 else if (stack.isOf(EvecualMC.DIAMOND_AMMO)) diamond += stack.getCount();
+                else if (stack.isOf(EvecualMC.ELACTORITE_AMMO)) elactorite += stack.getCount();
             }
         }
         int turrets = container.getLinkedStationaryTurrets().size();
-        String status = "Feeds " + turrets + " Turret" + (turrets == 1 ? "" : "s") + " (" + count + " total: " + copper + " Cu, " + iron + " Fe, " + diamond + " Dia)";
+        String status = "Feeds " + turrets + " Turret" + (turrets == 1 ? "" : "s") + " (" + count + " total: "
+                + (elactorite > 0 ? elactorite + " Elac, " : "")
+                + (diamond > 0 ? diamond + " Dia, " : "")
+                + (steel > 0 ? steel + " Steel, " : "")
+                + (iron > 0 ? iron + " Fe, " : "")
+                + copper + " Cu)";
         int color = count > 0 ? 0xFF86EFAC : 0xFFFBBF24;
         renderUnifiedHud(context, client, "📦", "Turret Ammo Container", 0xFFF59E0B,
                 count + " Ammo", 0xFFFFFFFF, status, color, null, null);

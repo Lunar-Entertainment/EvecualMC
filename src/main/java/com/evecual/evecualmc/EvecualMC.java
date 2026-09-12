@@ -162,10 +162,20 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "iron_ammo"),
             new Item(new Item.Settings()));
 
+    public static final Item STEEL_AMMO = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "steel_ammo"),
+            new Item(new Item.Settings()));
+
     public static final Item DIAMOND_AMMO = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "diamond_ammo"),
             new Item(new Item.Settings()));
+
+    public static final Item ELACTORITE_AMMO = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "elactorite_ammo"),
+            new Item(new Item.Settings().rarity(net.minecraft.util.Rarity.RARE)));
 
     public static final Item TURRET_LINKER = Registry.register(
             Registries.ITEM,
@@ -833,7 +843,9 @@ public class EvecualMC implements ModInitializer {
                 entries.add(ELECTRIC_ICE_CREAM);
                 entries.add(COPPER_AMMO);
                 entries.add(IRON_AMMO);
+                entries.add(STEEL_AMMO);
                 entries.add(DIAMOND_AMMO);
+                entries.add(ELACTORITE_AMMO);
                 entries.add(TURRET_LINKER);
                 entries.add(STATIONARY_TURRET_ITEM);
                 entries.add(TURRET_AMMO_CONTAINER_ITEM);

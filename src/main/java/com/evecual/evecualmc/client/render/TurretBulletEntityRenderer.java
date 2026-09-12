@@ -38,8 +38,12 @@ public class TurretBulletEntityRenderer extends EntityRenderer<TurretBulletEntit
         float r = 0.9F, g = 0.9F, b = 0.9F;
         if (type == AmmoType.COPPER) {
             r = 0.95F; g = 0.55F; b = 0.15F;
+        } else if (type == AmmoType.STEEL) {
+            r = 0.40F; g = 0.50F; b = 0.65F;
         } else if (type == AmmoType.DIAMOND) {
             r = 0.00F; g = 0.90F; b = 1.00F;
+        } else if (type == AmmoType.ELACTORITE) {
+            r = 0.75F; g = 0.30F; b = 1.00F;
         }
 
         VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getLightning());

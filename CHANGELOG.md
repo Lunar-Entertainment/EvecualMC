@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.19] - 2026-09-12
+### Added & Improved
+- **Steel & Elactorite Ammunition Types (`steel_ammo`, `elactorite_ammo`)**:
+  - Added **Steel Defense Ammo (`steel_ammo`)**:
+    - High-velocity armor-piercing kinetic projectile dealing **22.0 base damage** (with 0.45 armor penetration).
+    - Features slate-blue tracer flight glow, dense kinetic crit trails, and heavy metallic anvil impact audio.
+    - Crafted with 1 Steel Ingot + 1 Gunpowder $\rightarrow$ yields 8 Steel Ammo.
+  - Added **Elactorite Defense Ammo (`elactorite_ammo`)**:
+    - Apex quantum plasma projectile dealing **48.0 base damage** (with 0.95 armor penetration and 2.4x velocity multiplier).
+    - Features brilliant violet-cyan quantum plasma tracer lines, electric spark particle trails, and reverse portal shimmer.
+    - **Impact Shockwave**: On hitting an entity, triggers a lightning flash burst (`ENTITY_LIGHTNING_BOLT_IMPACT`) and arcs high-voltage chain lightning to up to 2 nearby hostile mobs dealing 12.0 bonus AOE shock damage.
+    - Crafted with 1 Elactorite + 1 Gunpowder $\rightarrow$ yields 8 Elactorite Ammo.
+- **Turret System & Ammo Container Upgrades**:
+  - `AmmoType` updated with full 5-tier ammunition hierarchy: **Elactorite (48 DMG)** > **Diamond (30 DMG)** > **Steel (22 DMG)** > **Iron (14 DMG)** > **Copper (6 DMG)**.
+  - `TurretAmmoContainerBlockEntity` automatically prioritizes higher-tier ammunition when loading defensive sentry turrets.
+  - `TurretBulletEntityRenderer` renders custom colored tracer lines for each ammo caliber.
+  - `EnergyHudOverlay` displays live real-time counts for all 5 ammunition types when inspecting ammo depots.
+  - Added full Field Guide topic documentation and translation keys for English (`en_us.json` & `en-US.json`).
+
 ## [1.8.18] - 2026-09-12
 ### Added & Improved
 - **Item Charger Machine Block (`item_charger`)**:

@@ -915,19 +915,20 @@ public enum TipTopic {
             "Armored 27-slot ammunition supply depot that feeds linked Stationary Turrets wirelessly with ammunition.",
             new String[]{
                     "Place near your base or defense installations.",
-                    "Load with Copper Ammo, Iron Ammo, or Diamond Ammo (up to 27 full stacks).",
+                    "Load with Copper Ammo, Iron Ammo, Steel Ammo, Diamond Ammo, or Elactorite Ammo (up to 27 full stacks).",
                     "Right-click with the Turret Linker tool to select this container as the ammo source.",
                     "Feeds ammo directly to any number of linked Stationary Turrets across the perimeter."
             },
             new String[][]{
                     {"Right-Click", "Open 27-Slot Ammo Storage Matrix"},
                     {"Turret Linker", "Right-click to select as source for turrets"},
-                    {"Hopper / Pipe", "Automated ammo replenishment from bottom/sides"}
+                    {"Hopper / Pipe", "Automated ammo replenishment from bottom/sides"},
+                    {"Ammo Tiers", "Elactorite (48 DMG) > Diamond (30 DMG) > Steel (22 DMG) > Iron (14 DMG) > Copper (6 DMG)"}
             },
             new String[]{
-                    "Automatically supplies whichever ammo type is loaded, prioritizing higher tier ammo.",
-                    "Breaking the container safely preserves items or spills them if broken in survival.",
-                    "One ammo container can supply an entire network of defensive turrets."
+                    "Automatically supplies whichever ammo type is loaded, prioritizing higher tier ammo (Elactorite > Diamond > Steel > Iron > Copper).",
+                    "Elactorite bullets unleash a high-voltage plasma explosion and chain shockwave.",
+                    "Steel bullets deliver heavy armor-piercing kinetic impact."
             }
     ),
 
@@ -1218,7 +1219,11 @@ public enum TipTopic {
         if (item == EvecualMC.ELECTRIC_CHUTE_ITEM) return ELECTRIC_CHUTE;
         if (item == EvecualMC.STORAGE_UNIT_ITEM) return STORAGE_UNIT;
         if (item == EvecualMC.STATIONARY_TURRET_ITEM) return STATIONARY_TURRET;
-        if (item == EvecualMC.TURRET_AMMO_CONTAINER_ITEM) return TURRET_AMMO_CONTAINER;
+        if (item == EvecualMC.TURRET_AMMO_CONTAINER_ITEM || item == EvecualMC.COPPER_AMMO
+                || item == EvecualMC.IRON_AMMO || item == EvecualMC.STEEL_AMMO
+                || item == EvecualMC.DIAMOND_AMMO || item == EvecualMC.ELACTORITE_AMMO) {
+            return TURRET_AMMO_CONTAINER;
+        }
         if (item == EvecualMC.TURRET_LINKER) return TURRET_LINKER;
         if (item == EvecualMC.RC_ROBOT_ITEM) return RC_ROBOT;
         if (item == EvecualMC.RC_CONTROLLER_ITEM) return RC_CONTROLLER;
