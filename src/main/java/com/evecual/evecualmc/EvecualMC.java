@@ -182,6 +182,16 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "elactorite"),
             new Item(new Item.Settings().rarity(net.minecraft.util.Rarity.RARE)));
 
+    public static final Item STEEL_ROD = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "steel_rod"),
+            new Item(new Item.Settings()));
+
+    public static final Item ELECTRONIC_ZAPPER = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electronic_zapper"),
+            new com.evecual.evecualmc.item.ElectronicZapperItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.EPIC)));
+
     public static final Item COPPER_PLATE = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "copper_plate"),
@@ -781,6 +791,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(MATERIALIZER_ITEM);
                 entries.add(ELECTRIC_GRINDER_ITEM);
                 entries.add(ELACTORITE);
+                entries.add(STEEL_ROD);
+                entries.add(ELECTRONIC_ZAPPER);
                 entries.add(COPPER_PLATE);
                 entries.add(CHARGER_ITEM);
                 entries.add(CHARGER_EXTENSION_ITEM);

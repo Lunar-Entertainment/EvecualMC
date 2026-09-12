@@ -1,5 +1,25 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.17] - 2026-09-12
+### Added & Improved
+- **Electronic Zapper Handheld Tool & Weapon (`electronic_zapper`)**:
+  - Crafted from 1 **Elactorite** and 2 **Steel Rods**.
+  - **Mode Toggle (Shift + Right-Click)**: Instantly swap between **Zap Mode** and **Attack Mode** with distinct sound feedback (`BLOCK_RESPAWN_ANCHOR_CHARGE` / `ITEM_TRIDENT_THUNDER`) and HUD action-bar notifications.
+  - **Zap Mode (Disintegration & Mining)**:
+    - **Right-Click Block / Remote Beam**: Instantly breaks and harvests blocks within direct reach or up to 12 blocks away via concentrated high-voltage particle beam with sonic boom shockwave and amethyst resonance.
+    - **Creature Strike**: Left-clicking mobs inflicts light baseline damage with electric spark feedback.
+  - **Attack Mode (Enhanced Electric Combat)**:
+    - **Melee Shock Strike**: Left-clicking enemies deals heavy physical damage plus an immediate +14.0 electric shock damage burst with flash FX and thunder impact (`ENTITY_LIGHTNING_BOLT_IMPACT`).
+    - **Chain Lightning**: Arcs secondary lightning beams to up to 2 nearby hostile mobs within 6 blocks dealing +8.0 chain damage each.
+    - **Plasma Shock Bolt (Right-Click)**: Discharges a concentrated long-range electric plasma arc up to 16 blocks away dealing 16.0 ranged damage to targeted creatures.
+  - Built-in permanent enchanted glint and detailed hover tooltip information.
+- **Steel Rod Material & Crafting (`steel_rod`)**:
+  - Added **Steel Rod**, forged with 2 Steel Ingots placed vertically in a crafting table (yields 4 rods).
+  - Used as high-conductive structural and electrical framing for advanced cybernetic gear.
+- **Field Guide & Localization**:
+  - Added full Field Guide / Tip Menu documentation for `ELECTRONIC_ZAPPER` and `STEEL_ROD`.
+  - Added complete localization in English (`en_us.json` & `en-US.json`).
+
 ## [1.8.16] - 2026-09-12
 ### Added & Improved
 - **Quantum Materializer Machine Block (`materializer`)**:

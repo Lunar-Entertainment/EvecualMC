@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S",
+    "S"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "evecualmc:steel_rod",
+    "count": 4
+  }
+}

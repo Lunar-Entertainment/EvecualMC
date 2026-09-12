@@ -1038,6 +1038,50 @@ public enum TipTopic {
             new String[]{
                     "Essential component for building a fleet of autonomous defense scavenger drones."
             }
+    ),
+
+    ELECTRONIC_ZAPPER(
+            "electronic_zapper",
+            "Electronic Zapper",
+            "⚡ Dual-Phase Energy Wand",
+            () -> new ItemStack(EvecualMC.ELECTRONIC_ZAPPER),
+            "High-energy dual-mode quantum emitter forged with Elactorite and tempered Steel Rods, capable of switching between instant block disintegration and lethal combat shockwaves.",
+            new String[]{
+                    "Craft with 1 Elactorite and 2 Steel Rods in a vertical column.",
+                    "Shift + Right-Click to instantly toggle between Zap Mode and Attack Mode.",
+                    "Zap Mode: Right-Click directly on blocks or aim up to 12m away to instantly vaporize and harvest blocks.",
+                    "Attack Mode: Left-Click deals heavy electric damage with chain lightning arcs to nearby hostiles, or Right-Click to fire concentrated plasma bolts."
+            },
+            new String[][]{
+                    {"Shift + Right-Click", "Toggle between Zap Mode (Mining) and Attack Mode (Combat)"},
+                    {"Right-Click (Zap Mode)", "Instant block disintegration & ranged laser mining (12m)"},
+                    {"Left-Click (Attack Mode)", "Heavy +18 Shock strike & chain lightning arcs to nearby mobs"},
+                    {"Right-Click (Attack Mode)", "Discharge long-range electric shockwave bolt (16m)"}
+            },
+            new String[]{
+                    "In Zap Mode, you can still hit creatures, but attacks deal reduced damage.",
+                    "Zap Mode laser mining works on any harvestable block without delay.",
+                    "Attack Mode chain lightning strikes up to 2 additional hostile mobs in a 6-block radius."
+            }
+    ),
+
+    STEEL_ROD(
+            "steel_rod",
+            "Steel Rod",
+            "🔨 Structural Shaft",
+            () -> new ItemStack(EvecualMC.STEEL_ROD),
+            "Heavy-duty forged high-tensile steel rod used as structural shafts, vehicle linkages, and the high-conductivity grip of the Electronic Zapper.",
+            new String[]{
+                    "Craft by placing 2 Steel Ingots vertically in a crafting table (yields 4 Steel Rods).",
+                    "Used to forge the Electronic Zapper alongside Elactorite.",
+                    "High torsional and electrical resistance."
+            },
+            new String[][]{
+                    {"Crafting Table", "2 Steel Ingots (Vertical) -> 4 Steel Rods"}
+            },
+            new String[]{
+                    "Essential intermediate material for high-voltage energy tools and heavy machinery."
+            }
     );
 
     public final String id;
@@ -1172,6 +1216,8 @@ public enum TipTopic {
         if (item == EvecualMC.MATERIALIZER_ITEM) return MATERIALIZER;
         if (item == EvecualMC.ELECTRIC_GRINDER_ITEM) return ELECTRIC_GRINDER;
         if (item == EvecualMC.ELACTORITE) return ELACTORITE;
+        if (item == EvecualMC.ELECTRONIC_ZAPPER) return ELECTRONIC_ZAPPER;
+        if (item == EvecualMC.STEEL_ROD) return STEEL_ROD;
         if (item == EvecualMC.COPPER_PLATE) return COPPER_PLATE;
         if (item == EvecualMC.STEEL_INGOT) return STEEL_INGOT;
         if (item == EvecualMC.ENGINE) return ENGINE;
