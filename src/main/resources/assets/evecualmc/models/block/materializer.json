@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/materializer_front",
+    "up": "evecualmc:block/materializer_top",
+    "down": "evecualmc:block/materializer_bottom",
+    "north": "evecualmc:block/materializer_front",
+    "south": "evecualmc:block/materializer_side",
+    "west": "evecualmc:block/materializer_side",
+    "east": "evecualmc:block/materializer_side"
+  }
+}

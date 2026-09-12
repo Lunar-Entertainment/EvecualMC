@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/electric_grinder_front",
+    "up": "evecualmc:block/electric_grinder_top",
+    "down": "evecualmc:block/electric_grinder_bottom",
+    "north": "evecualmc:block/electric_grinder_front",
+    "south": "evecualmc:block/electric_grinder_side",
+    "west": "evecualmc:block/electric_grinder_side",
+    "east": "evecualmc:block/electric_grinder_side"
+  }
+}

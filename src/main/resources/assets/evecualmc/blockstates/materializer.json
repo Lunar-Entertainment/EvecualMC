@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "active=false,facing=north": { "model": "evecualmc:block/materializer" },
+    "active=false,facing=south": { "model": "evecualmc:block/materializer", "y": 180 },
+    "active=false,facing=west":  { "model": "evecualmc:block/materializer", "y": 270 },
+    "active=false,facing=east":  { "model": "evecualmc:block/materializer", "y": 90 },
+    "active=true,facing=north":  { "model": "evecualmc:block/materializer_active" },
+    "active=true,facing=south":  { "model": "evecualmc:block/materializer_active", "y": 180 },
+    "active=true,facing=west":   { "model": "evecualmc:block/materializer_active", "y": 270 },
+    "active=true,facing=east":   { "model": "evecualmc:block/materializer_active", "y": 90 }
+  }
+}

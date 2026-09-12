@@ -177,6 +177,16 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "pickup_drone"),
             new com.evecual.evecualmc.item.PickupDroneItem(new Item.Settings().maxCount(1)));
 
+    public static final Item ELACTORITE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "elactorite"),
+            new Item(new Item.Settings().rarity(net.minecraft.util.Rarity.RARE)));
+
+    public static final Item COPPER_PLATE = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "copper_plate"),
+            new Item(new Item.Settings()));
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -238,6 +248,28 @@ public class EvecualMC implements ModInitializer {
             Registries.ITEM,
             new Identifier(MOD_ID, "electronic_duper"),
             new BlockItem(ELECTRONIC_DUPER_BLOCK, new Item.Settings()));
+
+    public static final Block MATERIALIZER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "materializer"),
+            new com.evecual.evecualmc.block.MaterializerBlock(
+                    FabricBlockSettings.create().strength(1.5f).sounds(BlockSoundGroup.METAL).luminance(state -> state.get(com.evecual.evecualmc.block.MaterializerBlock.ACTIVE) ? 12 : 0)));
+
+    public static final Item MATERIALIZER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "materializer"),
+            new BlockItem(MATERIALIZER_BLOCK, new Item.Settings()));
+
+    public static final Block ELECTRIC_GRINDER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "electric_grinder"),
+            new com.evecual.evecualmc.block.ElectricGrinderBlock(
+                    FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL).luminance(state -> state.get(com.evecual.evecualmc.block.ElectricGrinderBlock.ACTIVE) ? 8 : 0)));
+
+    public static final Item ELECTRIC_GRINDER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "electric_grinder"),
+            new BlockItem(ELECTRIC_GRINDER_BLOCK, new Item.Settings()));
 
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -503,6 +535,24 @@ public class EvecualMC implements ModInitializer {
                                     ELECTRONIC_DUPER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.MaterializerBlockEntity> MATERIALIZER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "materializer"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.MaterializerBlockEntity::new,
+                                    MATERIALIZER_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ElectricGrinderBlockEntity> ELECTRIC_GRINDER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "electric_grinder"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ElectricGrinderBlockEntity::new,
+                                    ELECTRIC_GRINDER_BLOCK)
+                            .build());
+
     public static final BlockEntityType<com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity> STATIONARY_TURRET_BLOCK_ENTITY = Registry
             .register(
                     Registries.BLOCK_ENTITY_TYPE,
@@ -585,6 +635,20 @@ public class EvecualMC implements ModInitializer {
                     Registries.SCREEN_HANDLER,
                     new Identifier(MOD_ID, "electronic_duper"),
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectronicDuperScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.MaterializerScreenHandler> MATERIALIZER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "materializer"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.MaterializerScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.ElectricGrinderScreenHandler> ELECTRIC_GRINDER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "electric_grinder"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectricGrinderScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
     public static final ScreenHandlerType<com.evecual.evecualmc.screen.RcRobotScreenHandler> RC_ROBOT_SCREEN_HANDLER = Registry
@@ -714,6 +778,10 @@ public class EvecualMC implements ModInitializer {
                 entries.add(WIRE_ITEM);
                 entries.add(ELECTRONIC_COMBINER_ITEM);
                 entries.add(ELECTRONIC_DUPER_ITEM);
+                entries.add(MATERIALIZER_ITEM);
+                entries.add(ELECTRIC_GRINDER_ITEM);
+                entries.add(ELACTORITE);
+                entries.add(COPPER_PLATE);
                 entries.add(CHARGER_ITEM);
                 entries.add(CHARGER_EXTENSION_ITEM);
                 entries.add(HELI_CHARGER_ITEM);

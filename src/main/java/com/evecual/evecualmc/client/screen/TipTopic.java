@@ -951,6 +951,93 @@ public enum TipTopic {
                     "Link status is confirmed with chime sounds and action bar confirmations.",
                     "A single container can be linked to indefinitely many turrets."
             }
+    ),
+
+    MATERIALIZER(
+            "materializer",
+            "Quantum Materializer",
+            "⚡ Atomic Synthesis Machine",
+            () -> new ItemStack(EvecualMC.MATERIALIZER_ITEM),
+            "High-energy synthesis machine that condenses base elements into rare quantum materials, including Elactorite and Steel.",
+            new String[]{
+                    "Step 1: Place the Materializer and connect it to power (Batteries, Wires, or Solar).",
+                    "Step 2 (Elactorite): Insert 2 Iron Ingots and 1 Diamond into the two input slots.",
+                    "Step 3: Wait 2 minutes (2400 ticks) while the machine condenses the atomic lattice at 1 EU/t.",
+                    "Step 4: Retrieve the finished Elactorite from the output containment slot!",
+                    "Alternative (Steel): Insert 2 Iron Ingots and 1 Coal to synthesize Steel Ingots in 20 seconds."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Materializer GUI with live progress countdown & EU meter"},
+                    {"Hopper / Chute", "Automate top/sides for inputs and bottom for output extraction"}
+            },
+            new String[]{
+                    "Inputs are flexible: you can place Iron in either Slot 0 or Slot 1.",
+                    "If power is interrupted, progress is safely paused without losing elapsed synthesis time.",
+                    "Materializing emits brilliant electric spark and violet portal particles."
+            }
+    ),
+
+    ELACTORITE(
+            "elactorite",
+            "Elactorite",
+            "💎 Synthetic Quantum Alloy",
+            () -> new ItemStack(EvecualMC.ELACTORITE),
+            "Ultra-rare hyper-dense quantum alloy synthesized exclusively within high-power Materializers from Iron and Diamonds.",
+            new String[]{
+                    "Synthesized by placing 2 Iron Ingots and 1 Diamond in a powered Materializer.",
+                    "Requires 2 continuous minutes of quantum stabilization.",
+                    "Possesses immense energetic and structural density for advanced aerospace technology."
+            },
+            new String[][]{
+                    {"Materializer", "Insert 2 Iron + 1 Diamond and wait 2 minutes"},
+                    {"Field Guide", "View synthesis specifications and energy requirements"}
+            },
+            new String[]{
+                    "Keep a stockpile of Elactorite for top-tier defense and high-voltage grid upgrades.",
+                    "Significantly higher energy storage capacity and magnetic conductivity than standard alloys."
+            }
+    ),
+
+    ELECTRIC_GRINDER(
+            "electric_grinder",
+            "Electric Grinder",
+            "⚙️ Industrial Milling Mill",
+            () -> new ItemStack(EvecualMC.ELECTRIC_GRINDER_ITEM),
+            "Heavy rotary milling station engineered to pulverize and flatten metals, rolling Copper Ingots and Raw Copper into Copper Plates.",
+            new String[]{
+                    "Place and connect to any power grid (consumes 2 EU/t while operating).",
+                    "Insert Copper Ingots or Raw Copper into the input slot.",
+                    "Grinds 1 copper item every 5 seconds (100 ticks) into finished Copper Plates.",
+                    "Fully automatable with Hoppers and Electric Chutes."
+            },
+            new String[][]{
+                    {"Right-Click", "Open Electric Grinder GUI & monitoring panel"},
+                    {"Hopper / Chute", "Top/sides for copper feed, bottom for plate extraction"}
+            },
+            new String[]{
+                    "Copper Plates produced by the grinder are required to reinforce Pickup Drones.",
+                    "Can also grind entire Copper Blocks into 9 Copper Plates simultaneously."
+            }
+    ),
+
+    COPPER_PLATE(
+            "copper_plate",
+            "Copper Plate",
+            "🛡️ Reinforced Plating",
+            () -> new ItemStack(EvecualMC.COPPER_PLATE),
+            "Durable cold-rolled copper plating engineered for aerodynamic drone hulls, heat sinks, and structural reinforcement.",
+            new String[]{
+                    "Produced by feeding Copper Ingots or Raw Copper into an Electric Grinder.",
+                    "Required ingredient to craft and reinforce Pickup Drones.",
+                    "Combines excellent electrical conductivity with lightweight ballistic shielding."
+            },
+            new String[][]{
+                    {"Electric Grinder", "Grind Copper Ingots or Raw Copper (5s per plate)"},
+                    {"Crafting Table", "Combine with RC Drone + Hopper to craft Pickup Drone"}
+            },
+            new String[]{
+                    "Essential component for building a fleet of autonomous defense scavenger drones."
+            }
     );
 
     public final String id;
@@ -1031,6 +1118,8 @@ public enum TipTopic {
         if (block == EvecualMC.ROBOT_PARKING_SPOT_BLOCK) return ROBOT_PARKING_SPOT;
         if (block == EvecualMC.ELECTRONIC_COMBINER_BLOCK) return ELECTRONIC_COMBINER;
         if (block == EvecualMC.ELECTRONIC_DUPER_BLOCK) return ELECTRONIC_DUPER;
+        if (block == EvecualMC.MATERIALIZER_BLOCK) return MATERIALIZER;
+        if (block == EvecualMC.ELECTRIC_GRINDER_BLOCK) return ELECTRIC_GRINDER;
         if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
         if (block == EvecualMC.HELI_CHARGER_BLOCK) return HELI_CHARGER;
         if (block == EvecualMC.DRONE_PICKUP_BLOCK) return DRONE_PICKUP;
@@ -1080,6 +1169,10 @@ public enum TipTopic {
         if (item == EvecualMC.ROBOT_PARKING_SPOT_ITEM) return ROBOT_PARKING_SPOT;
         if (item == EvecualMC.ELECTRONIC_COMBINER_ITEM) return ELECTRONIC_COMBINER;
         if (item == EvecualMC.ELECTRONIC_DUPER_ITEM) return ELECTRONIC_DUPER;
+        if (item == EvecualMC.MATERIALIZER_ITEM) return MATERIALIZER;
+        if (item == EvecualMC.ELECTRIC_GRINDER_ITEM) return ELECTRIC_GRINDER;
+        if (item == EvecualMC.ELACTORITE) return ELACTORITE;
+        if (item == EvecualMC.COPPER_PLATE) return COPPER_PLATE;
         if (item == EvecualMC.STEEL_INGOT) return STEEL_INGOT;
         if (item == EvecualMC.ENGINE) return ENGINE;
         if (item == EvecualMC.UPGRADED_ENGINE) return UPGRADED_ENGINE;

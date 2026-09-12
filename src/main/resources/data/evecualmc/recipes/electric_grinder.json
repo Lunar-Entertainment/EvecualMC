@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SGS",
+    "WEW",
+    "SBS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:grindstone"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    },
+    "B": {
+      "item": "evecualmc:battery"
+    }
+  ],
+  "result": {
+    "item": "evecualmc:electric_grinder",
+    "count": 1
+  }
+}

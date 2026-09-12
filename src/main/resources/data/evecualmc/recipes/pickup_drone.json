@@ -6,6 +6,9 @@
     },
     {
       "item": "minecraft:hopper"
+    },
+    {
+      "item": "evecualmc:copper_plate"
     }
   ],
   "result": {

@@ -107,6 +107,10 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderRcChargerTip(drawContext, client, rcCharger);
             } else if (be instanceof com.evecual.evecualmc.block.entity.ElectronicDuperBlockEntity duper) {
                 renderDuperTip(drawContext, client, duper);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.MaterializerBlockEntity materializer) {
+                renderMaterializerTip(drawContext, client, materializer);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.ElectricGrinderBlockEntity grinder) {
+                renderElectricGrinderTip(drawContext, client, grinder);
             } else if (be instanceof HeliChargerBlockEntity heliCharger) {
                 renderHeliChargerTip(drawContext, client, heliCharger);
             } else if (state.isOf(EvecualMC.WIND_TURBINE_BLOCK) || be instanceof com.evecual.evecualmc.block.entity.WindTurbineBlockEntity) {
@@ -171,6 +175,63 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
                 duper.isDuplicating() ? (double) progress / Math.max(1, maxTicks) : null,
                 duper.isDuplicating() ? 0xFF06B6D4 : null);
+    }
+
+    private void renderMaterializerTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.MaterializerBlockEntity materializer) {
+        long energy = materializer.getEnergy();
+        long maxEnergy = materializer.getMaxEnergy();
+        int maxTicks = materializer.getTotalTicks();
+        int progress = materializer.getProgressTicks();
+        boolean active = materializer.isActive();
+        int recipeType = materializer.getRecipeType();
+
+        String status;
+        if (active) {
+            int pct = (int) (((float) progress / Math.max(1, maxTicks)) * 100);
+            int remSecTotal = Math.max(0, maxTicks - progress) / 20;
+            String timeStr = String.format("%02d:%02d", remSecTotal / 60, remSecTotal % 60);
+            String itemStr = (recipeType == com.evecual.evecualmc.block.entity.MaterializerBlockEntity.RECIPE_ELACTORITE) ? "Elactorite" : "Steel Ingot";
+            status = "🌀 Materializing " + itemStr + "... " + pct + "% (" + timeStr + " left)";
+        } else {
+            if (recipeType != com.evecual.evecualmc.block.entity.MaterializerBlockEntity.RECIPE_NONE) {
+                status = energy >= 1 ? "⚡ Ready to Materialize" : "⚠️ Needs Power (1 EU/t)";
+            } else {
+                status = "⚡ Idle - Insert 2 Iron + 1 Diamond OR 2 Iron + 1 Coal";
+            }
+        }
+        int color = active ? 0xFFA855F7 : (energy >= 1 ? 0xFF00E5FF : 0xFFF87171);
+
+        renderUnifiedHud(context, client, "⚡", "Quantum Materializer", 0xFFA855F7,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
+                active ? (double) progress / Math.max(1, maxTicks) : null,
+                active ? 0xFFA855F7 : null);
+    }
+
+    private void renderElectricGrinderTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.ElectricGrinderBlockEntity grinder) {
+        long energy = grinder.getEnergy();
+        long maxEnergy = grinder.getMaxEnergy();
+        int maxTicks = grinder.getTotalTicks();
+        int progress = grinder.getProgressTicks();
+        boolean active = grinder.isActive();
+
+        String status;
+        if (active) {
+            int pct = (int) (((float) progress / Math.max(1, maxTicks)) * 100);
+            float remSec = Math.max(0, maxTicks - progress) / 20.0F;
+            status = String.format("⚙️ Grinding Copper Plates... %d%% (%.1fs left)", pct, remSec);
+        } else {
+            if (!grinder.getStack(0).isEmpty()) {
+                status = energy >= 2 ? "⚙️ Ready to Grind" : "⚠️ Needs Power (2 EU/t)";
+            } else {
+                status = "⚙️ Idle - Insert Copper Ingot or Raw Copper";
+            }
+        }
+        int color = active ? 0xFFF97316 : (energy >= 2 ? 0xFFFDBA74 : 0xFFF87171);
+
+        renderUnifiedHud(context, client, "⚙️", "Electric Grinder", 0xFFEA580C,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
+                active ? (double) progress / Math.max(1, maxTicks) : null,
+                active ? 0xFFEA580C : null);
     }
 
     private void renderChargerWaypoints(DrawContext context, MinecraftClient client) {

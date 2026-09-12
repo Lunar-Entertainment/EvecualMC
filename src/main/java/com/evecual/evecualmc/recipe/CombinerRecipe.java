@@ -200,6 +200,34 @@ public enum CombinerRecipe {
             }
     ),
 
+    PICKUP_DRONE(
+            Category.RC,
+            "pickup_drone",
+            "Pickup Drone",
+            "Autonomous logistics quadcopter with item vacuum and copper armor plating.",
+            () -> new ItemStack(EvecualMC.PICKUP_DRONE_ITEM),
+            new SlotRequirement[]{
+                    new SlotRequirement("RC Drone Core", "RC Drone", "Central Avionics Chassis", 1, false,
+                            s -> s.isOf(EvecualMC.RC_DRONE_ITEM),
+                            () -> new ItemStack(EvecualMC.RC_DRONE_ITEM)),
+                    new SlotRequirement("Vacuum Hopper", "Hopper", "Underslung Suction Unit", 1, false,
+                            s -> s.isOf(Items.HOPPER),
+                            () -> new ItemStack(Items.HOPPER)),
+                    new SlotRequirement("Copper Armor Plating", "Copper Plate (x2)", "Reinforced Outer Plating", 2, false,
+                            s -> s.isOf(EvecualMC.COPPER_PLATE),
+                            () -> new ItemStack(EvecualMC.COPPER_PLATE)),
+                    new SlotRequirement("Brushless Motor", "Electric Engine or Upgraded Engine", "Quad Motor Rotor Hub", 1, false,
+                            s -> s.isOf(EvecualMC.ENGINE) || s.isOf(EvecualMC.UPGRADED_ENGINE),
+                            () -> new ItemStack(EvecualMC.ENGINE)),
+                    new SlotRequirement("High-Volt Battery", "Battery or Redstone Dust", "Extended Battery Bay", 1, false,
+                            s -> s.isOf(EvecualMC.BATTERY_ITEM) || s.isOf(Items.REDSTONE),
+                            () -> new ItemStack(EvecualMC.BATTERY_ITEM)),
+                    new SlotRequirement("Logistics Radar", "Ender Pearl or Copper Wire", "Top Cargo Radar Dome", 1, true,
+                            s -> s.isOf(Items.ENDER_PEARL) || s.isOf(EvecualMC.WIRE_ITEM),
+                            () -> new ItemStack(Items.ENDER_PEARL))
+            }
+    ),
+
     RC_CONTROLLER(
             Category.RC,
             "rc_controller",
@@ -467,6 +495,14 @@ public enum CombinerRecipe {
                 {32, 34},  // 3: Propellers (left rotor mount)
                 {128, 48}, // 4: Battery Cell (underslung battery)
                 {152, 26}  // 5: Gyro Stabilizer (right avionics)
+            };
+            case PICKUP_DRONE -> new int[][]{
+                {96, 22},  // 0: RC Drone Core (top avionics)
+                {96, 48},  // 1: Vacuum Hopper (bottom intake)
+                {60, 36},  // 2: Copper Armor Plating (left wing hull)
+                {132, 36}, // 3: Brushless Motor (right motor)
+                {132, 48}, // 4: Battery Cell (lower battery)
+                {60, 48}   // 5: Logistics Radar (radar dome)
             };
             case RC_ROBOT -> new int[][]{
                 {96, 22},  // 0: RC Sender (sensor head)

@@ -1,5 +1,31 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.16] - 2026-09-12
+### Added & Improved
+- **Quantum Materializer Machine Block (`materializer`)**:
+  - Added the **Quantum Materializer**, a high-power atomic synthesis workstation engineered with a dark titanium frame, magnetic vortex emitter ring, and cybernetic containment chamber.
+  - **Visual & Audio FX**: Emits electric sparks and reverse portal shimmer while active, plays deep resonant beacon humming loops (`BLOCK_BEACON_AMBIENT`), and delivers a triumphant firework burst and chime on completion (`BLOCK_BEACON_ACTIVATE` + `ENTITY_PLAYER_LEVELUP`).
+  - **High-Tech Cyber GUI**: Custom glassmorphic HUD screen featuring vertical EU energy gauge with tooltip, dual input slot frames (Slot 0 and Slot 1), quantum convergence progress bar, golden containment output slot (Slot 2), and live ETA countdown timer.
+  - **Elactorite Synthesis**: Place 2 Iron Ingots and 1 Diamond (in either input slot) to forge **Elactorite** after 2 minutes (2400 ticks) of quantum compression at 1 EU/t.
+  - **Steel Synthesis**: Place 2 Iron Ingots and 1 Coal or Charcoal to synthesize **Steel Ingots** in 20 seconds (400 ticks).
+  - **Power Loss Fail-Safe**: If energy drops below 1 EU, progress pauses safely in place without resetting, protecting player progress.
+  - **Hopper & Chute Automation**: Implemented `SidedInventory` with top/side input routing and bottom output extraction.
+- **Electric Grinder Machine Block (`electric_grinder`)**:
+  - Added the **Electric Grinder**, an industrial rotary milling workstation with tungsten-carbide grinding teeth, motor cooling radiator fins, and a copper intake funnel.
+  - **Visual & Audio FX**: Emits mechanical friction sparks (`CRIT` + `ELECTRIC_SPARK`) and grindstone audio during operation, finishing with an anvil clang and copper resonance.
+  - **Industrial GUI**: Custom dark slate GUI with amber EU energy gauge, animated grinding teeth progress bar, and live milling status.
+  - **Copper Milling**: Grinds Copper Ingots or Raw Copper into **Copper Plates** (1 item per 5 seconds / 100 ticks) at 2 EU/t. Also supports pulverizing Copper Blocks into 9 plates simultaneously.
+- **New Materials: Elactorite & Copper Plate**:
+  - **Elactorite (`elactorite`)**: Rare synthetic quantum alloy ingot featuring glowing crystalline violet/cyan pixel art and lore.
+  - **Copper Plate (`copper_plate`)**: Heavy cold-rolled copper plating featuring bevel edges, corner rivets, and metallic sheen.
+- **Pickup Drone Recipe Overhaul**:
+  - Updated shapeless crafting recipe (`pickup_drone.json`) to require `evecualmc:rc_drone`, `minecraft:hopper`, and `evecualmc:copper_plate`.
+  - Added dedicated Electronic Combiner / Car Fabricator recipe for the Pickup Drone with vacuum hopper and copper hull CAD silhouette display.
+- **HUD & Field Guide Diagnostics**:
+  - Integrated Materializer and Electric Grinder into `EnergyHudOverlay.java` for crosshair telemetry with real-time EU capacity, progress bars, and countdown timers.
+  - Added comprehensive Field Guide entries in `TipTopic.java` for `MATERIALIZER`, `ELECTRIC_GRINDER`, `ELACTORITE`, and `COPPER_PLATE`.
+  - Added both machines to EvecualTechShader `block.properties` for realistic metallic specular reflections.
+
 ## [1.8.15] - 2026-09-12
 ### Fixed & Improved
 - **Drone Autonomous Pathfinding & Flight Control**:

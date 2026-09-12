@@ -92,5 +92,13 @@
   "item.evecualmc.pickup_drone": "Pickup Drone",
   "entity.evecualmc.pickup_drone": "Pickup Drone",
   "entity.evecualmc.turret_bullet": "Turret Kinetic Round",
+  "item.evecualmc.elactorite": "Elactorite",
+  "item.evecualmc.copper_plate": "Copper Plate",
+  "block.evecualmc.materializer": "Quantum Materializer",
+  "item.evecualmc.materializer": "Quantum Materializer",
+  "container.evecualmc.materializer": "Quantum Materializer",
+  "block.evecualmc.electric_grinder": "Electric Grinder",
+  "item.evecualmc.electric_grinder": "Electric Grinder",
+  "container.evecualmc.electric_grinder": "Electric Grinder",
   "category.evecualmc.evecual": "Evecual"
 }

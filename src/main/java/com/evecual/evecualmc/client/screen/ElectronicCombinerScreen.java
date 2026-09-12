@@ -386,6 +386,20 @@ public class ElectronicCombinerScreen extends HandledScreen<ElectronicCombinerSc
                 context.fill(bx + 10, cy - 8, bx + 42, cy - 7, 0x8838BDF8);
                 context.fill(bx + 144, cy - 8, bx + 176, cy - 7, 0x8838BDF8);
             }
+            case PICKUP_DRONE -> {
+                int cy = by + 30;
+                context.fill(bx + 72, cy - 8, bx + 114, cy + 6, 0xFF2A1C14);
+                context.drawBorder(bx + 72, cy - 8, 42, 14, 0xFFEA580C);
+                context.fill(bx + 87, cy - 14, bx + 99, cy - 8, 0xFFF97316);
+                context.fill(bx + 82, cy + 6, bx + 104, cy + 16, 0xFF475569);
+                context.drawBorder(bx + 82, cy + 6, 22, 10, 0xFF94A3B8);
+                context.fill(bx + 26, cy - 3, bx + 72, cy - 1, 0xFFEA580C);
+                context.fill(bx + 114, cy - 3, bx + 160, cy - 1, 0xFFEA580C);
+                context.fill(bx + 22, cy - 7, bx + 30, cy + 1, 0xFFF97316);
+                context.fill(bx + 156, cy - 7, bx + 164, cy + 1, 0xFFF97316);
+                context.fill(bx + 10, cy - 8, bx + 42, cy - 7, 0x88FDBA74);
+                context.fill(bx + 144, cy - 8, bx + 176, cy - 7, 0x88FDBA74);
+            }
             case RC_ROBOT -> {
                 int floorY = by + 46;
                 drawCadTrack(context, bx + 38, floorY - 10, 106, 10);

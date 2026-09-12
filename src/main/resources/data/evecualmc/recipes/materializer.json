@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SWS",
+    "BEB",
+    "SDS"
+  ],
+  "key": {
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "B": {
+      "item": "evecualmc:battery"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  ],
+  "result": {
+    "item": "evecualmc:materializer",
+    "count": 1
+  }
+}
