@@ -72,6 +72,16 @@ public class StationaryTurretBlock extends BlockWithEntity {
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         ItemStack held = player.getStackInHand(hand);
 
+        // Sneaking with empty hand: Convert into Defense Drone item
+        if (player.isSneaking() && held.isEmpty()) {
+            if (!world.isClient) {
+                world.breakBlock(pos, false);
+                net.minecraft.block.Block.dropStack(world, pos, new ItemStack(EvecualMC.FLYING_TURRET_ITEM));
+                player.sendMessage(Text.literal("§a🚁 Converted stationary turret into mobile Defense Drone!"), true);
+            }
+            return ActionResult.SUCCESS;
+        }
+
         // Check if using Turret Linker item
         if (held.isOf(EvecualMC.TURRET_LINKER)) {
             if (held.hasNbt() && held.getNbt().contains("ContainerPos")) {

@@ -11,14 +11,16 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
-import org.joml.Matrix4f;
 
 public class FlyingTurretEntityRenderer extends EntityRenderer<FlyingTurretEntity> {
-    private static final Identifier TEXTURE = new Identifier("evecualmc", "textures/entity/flying_turret.png");
+    private static final Identifier TEXTURE = new Identifier("evecualmc", "textures/entity/rc_drone.png");
+
+    private final DefenseDroneEntityModel model;
 
     public FlyingTurretEntityRenderer(EntityRendererFactory.Context ctx) {
         super(ctx);
-        this.shadowRadius = 0.45F;
+        this.shadowRadius = 0.35F;
+        this.model = new DefenseDroneEntityModel(ctx.getPart(DefenseDroneEntityModel.MODEL_LAYER));
     }
 
     @Override
@@ -30,109 +32,35 @@ public class FlyingTurretEntityRenderer extends EntityRenderer<FlyingTurretEntit
     public void render(FlyingTurretEntity drone, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
-        // 1. Heading Rotation
+        // 1. Heading Yaw Rotation
         float droneYaw = MathHelper.lerpAngleDegrees(tickDelta, drone.prevYaw, drone.getYaw());
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - droneYaw));
 
-        // 2. Flight Pitch & Bobbing
-        float pitch = MathHelper.lerp(tickDelta, drone.prevPitch, drone.getPitch());
+        // 2. Flight Pitch & Roll Tilts
+        float pitch = MathHelper.lerp(tickDelta, drone.getPitchTilt(), drone.getPitchTilt());
+        float roll = MathHelper.lerp(tickDelta, drone.getRollTilt(), drone.getRollTilt());
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pitch));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(roll));
 
-        matrices.translate(0.0, 0.5, 0.0);
+        // 3. Minecraft model coordinate orientation (invert Y & Z)
+        matrices.scale(-1.0F, -1.0F, 1.0F);
+        matrices.translate(0.0, -1.5, 0.0);
 
-        VertexConsumer consumer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(TEXTURE));
-        MatrixStack.Entry entry = matrices.peek();
+        // Update animation angles
+        this.model.setAngles(drone, 0.0F, 0.0F, drone.age + tickDelta, 0.0F, 0.0F);
 
-        // 3. Central Drone Chassis (x: -0.35..0.35, y: -0.15..0.15, z: -0.35..0.35)
-        drawBox(consumer, entry, -0.35F, -0.15F, -0.35F, 0.35F, 0.15F, 0.35F, 0.15F, 0.22F, 0.3F, light);
+        // 4. Render main fuselage, landing skids, motor arms, and propellers
+        // Tint: Tactical Dark Stealth / Combat Cyan
+        float r = 0.50F, g = 0.65F, b = 0.85F;
+        VertexConsumer solidVertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutout(TEXTURE));
+        this.model.renderBodyAndProps(matrices, solidVertices, light, OverlayTexture.DEFAULT_UV, r, g, b, 1.0F);
 
-        // Front Cyan Sensor Visor
-        drawBox(consumer, entry, -0.2F, -0.05F, -0.37F, 0.2F, 0.08F, -0.34F, 0.0F, 0.9F, 1.0F, light);
-
-        // 4. Quad-Rotor Arms
-        // Front-Left Arm & Rotor
-        drawBox(consumer, entry, 0.3F, 0.0F, -0.6F, 0.55F, 0.06F, -0.3F, 0.2F, 0.25F, 0.35F, light);
-        drawRotorDisc(consumer, entry, 0.55F, 0.1F, -0.6F, drone.rotorAngle, light);
-
-        // Front-Right Arm & Rotor
-        drawBox(consumer, entry, -0.55F, 0.0F, -0.6F, -0.3F, 0.06F, -0.3F, 0.2F, 0.25F, 0.35F, light);
-        drawRotorDisc(consumer, entry, -0.55F, 0.1F, -0.6F, -drone.rotorAngle, light);
-
-        // Rear-Left Arm & Rotor
-        drawBox(consumer, entry, 0.3F, 0.0F, 0.3F, 0.55F, 0.06F, 0.6F, 0.2F, 0.25F, 0.35F, light);
-        drawRotorDisc(consumer, entry, 0.55F, 0.1F, 0.6F, -drone.rotorAngle, light);
-
-        // Rear-Right Arm & Rotor
-        drawBox(consumer, entry, -0.55F, 0.0F, 0.3F, -0.3F, 0.06F, 0.6F, 0.2F, 0.25F, 0.35F, light);
-        drawRotorDisc(consumer, entry, -0.55F, 0.1F, 0.6F, drone.rotorAngle, light);
-
-        // 5. Underslung Gimbal Gun Pod
-        drawBox(consumer, entry, -0.12F, -0.35F, -0.12F, 0.12F, -0.15F, 0.12F, 0.1F, 0.15F, 0.2F, light);
-        // Barrel
-        drawBox(consumer, entry, -0.05F, -0.30F, -0.55F, 0.05F, -0.22F, 0.0F, 0.08F, 0.10F, 0.12F, light);
-        // Cyan Barrel Tip
-        drawBox(consumer, entry, -0.06F, -0.31F, -0.60F, 0.06F, -0.21F, -0.52F, 0.0F, 0.9F, 1.0F, light);
+        // 5. Continuous high-RPM rotor motion blur & ghost blades
+        VertexConsumer transVertices = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE));
+        this.model.renderPropellerGhosts(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, 0.25F, 0.75F, 1.0F, 1.0F);
+        this.model.renderBlurDiscs(matrices, transVertices, light, OverlayTexture.DEFAULT_UV, 0.35F);
 
         matrices.pop();
         super.render(drone, yaw, tickDelta, matrices, vertexConsumers, light);
-    }
-
-    private void drawRotorDisc(VertexConsumer consumer, MatrixStack.Entry entry, float cx, float cy, float cz, float angle, int light) {
-        Matrix4f pos = entry.getPositionMatrix();
-        float rad = 0.28F;
-        float cos = (float) Math.cos(Math.toRadians(angle)) * rad;
-        float sin = (float) Math.sin(Math.toRadians(angle)) * rad;
-
-        // Blade 1
-        consumer.vertex(pos, cx - cos, cy, cz - sin).color(0.3F, 0.8F, 1.0F, 0.8F).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx + cos, cy, cz + sin).color(0.3F, 0.8F, 1.0F, 0.8F).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx + cos, cy + 0.02F, cz + sin).color(0.3F, 0.8F, 1.0F, 0.8F).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx - cos, cy + 0.02F, cz - sin).color(0.3F, 0.8F, 1.0F, 0.8F).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-
-        // Blade 2
-        consumer.vertex(pos, cx - sin, cy, cz + cos).color(0.3F, 0.8F, 1.0F, 0.8F).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx + sin, cy, cz - cos).color(0.3F, 0.8F, 1.0F, 0.8F).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx + sin, cy + 0.02F, cz - cos).color(0.3F, 0.8F, 1.0F, 0.8F).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, cx - sin, cy + 0.02F, cz + cos).color(0.3F, 0.8F, 1.0F, 0.8F).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-    }
-
-    private void drawBox(VertexConsumer consumer, MatrixStack.Entry entry, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float r, float g, float b, int light) {
-        Matrix4f pos = entry.getPositionMatrix();
-
-        // Down face (Y-)
-        consumer.vertex(pos, minX, minY, minZ).color(r * 0.6f, g * 0.6f, b * 0.6f, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, -1, 0).next();
-        consumer.vertex(pos, maxX, minY, minZ).color(r * 0.6f, g * 0.6f, b * 0.6f, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, -1, 0).next();
-        consumer.vertex(pos, maxX, minY, maxZ).color(r * 0.6f, g * 0.6f, b * 0.6f, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, -1, 0).next();
-        consumer.vertex(pos, minX, minY, maxZ).color(r * 0.6f, g * 0.6f, b * 0.6f, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, -1, 0).next();
-
-        // Up face (Y+)
-        consumer.vertex(pos, minX, maxY, maxZ).color(r, g, b, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, maxX, maxY, maxZ).color(r, g, b, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, maxX, maxY, minZ).color(r, g, b, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-        consumer.vertex(pos, minX, maxY, minZ).color(r, g, b, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0).next();
-
-        // North face (Z-)
-        consumer.vertex(pos, minX, maxY, minZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, -1).next();
-        consumer.vertex(pos, maxX, maxY, minZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, -1).next();
-        consumer.vertex(pos, maxX, minY, minZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, -1).next();
-        consumer.vertex(pos, minX, minY, minZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, -1).next();
-
-        // South face (Z+)
-        consumer.vertex(pos, minX, minY, maxZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 1).next();
-        consumer.vertex(pos, maxX, minY, maxZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 1).next();
-        consumer.vertex(pos, maxX, maxY, maxZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 1).next();
-        consumer.vertex(pos, minX, maxY, maxZ).color(r * 0.8f, g * 0.8f, b * 0.8f, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 1).next();
-
-        // West face (X-)
-        consumer.vertex(pos, minX, minY, minZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(-1, 0, 0).next();
-        consumer.vertex(pos, minX, minY, maxZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(-1, 0, 0).next();
-        consumer.vertex(pos, minX, maxY, maxZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(-1, 0, 0).next();
-        consumer.vertex(pos, minX, maxY, minZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(-1, 0, 0).next();
-
-        // East face (X+)
-        consumer.vertex(pos, maxX, minY, maxZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(1, 0, 0).next();
-        consumer.vertex(pos, maxX, minY, minZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(1, 0, 0).next();
-        consumer.vertex(pos, maxX, maxY, minZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(1, 0, 0).next();
-        consumer.vertex(pos, maxX, maxY, maxZ).color(r * 0.7f, g * 0.7f, b * 0.7f, 1.0f).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(1, 0, 0).next();
     }
 }

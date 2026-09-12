@@ -560,7 +560,7 @@ public class EvecualMCClient implements ClientModInitializer {
             previousPerspective = client.options.getPerspective();
             client.setCameraEntity(targetRc);
             client.options.setPerspective(Perspective.THIRD_PERSON_BACK);
-            String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) ? "Turret Drone" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
+            String name = (targetRc instanceof HeliEntity) ? "Heli" : (targetRc instanceof com.evecual.evecualmc.entity.FlyingTurretEntity) ? "Defense Drone" : (targetRc instanceof RcDroneEntity) ? "Drone" : (targetRc instanceof RcRobotEntity) ? "Robot" : "Car";
             sendSafeActionBar(client, "§b📷 " + name + " Cam: §aACTIVE §7[<: View | F: Exit]");
         }
     }
@@ -606,7 +606,8 @@ public class EvecualMCClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(HeliEntityModel.MODEL_LAYER, HeliEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.HELI_ENTITY, HeliEntityRenderer::new);
 
-        // Register Turret Bullet & Flying Turret Drone Renderers
+        // Register Turret Bullet & Defense Drone Renderers and Models
+        EntityModelLayerRegistry.registerModelLayer(com.evecual.evecualmc.client.render.DefenseDroneEntityModel.MODEL_LAYER, com.evecual.evecualmc.client.render.DefenseDroneEntityModel::getTexturedModelData);
         EntityRendererRegistry.register(EvecualMC.TURRET_BULLET_ENTITY, com.evecual.evecualmc.client.render.TurretBulletEntityRenderer::new);
         EntityRendererRegistry.register(EvecualMC.FLYING_TURRET_ENTITY, com.evecual.evecualmc.client.render.FlyingTurretEntityRenderer::new);
 

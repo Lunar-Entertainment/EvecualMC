@@ -37,7 +37,7 @@ public class FlyingTurretControllerItem extends Item {
         nbt.putBoolean("ActiveLink", true);
         turret.setPairedPlayerUuid(player.getUuidAsString());
 
-        player.sendMessage(Text.literal("§a🚁 Turret Controller paired to Flying Defense Drone! §7(Range: 1024m)"), true);
+        player.sendMessage(Text.literal("§a🚁 Defense Controller paired to Defense Drone! §7(Range: 1024m)"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
         return true;
@@ -52,7 +52,7 @@ public class FlyingTurretControllerItem extends Item {
             }
         }
         if (player != null) {
-            player.sendMessage(Text.literal("§e📡 Flying Turret Controller unpaired."), true);
+            player.sendMessage(Text.literal("§e📡 Defense Controller unpaired."), true);
             player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.PLAYERS, 0.8f, 0.8f);
         }
@@ -63,7 +63,7 @@ public class FlyingTurretControllerItem extends Item {
         ItemStack stack = user.getStackInHand(hand);
         NbtCompound nbt = stack.getOrCreateNbt();
 
-        // Search for nearby Flying Turret to pair with (within 16 blocks)
+        // Search for nearby Defense Drone to pair with (within 16 blocks)
         Vec3d eyePos = user.getEyePos();
         Vec3d lookVec = user.getRotationVec(1.0f);
         Box searchBox = user.getBoundingBox().expand(16.0);
@@ -105,12 +105,12 @@ public class FlyingTurretControllerItem extends Item {
                 if (e instanceof FlyingTurretEntity turret && turret.isAlive()) {
                     if (user.squaredDistanceTo(turret) <= MAX_RANGE * MAX_RANGE) {
                         serverPlayer.openHandledScreen(turret);
-                        user.sendMessage(Text.literal("§b📡 Remote Drone Terminal opened!"), true);
+                        user.sendMessage(Text.literal("§b📡 Remote Defense Drone Terminal opened!"), true);
                     } else {
-                        user.sendMessage(Text.literal("§c⚠️ Flying Turret is out of communication range (> 1024m)!"), true);
+                        user.sendMessage(Text.literal("§c⚠️ Defense Drone is out of communication range (> 1024m)!"), true);
                     }
                 } else {
-                    user.sendMessage(Text.literal("§c⚠️ Paired Flying Turret not found in this dimension!"), true);
+                    user.sendMessage(Text.literal("§c⚠️ Paired Defense Drone not found in this dimension!"), true);
                 }
             }
             return TypedActionResult.success(stack, world.isClient());
@@ -122,11 +122,11 @@ public class FlyingTurretControllerItem extends Item {
             nbt.putBoolean("ActiveLink", !currentLink);
             if (!world.isClient) {
                 if (!currentLink) {
-                    user.sendMessage(Text.literal("§a📡 Flying Drone Remote Link Online §7(1024m Range)"), true);
+                    user.sendMessage(Text.literal("§a📡 Defense Drone Remote Link Online §7(1024m Range)"), true);
                     world.playSound(null, user.getX(), user.getY(), user.getZ(),
                             SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.PLAYERS, 0.6f, 1.8f);
                 } else {
-                    user.sendMessage(Text.literal("§c📡 Flying Drone Remote Link Standby"), true);
+                    user.sendMessage(Text.literal("§c📡 Defense Drone Remote Link Standby"), true);
                     world.playSound(null, user.getX(), user.getY(), user.getZ(),
                             SoundEvents.BLOCK_BEACON_DEACTIVATE, SoundCategory.PLAYERS, 0.6f, 1.4f);
                 }
@@ -135,27 +135,30 @@ public class FlyingTurretControllerItem extends Item {
         }
 
         if (!world.isClient) {
-            user.sendMessage(Text.literal("§e⚠️ Aim and Right-Click a Flying Turret Drone within 16 blocks to pair!"), true);
+            user.sendMessage(Text.literal("§e⚠️ Aim and Right-Click a Defense Drone within 16 blocks to pair!"), true);
         }
         return TypedActionResult.pass(stack);
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(Text.literal("§7Aerial Defense Remote Control Device"));
+        tooltip.add(Text.literal("§7Defense Drone Remote Piloting & Targeting Device"));
         tooltip.add(Text.literal("§6📡 Operating Range: §a1024 Blocks"));
+        tooltip.add(Text.literal("§e⚠️ Required to fly & reposition Defense Drone"));
 
         if (stack.hasNbt() && stack.getNbt() != null && stack.getNbt().containsUuid("PairedTurret")) {
             boolean active = stack.getNbt().getBoolean("ActiveLink");
-            tooltip.add(Text.literal("§b🚁 Paired: §fFlying Defense Drone"));
+            tooltip.add(Text.literal("§b🚁 Paired: §fDefense Drone"));
             tooltip.add(Text.literal("§aStatus: " + (active ? "§2● ACTIVE LINK" : "§7○ STANDBY")));
-            tooltip.add(Text.literal("§7[Right-Click] Toggle Link / Remote Cam"));
+            tooltip.add(Text.literal("§7[WASD / Space / Sneak] Pilot & move drone"));
+            tooltip.add(Text.literal("§7[Right-Click] Toggle Link"));
             tooltip.add(Text.literal("§7[Shift + Right-Click] Open Remote Terminal"));
+            tooltip.add(Text.literal("§7[F Key] Toggle FPV Drone Camera"));
             tooltip.add(Text.literal("§7[LMB / Attack] Manual Kinetic Cannon Fire"));
-            tooltip.add(Text.literal("§7[C Key] Recall Drone to Position"));
+            tooltip.add(Text.literal("§7[C Key] Recall Drone to Player"));
         } else {
             tooltip.add(Text.literal("§eStatus: §7Not Paired"));
-            tooltip.add(Text.literal("§7Right-click on a Flying Drone to pair"));
+            tooltip.add(Text.literal("§7Right-click on a Defense Drone to pair"));
         }
     }
 }

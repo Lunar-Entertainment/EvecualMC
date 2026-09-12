@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "evecualmc:stationary_turret"
+    }
+  ],
+  "result": {
+    "item": "evecualmc:flying_turret",
+    "count": 1
+  }
+}

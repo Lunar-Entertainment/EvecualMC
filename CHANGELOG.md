@@ -1,5 +1,26 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.7] - 2026-09-12
+### Added & Improved
+- **Remade Defense Turret to be the Drone (`Defense Drone`)**:
+  - Rebuilt the aerial defense turret into an authentic high-fidelity combat drone (`Defense Drone`), utilizing official quadcopter geometry, aerodynamic chassis, 4 motor booms, high-RPM rotor discs, and dual underslung kinetic railcannons with energy conduits.
+  - **Stationary Defense Mode (Requires Defense Controller to Move)**:
+    - The Defense Drone no longer wanders or flies in circles on autonomous patrol.
+    - When deployed on ground or in air, the drone maintains a rock-solid gyro-stabilized hover at its station coordinates (`stationPos`).
+    - Tracks and aims directly at hostile targets across up to 1024x1024 blocks (512m radius), automatically firing kinetic rounds from linked ammo containers while remaining stationed in place.
+    - If nudged or pushed by mob collisions or explosions, the drone smoothly returns to its station coordinates.
+  - **Defense Controller Piloting**:
+    - You need the **Defense Controller** to move, reposition, or fly the drone.
+    - Full 3D directional vectoring (WASD, Space, Sneak, Sprint Turbo) with synchronized pitch and roll tilt kinematics.
+    - When flight inputs cease, the drone immediately anchors its new defense station coordinates right where you left it.
+    - Recall key (`C`) commands the drone to navigate directly back to the player.
+  - **Interactive Handling & Survival Retrieval**:
+    - Shift + Right-Click with an empty hand safely retrieves the Defense Drone into your inventory.
+    - Automatically drops as a Defense Drone item on death in survival.
+    - Can be placed on blocks or right-clicked in mid-air to deploy directly into hover defense mode.
+    - Sneak + Right-Click on existing placed Stationary Turrets immediately converts them into a mobile Defense Drone.
+    - Added shapeless crafting recipe: 1 Stationary Turret -> 1 Defense Drone.
+
 ## [1.8.6] - 2026-09-11
 ### Added & Improved
 - **Flying Turret Remote Controller**:
