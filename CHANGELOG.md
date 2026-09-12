@@ -1,5 +1,11 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.20] - 2026-09-12
+### Added & Improved
+- **Swedish (Svenska) Localization (`sv_se.json`, `sv-SE.json`)**:
+  - Full comprehensive Swedish translation covering all items, blocks, machines, vehicles, drones, weapons, ammo types, keybindings, containers, and creative tabs.
+  - Complete terminology translations including *Kvantmaterialiserare* (Quantum Materializer), *Elektrisk kross* (Electric Grinder), *Föremålsladdare* (Item Charger), *Elactorit* (Elactorite), *Ståltacka* (Steel Ingot), *Elbil* (Electric Car), *Elhelikopter* (EV Heli), *Upphämtningsdrönare* (Pickup Drone), *Försvarstorn* (Stationary Turret), and all ammunition tiers.
+
 ## [1.8.19] - 2026-09-12
 ### Added & Improved
 - **Steel & Elactorite Ammunition Types (`steel_ammo`, `elactorite_ammo`)**:
