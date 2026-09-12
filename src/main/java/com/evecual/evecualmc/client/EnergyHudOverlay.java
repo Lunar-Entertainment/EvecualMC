@@ -133,6 +133,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderStationaryTurretTip(drawContext, client, turret);
             } else if (be instanceof com.evecual.evecualmc.block.entity.TurretAmmoContainerBlockEntity ammoContainer) {
                 renderTurretAmmoContainerTip(drawContext, client, ammoContainer);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.AutoPickupBlockEntity autoPickup) {
+                renderAutoPickupTip(drawContext, client, autoPickup);
             } else if (be instanceof StationaryRcControllerBlockEntity station) {
                 renderStationaryRcControllerTip(drawContext, client, station);
             }
@@ -609,6 +611,16 @@ public class EnergyHudOverlay implements HudRenderCallback {
         int color = count > 0 ? 0xFF86EFAC : 0xFFFBBF24;
         renderUnifiedHud(context, client, "📦", "Turret Ammo Container", 0xFFF59E0B,
                 count + " Ammo", 0xFFFFFFFF, status, color, null, null);
+    }
+
+    private void renderAutoPickupTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.AutoPickupBlockEntity autoPickup) {
+        String status = autoPickup.getStatusMessage();
+        String droneName = autoPickup.getLinkedDroneName();
+        boolean hasLink = !"None".equals(droneName) && !status.startsWith("⚠️");
+        int color = hasLink ? 0xFF86EFAC : 0xFFF87171;
+        String val = hasLink ? "ONLINE (" + droneName + ")" : "STANDBY";
+        renderUnifiedHud(context, client, "📡", "Auto Pickup Station", 0xFF38BDF8,
+                val, 0xFFFFFFFF, status, color, null, null);
     }
 
     private void renderRcDroneTip(DrawContext context, MinecraftClient client, RcDroneEntity drone) {

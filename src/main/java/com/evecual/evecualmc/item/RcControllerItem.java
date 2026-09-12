@@ -64,9 +64,11 @@ public class RcControllerItem extends Item {
             drone.onPairFromParkingSpot();
         }
 
-        String droneName = (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity) ? "Pickup Drone" : "RC Drone";
+        boolean isPickup = (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity);
+        String droneName = isPickup ? "Pickup Drone" : "RC Drone";
+        String rangeStr = isPickup ? "∞ Infinite" : "512m";
         nbt.putString("VehicleName", droneName);
-        player.sendMessage(Text.literal("§a📡 RC Controller paired to " + droneName + "! §7(Range: 512m)"), true);
+        player.sendMessage(Text.literal("§a📡 RC Controller paired to " + droneName + "! §7(Range: " + rangeStr + ")"), true);
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.PLAYERS, 0.9f, 2.0f);
         return true;
@@ -269,9 +271,19 @@ public class RcControllerItem extends Item {
                     user.sendMessage(Text.literal("§6🤖 RC Robot Link: §aENABLED §7[W/A/S/D Move, LMB Tool, RMB Place, F Camera]"), true);
                 } else if (isDrone) {
                     if (droneUuid != null) {
-                        for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(512.0), d -> d.getUuid().equals(droneUuid))) {
-                            if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
-                                drone.onPairFromParkingSpot();
+                        Entity foundEntity = null;
+                        if (world instanceof net.minecraft.server.world.ServerWorld sw) {
+                            foundEntity = sw.getEntity(droneUuid);
+                        }
+                        if (foundEntity instanceof RcDroneEntity d) {
+                            if (d.isInParkingSpot() || d.getParkingSpotPos() != null) {
+                                d.onPairFromParkingSpot();
+                            }
+                        } else {
+                            for (RcDroneEntity drone : world.getEntitiesByClass(RcDroneEntity.class, user.getBoundingBox().expand(512.0), d -> d.getUuid().equals(droneUuid))) {
+                                if (drone.isInParkingSpot() || drone.getParkingSpotPos() != null) {
+                                    drone.onPairFromParkingSpot();
+                                }
                             }
                         }
                     }
@@ -340,8 +352,9 @@ public class RcControllerItem extends Item {
             } else if (nbt.containsUuid("PairedDrone") || "drone".equals(type)) {
                 String droneName = nbt.contains("VehicleName") ? nbt.getString("VehicleName") : "RC Drone";
                 String droneIcon = droneName.contains("Pickup") ? "§b🛡️ " : "§b🚁 ";
+                String rangeStr = droneName.contains("Pickup") ? "∞ Infinite" : "512m";
                 tooltip.add(Text.literal("§7Paired to: " + droneIcon + droneName));
-                tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: 512m)" : "§cSTANDBY")));
+                tooltip.add(Text.literal("§7Link Status: " + (active ? "§aCONNECTED §7(Range: " + rangeStr + ")" : "§cSTANDBY")));
                 tooltip.add(Text.literal("§8Controls: W/S Pitch | A/D Roll | Space/Shift Alt | C Auto-Dock"));
                 tooltip.add(Text.literal("§7[Right-Click] Connect | [Shift + Right-Click] Standby"));
             } else if (nbt.containsUuid("PairedCar")) {

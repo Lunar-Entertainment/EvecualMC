@@ -345,20 +345,20 @@ public enum TipTopic {
             "Pickup Drone",
             "🛡️ Tactical Defense Harvester",
             () -> new ItemStack(EvecualMC.PICKUP_DRONE_ITEM),
-            "Military-grade defense system quadcopter featuring composite armor plating, FLIR optics, automated magnetic item vacuum, expansive 27-slot cargo bay, Drone Pickup station docking, and pneumatic chute unloading.",
+            "Military-grade defense system quadcopter featuring infinite flight range, 3x3 forced chunk loading, autonomous item harvesting, 40 m/s boost / 30 m/s cruise / 15 m/s low power speed profiles, expansive 27-slot cargo bay, and docking automation.",
             new String[]{
-                    "Equipped with composite armor and an underslung magnetic vacuum harvester.",
-                    "Features an expansive 27-slot cargo bay (3 full chest rows) for high-capacity material collection.",
-                    "Automatically sweeps and vacuums nearby dropped items within 1.8m directly into its cargo hold.",
-                    "Requires a special landing spot: place a Pickup Drone Parking Spot directly on top of a Drone Pickup station.",
-                    "Docking on the station allows Electric Chutes to pneumatically offload cargo into high-capacity Storage Units."
+                    "Infinite Flight Range: Control seamlessly from anywhere in the world without signal dropoff.",
+                    "Active Chunk Loading: Automatically forces and maintains a 3x3 chunk perimeter loaded around itself in all states.",
+                    "Tuned Flight Speeds: 40 blocks/s (2.0 b/t) on Boost, 30 blocks/s (1.5 b/t) on Cruise, and 15 blocks/s (0.75 b/t) under 5% battery with reduced power drain.",
+                    "Automated Auto Pickup Integration: Can be linked to an Auto Pickup radar station to automatically scavenge dropped items and return to dock.",
+                    "Features an expansive 27-slot cargo bay and underslung magnetic vacuum harvester."
             },
             new String[][]{
-                    {"W / S", "Pitch Forward / Backward"},
+                    {"W / S", "Pitch Forward / Backward (30 m/s Cruise, 40 m/s Boost)"},
                     {"A / D (FP Mode)", "Lateral Strafe Left / Right"},
                     {"Mouse", "Steer Yaw & Aim FLIR Camera"},
                     {"Space / Shift", "Ascend / Descend Altitude"},
-                    {"Ctrl (Sprint)", "Engage High-Speed Propulsion Boost"},
+                    {"Ctrl (Sprint)", "Engage 40 m/s Propulsion Boost"},
                     {"F", "Toggle FLIR FPV Remote Camera Feed"},
                     {"RMB (In Cam)", "Toggle First-Person / Third-Person view"},
                     {"L", "Toggle High-Power Spotlight (Level 15)"},
@@ -367,10 +367,34 @@ public enum TipTopic {
                     {"Shift + Right-Click", "Retrieve drone back into inventory"}
             },
             new String[]{
-                    "Press C while flying to automatically locate and dock onto the nearest Pickup Drone Station.",
-                    "When docked on top of a Drone Pickup, items are rapidly sucked through connected Electric Chutes into Storage Units.",
-                    "Operates seamlessly with both the handheld RC Controller and Stationary RC Controller terminal.",
-                    "Underslung suction core emits genuine item pickup sound effects as it clears battlefield debris."
+                    "Pair with the Auto Pickup block to create a fully autonomous 24/7 battlefield scavenger.",
+                    "Maintains 3x3 chunk loading even when docked or flying far from players.",
+                    "Under 5% battery (< 30 EU), speed caps at 15 m/s and power drain slows down 4x to ensure safe return.",
+                    "When docked on a Drone Pickup, items are rapidly sucked through connected Electric Chutes into Storage Units."
+            }
+    ),
+
+    AUTO_PICKUP(
+            "auto_pickup",
+            "Auto Pickup",
+            "📡 Autonomous Logistics Station",
+            () -> new ItemStack(EvecualMC.AUTO_PICKUP_ITEM),
+            "Autonomous logistics radar that detects ANY dropped items in the surrounding world and automatically dispatches a linked Pickup Drone to retrieve them, returning to dock afterwards.",
+            new String[]{
+                    "Place the Auto Pickup block anywhere in your base or defense perimeter.",
+                    "Link to a Pickup Drone by right-clicking the block while holding an RC Controller paired with that drone.",
+                    "Actively scans 256 blocks for dropped items on the ground in all directions.",
+                    "When items are detected, wakes the drone from its dock and commands it to fly, vacuum the drops, and land safely on its pad."
+            },
+            new String[][]{
+                    {"RC Controller Link", "Right-click block with paired controller to bind drone"},
+                    {"Right-Click", "Open Diagnostics and current mission status"},
+                    {"Pickaxe / Hand", "Break block to retrieve (clears link)"}
+            },
+            new String[]{
+                    "Link with a Pickup Drone docked on a Drone Pickup Station connected to Electric Chutes and Storage Units for 100% automated item gathering.",
+                    "Pickup Drone automatically keeps chunks loaded around itself and can fly across infinite distances.",
+                    "Drone operates at 40 m/s turbo boost, 30 m/s cruise, and drops to 15 m/s low-power mode when battery is under 5%."
             }
     ),
 
@@ -1013,6 +1037,7 @@ public enum TipTopic {
         if (block == EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK) return PICKUP_DRONE_PARKING_SPOT;
         if (block == EvecualMC.ELECTRIC_CHUTE_BLOCK) return ELECTRIC_CHUTE;
         if (block == EvecualMC.STORAGE_UNIT_BLOCK) return STORAGE_UNIT;
+        if (block == EvecualMC.AUTO_PICKUP_BLOCK) return AUTO_PICKUP;
         if (block == EvecualMC.STATIONARY_TURRET_BLOCK) return STATIONARY_TURRET;
         if (block == EvecualMC.TURRET_AMMO_CONTAINER_BLOCK) return TURRET_AMMO_CONTAINER;
         return null;
@@ -1027,6 +1052,7 @@ public enum TipTopic {
         if (item == EvecualMC.RC_CAR_ITEM) return RC_CAR;
         if (item == EvecualMC.PICKUP_DRONE_ITEM) return PICKUP_DRONE;
         if (item == EvecualMC.RC_DRONE_ITEM) return RC_DRONE;
+        if (item == EvecualMC.AUTO_PICKUP_ITEM) return AUTO_PICKUP;
         if (item == EvecualMC.DRONE_PICKUP_ITEM) return DRONE_PICKUP;
         if (item == EvecualMC.PICKUP_DRONE_PARKING_SPOT_ITEM) return PICKUP_DRONE_PARKING_SPOT;
         if (item == EvecualMC.ELECTRIC_CHUTE_ITEM) return ELECTRIC_CHUTE;

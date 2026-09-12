@@ -1166,7 +1166,7 @@ public class EvecualMCClient implements ClientModInitializer {
                             ClientPlayNetworking.send(EvecualMC.RC_DRONE_AUTO_DOCK_PACKET_ID, dockBuf);
                         }
 
-                        if (client.player.squaredDistanceTo(targetDrone) <= 262144.0) { // 512m max range
+                        if (targetDrone instanceof com.evecual.evecualmc.entity.PickupDroneEntity || client.player.squaredDistanceTo(targetDrone) <= 262144.0) { // Infinite range for Pickup Drone, 512m for standard
                             boolean rcFwd = client.options.forwardKey.isPressed();
                             boolean rcBack = client.options.backKey.isPressed();
                             boolean rcLeft = client.options.leftKey.isPressed();
@@ -1431,6 +1431,8 @@ public class EvecualMCClient implements ClientModInitializer {
                             : "⚡ " + (storage.isElectricallyCharged() ? "Retention Charged" : "Uncharged") + " (" + totalItems + " items in " + filledSlots + " slots)";
                 } else if (be instanceof com.evecual.evecualmc.block.entity.DronePickupBlockEntity dpbe) {
                     status = dpbe.getStatusMessage();
+                } else if (be instanceof com.evecual.evecualmc.block.entity.AutoPickupBlockEntity apbe) {
+                    status = apbe.getStatusMessage();
                 } else if (bs.isOf(EvecualMC.PICKUP_DRONE_PARKING_SPOT_BLOCK)) {
                     boolean onPickup = client.world.getBlockState(bp.down()).isOf(EvecualMC.DRONE_PICKUP_BLOCK);
                     status = onPickup ? "🛡️ Specialized Dock: Ready for Pickup Drone" : "⚠️ Invalid Spot: Must be on a Drone Pickup Station";

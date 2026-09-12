@@ -23,6 +23,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 public class StationaryRcControllerItem extends BlockItem {
     public StationaryRcControllerItem(Block block, Settings settings) {
@@ -183,5 +184,41 @@ public class StationaryRcControllerItem extends BlockItem {
         }
         tooltip.add(Text.literal("§8Stationary terminal: locks player in place with vehicle view."));
         super.appendTooltip(stack, world, tooltip, context);
+    }
+
+    public static @Nullable UUID getPairedDroneUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null) {
+            if (stack.getNbt().containsUuid("PairedDrone")) {
+                return stack.getNbt().getUuid("PairedDrone");
+            }
+            if (stack.getNbt().containsUuid("PairedVehicle") && "drone".equals(stack.getNbt().getString("PairedType"))) {
+                return stack.getNbt().getUuid("PairedVehicle");
+            }
+        }
+        return null;
+    }
+
+    public static @Nullable UUID getPairedCarUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null) {
+            if (stack.getNbt().containsUuid("PairedCar")) {
+                return stack.getNbt().getUuid("PairedCar");
+            }
+            if (stack.getNbt().containsUuid("PairedVehicle") && "car".equals(stack.getNbt().getString("PairedType"))) {
+                return stack.getNbt().getUuid("PairedVehicle");
+            }
+        }
+        return null;
+    }
+
+    public static @Nullable UUID getPairedRobotUuid(ItemStack stack) {
+        if (stack.hasNbt() && stack.getNbt() != null) {
+            if (stack.getNbt().containsUuid("PairedRobot")) {
+                return stack.getNbt().getUuid("PairedRobot");
+            }
+            if (stack.getNbt().containsUuid("PairedVehicle") && "robot".equals(stack.getNbt().getString("PairedType"))) {
+                return stack.getNbt().getUuid("PairedVehicle");
+            }
+        }
+        return null;
     }
 }

@@ -387,6 +387,17 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "storage_unit"),
             new com.evecual.evecualmc.item.StorageUnitItem(STORAGE_UNIT_BLOCK, new Item.Settings().maxCount(1)));
 
+    public static final Block AUTO_PICKUP_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "auto_pickup"),
+            new com.evecual.evecualmc.block.AutoPickupBlock(
+                    FabricBlockSettings.create().strength(2.0f).sounds(BlockSoundGroup.NETHERITE)));
+
+    public static final Item AUTO_PICKUP_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "auto_pickup"),
+            new BlockItem(AUTO_PICKUP_BLOCK, new Item.Settings()));
+
     public static final Block STATIONARY_TURRET_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "stationary_turret"),
@@ -532,6 +543,14 @@ public class EvecualMC implements ModInitializer {
                     new Identifier(MOD_ID, "storage_unit"),
                     FabricBlockEntityTypeBuilder
                             .create(com.evecual.evecualmc.block.entity.StorageUnitBlockEntity::new, STORAGE_UNIT_BLOCK)
+                            .build());
+
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.AutoPickupBlockEntity> AUTO_PICKUP_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "auto_pickup"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.AutoPickupBlockEntity::new, AUTO_PICKUP_BLOCK)
                             .build());
 
     // Screen Handlers
@@ -687,6 +706,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(DRONE_PICKUP_ITEM);
                 entries.add(ELECTRIC_CHUTE_ITEM);
                 entries.add(STORAGE_UNIT_ITEM);
+                entries.add(AUTO_PICKUP_ITEM);
                 entries.add(ROBOT_PARKING_SPOT_ITEM);
                 entries.add(SOLAR_PANEL_ITEM);
                 entries.add(WIND_TURBINE_ITEM);
@@ -852,7 +872,7 @@ public class EvecualMC implements ModInitializer {
                         if (player.getServerWorld() != null) {
                             Entity target = player.getServerWorld().getEntity(droneUuid);
                             if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
-                                if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range (512^2)
+                                if (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity || player.squaredDistanceTo(drone) <= 262144.0) { // Infinite range for Pickup Drone, 512m for standard
                                     drone.setRemoteInputs(forward, back, left, right, up, down, sprint, strafe);
                                     if (!Float.isNaN(yaw)) {
                                         drone.setRemoteYaw(yaw);
@@ -870,7 +890,7 @@ public class EvecualMC implements ModInitializer {
                         if (player.getServerWorld() != null) {
                             Entity target = player.getServerWorld().getEntity(droneUuid);
                             if (target instanceof com.evecual.evecualmc.entity.RcDroneEntity drone) {
-                                if (player.squaredDistanceTo(drone) <= 262144.0) { // 512 blocks max range
+                                if (drone instanceof com.evecual.evecualmc.entity.PickupDroneEntity || player.squaredDistanceTo(drone) <= 262144.0) { // Infinite range for Pickup Drone
                                     boolean started = drone.startAutoReturnToCharger();
                                     if (started) {
                                         player.sendMessage(Text.literal("§a⚡ RC Drone returning to Helipad..."), true);

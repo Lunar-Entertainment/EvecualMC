@@ -1,5 +1,30 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.14] - 2026-09-12
+### Added & Improved
+- **Auto Pickup Logistics Radar Block (`auto_pickup`)**:
+  - Added new **Auto Pickup** block with custom 3D model, animated active state, particle effects, and crafting recipe.
+  - Linked to a Pickup Drone via RC Controller (right-click block with paired controller).
+  - Continuously scans 256m in all directions for ANY dropped items in loaded chunks.
+  - Automatically dispatches the linked Pickup Drone from its docking pad to fly, vacuum up all dropped items, chain nearby items, and return safely to dock on the landing pad when finished or when cargo is full.
+  - Integrated HUD inspection overlay and Field Guide diagnostics (`TipTopic.AUTO_PICKUP`).
+- **Pickup Drone Infinite Control Range**:
+  - Removed range barriers for Pickup Drones across server control packets and client controllers.
+  - Players can now operate and control the Pickup Drone seamlessly from anywhere across the dimension.
+- **Autonomous 3x3 Forced Chunk Loading**:
+  - Implemented persistent 3x3 chunk loading around the Pickup Drone (`PickupDroneEntity.updatePickupChunkLoading`).
+  - Keeps chunks active whether the drone is flying, harvesting, docked on its landing pad, or stationary across the map.
+  - Guarantees chunk unloading cleanup when the drone is picked up or removed.
+- **Tuned Flight Speeds & Power Saving**:
+  - Updated max speeds:
+    - **40 m/s** (2.0 blocks/tick) when boosting (Sprint / Ctrl).
+    - **30 m/s** (1.5 blocks/tick) standard cruise speed.
+    - **15 m/s** (0.75 blocks/tick) low-power speed when battery drops under 5% (< 30 EU).
+  - Power consumption is reduced 4x (80-tick drain interval) in low-power mode (< 5%) to ensure the drone can safely return home.
+- **RC Controller & Diagnostics Enhancements**:
+  - RC Controller tooltips and pairing messages now display `(Range: ∞ Infinite)` when paired with a Pickup Drone.
+  - Updated Field Guide entries for Pickup Drone and Auto Pickup with comprehensive operation instructions.
+
 ## [1.8.13] - 2026-09-12
 ### Added & Improved
 - **Electric Chute 6-Directional Cornering & Multipart Models**:

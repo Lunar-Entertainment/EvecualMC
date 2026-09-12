@@ -42,6 +42,8 @@
   "item.evecualmc.electric_chute": "Electric Chute",
   "block.evecualmc.storage_unit": "Storage Unit",
   "item.evecualmc.storage_unit": "Storage Unit",
+  "block.evecualmc.auto_pickup": "Auto Pickup Station",
+  "item.evecualmc.auto_pickup": "Auto Pickup Station",
   "block.evecualmc.robot_parking_spot": "Robot Parking Spot",
   "item.evecualmc.robot_parking_spot": "Robot Parking Spot",
   "block.evecualmc.stationary_rc_controller": "Stationary RC Controller",

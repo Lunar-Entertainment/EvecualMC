@@ -71,8 +71,8 @@ public class RcDroneEntity extends Entity {
     protected int autoReturnStage = 0; // 0 = ascend, 1 = cruise to X/Z, 2 = descend to pad
     protected double cruiseAltitude = 0.0;
 
-    private boolean wasInParkingSpot = false;
-    private boolean explicitlyPairedInSpot = false;
+    protected boolean wasInParkingSpot = false;
+    protected boolean explicitlyPairedInSpot = false;
 
     public RcDroneEntity(EntityType<?> type, World world) {
         super(type, world);
@@ -258,6 +258,18 @@ public class RcDroneEntity extends Entity {
 
     public SimpleInventory getTrunk() {
         return this.trunk;
+    }
+
+    public double getTopSpeed(boolean sprint) {
+        return sprint ? 0.78 : 0.42;
+    }
+
+    public double getAcceleration(boolean sprint) {
+        return sprint ? 0.08 : 0.045;
+    }
+
+    public int getBatteryDrainInterval(boolean sprint) {
+        return sprint ? 20 : 25;
     }
 
     public boolean isAutoReturning() {
@@ -708,8 +720,8 @@ public class RcDroneEntity extends Entity {
         }
         // Manual flight controls
         else if (hasPower && isFlying()) {
-            double topSpeed = this.inputSprint ? 0.78 : 0.42;
-            double accel = this.inputSprint ? 0.08 : 0.045;
+            double topSpeed = getTopSpeed(this.inputSprint);
+            double accel = getAcceleration(this.inputSprint);
 
             Vec3d forwardVec = Vec3d.fromPolar(0, this.getYaw());
             Vec3d rightVec = new Vec3d(-forwardVec.z, 0, forwardVec.x);
@@ -733,7 +745,7 @@ public class RcDroneEntity extends Entity {
                 );
 
                 // Consume battery during flight
-                if (this.age % 25 == 0 && !this.getWorld().isClient) {
+                if (this.age % getBatteryDrainInterval(this.inputSprint) == 0 && !this.getWorld().isClient) {
                     setEnergy(energy - 1);
                 }
             } else {
@@ -747,11 +759,11 @@ public class RcDroneEntity extends Entity {
             if (this.inputUp) {
                 double targetY = this.inputSprint ? 0.55 : 0.32;
                 vel = new Vec3d(vel.x, vel.y + (targetY - vel.y) * 0.35, vel.z);
-                if (this.age % 25 == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
+                if (this.age % getBatteryDrainInterval(this.inputSprint) == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
             } else if (this.inputDown) {
                 double targetY = this.inputSprint ? -0.45 : -0.28;
                 vel = new Vec3d(vel.x, vel.y + (targetY - vel.y) * 0.35, vel.z);
-                if (this.age % 30 == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
+                if (this.age % getBatteryDrainInterval(this.inputSprint) == 0 && !this.getWorld().isClient) setEnergy(energy - 1);
             } else {
                 // Gyro-stabilized altitude hold hover physics
                 double hoverDamping = 0.70;

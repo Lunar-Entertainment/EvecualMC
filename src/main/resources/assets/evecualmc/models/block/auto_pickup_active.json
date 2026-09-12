@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "evecualmc:block/auto_pickup_front_active",
+    "up": "evecualmc:block/auto_pickup_top",
+    "down": "evecualmc:block/auto_pickup_bottom",
+    "north": "evecualmc:block/auto_pickup_front_active",
+    "south": "evecualmc:block/auto_pickup_side",
+    "west": "evecualmc:block/auto_pickup_side",
+    "east": "evecualmc:block/auto_pickup_side"
+  }
+}

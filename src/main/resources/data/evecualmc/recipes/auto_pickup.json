@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ERE",
+    "SCS",
+    "SWS"
+  ],
+  "key": {
+    "E": { "item": "minecraft:ender_eye" },
+    "R": { "item": "minecraft:lightning_rod" },
+    "S": { "item": "evecualmc:steel_ingot" },
+    "C": { "item": "minecraft:comparator" },
+    "W": { "item": "evecualmc:wire" }
+  },
+  "result": {
+    "item": "evecualmc:auto_pickup",
+    "count": 1
+  }
+}
