@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "evecualmc:block/item_charger_top",
+    "bottom": "evecualmc:block/item_charger_bottom",
+    "side": "evecualmc:block/item_charger_side",
+    "front": "evecualmc:block/item_charger_front"
+  }
+}

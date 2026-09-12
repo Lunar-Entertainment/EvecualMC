@@ -62,10 +62,17 @@ public class WireBlock extends BlockWithEntity {
                 || state.isOf(EvecualMC.BATTERY_BLOCK)
                 || state.isOf(EvecualMC.ELECTRONIC_COMBINER_BLOCK)
                 || state.isOf(EvecualMC.ELECTRONIC_DUPER_BLOCK)
+                || state.isOf(EvecualMC.MATERIALIZER_BLOCK)
+                || state.isOf(EvecualMC.ELECTRIC_GRINDER_BLOCK)
+                || state.isOf(EvecualMC.ITEM_CHARGER_BLOCK)
                 || state.isOf(EvecualMC.CHARGER_BLOCK)
+                || state.isOf(EvecualMC.CHARGER_EXTENSION_BLOCK)
                 || state.isOf(EvecualMC.RC_CHARGER_BLOCK)
+                || state.isOf(EvecualMC.HELI_CHARGER_BLOCK)
                 || state.isOf(EvecualMC.ELECTRIC_CHUTE_BLOCK)
-                || state.isOf(EvecualMC.STORAGE_UNIT_BLOCK);
+                || state.isOf(EvecualMC.STORAGE_UNIT_BLOCK)
+                || state.isOf(EvecualMC.STATIONARY_TURRET_BLOCK)
+                || state.isOf(EvecualMC.AUTO_PICKUP_BLOCK);
     }
 
     @Override

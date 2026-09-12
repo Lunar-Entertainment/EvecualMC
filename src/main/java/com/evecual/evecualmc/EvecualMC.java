@@ -281,6 +281,17 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "electric_grinder"),
             new BlockItem(ELECTRIC_GRINDER_BLOCK, new Item.Settings()));
 
+    public static final Block ITEM_CHARGER_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "item_charger"),
+            new com.evecual.evecualmc.block.ItemChargerBlock(
+                    FabricBlockSettings.create().strength(1.2f).sounds(BlockSoundGroup.METAL).luminance(state -> state.get(com.evecual.evecualmc.block.ItemChargerBlock.ACTIVE) ? 10 : 0)));
+
+    public static final Item ITEM_CHARGER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "item_charger"),
+            new BlockItem(ITEM_CHARGER_BLOCK, new Item.Settings()));
+
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "charger"),
@@ -563,6 +574,15 @@ public class EvecualMC implements ModInitializer {
                                     ELECTRIC_GRINDER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ItemChargerBlockEntity> ITEM_CHARGER_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "item_charger"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ItemChargerBlockEntity::new,
+                                    ITEM_CHARGER_BLOCK)
+                            .build());
+
     public static final BlockEntityType<com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity> STATIONARY_TURRET_BLOCK_ENTITY = Registry
             .register(
                     Registries.BLOCK_ENTITY_TYPE,
@@ -659,6 +679,13 @@ public class EvecualMC implements ModInitializer {
                     Registries.SCREEN_HANDLER,
                     new Identifier(MOD_ID, "electric_grinder"),
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectricGrinderScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.ItemChargerScreenHandler> ITEM_CHARGER_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "item_charger"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.ItemChargerScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
     public static final ScreenHandlerType<com.evecual.evecualmc.screen.RcRobotScreenHandler> RC_ROBOT_SCREEN_HANDLER = Registry
@@ -790,6 +817,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(ELECTRONIC_DUPER_ITEM);
                 entries.add(MATERIALIZER_ITEM);
                 entries.add(ELECTRIC_GRINDER_ITEM);
+                entries.add(ITEM_CHARGER_ITEM);
                 entries.add(ELACTORITE);
                 entries.add(STEEL_ROD);
                 entries.add(ELECTRONIC_ZAPPER);

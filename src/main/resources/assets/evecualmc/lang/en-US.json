@@ -102,5 +102,8 @@
   "block.evecualmc.electric_grinder": "Electric Grinder",
   "item.evecualmc.electric_grinder": "Electric Grinder",
   "container.evecualmc.electric_grinder": "Electric Grinder",
+  "block.evecualmc.item_charger": "Item Charger",
+  "item.evecualmc.item_charger": "Item Charger",
+  "container.evecualmc.item_charger": "Item Charger",
   "category.evecualmc.evecual": "Evecual"
 }

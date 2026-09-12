@@ -1082,6 +1082,32 @@ public enum TipTopic {
             new String[]{
                     "Essential intermediate material for high-voltage energy tools and heavy machinery."
             }
+    ),
+
+    ITEM_CHARGER(
+            "item_charger",
+            "Item Charger",
+            "⚡ Energy Station",
+            () -> new ItemStack(EvecualMC.ITEM_CHARGER_BLOCK),
+            "A high-tech energy charging station designed to slowly charge any EU-powered device in item form (tools, weapons, batteries, machines, drones, vehicles).",
+            new String[]{
+                    "Place down the Item Charger and connect it to a power grid (Solar, Turbine, Battery, or Wires).",
+                    "Right-Click the Item Charger to open the charging interface.",
+                    "Place any item requiring power (e.g., Electronic Zapper, RC Car, Drone, Battery Block, Machine) into the charging cradle.",
+                    "The station slowly transfers power into the item at 1 EU/t (20 EU/s).",
+                    "When placed in the world, charged block items and vehicles retain their stored energy!"
+            },
+            new String[][]{
+                    {"Right-Click Block", "Open Item Charger GUI"},
+                    {"Shift + Right-Click", "Open Field Guide Diagnostics"},
+                    {"Charging Rate", "1 EU per tick (Slow steady charging)"},
+                    {"Automation", "Hoppers can insert from top/sides and extract full items from bottom"}
+            },
+            new String[]{
+                    "Charge the Electronic Zapper to restore full Zap and Attack mode abilities.",
+                    "Charge batteries or machines in item form before transport to place pre-charged systems in remote bases.",
+                    "Equipped with built-in auto-shutoff when the inserted item reaches 100% capacity."
+            }
     );
 
     public final String id;
@@ -1164,6 +1190,7 @@ public enum TipTopic {
         if (block == EvecualMC.ELECTRONIC_DUPER_BLOCK) return ELECTRONIC_DUPER;
         if (block == EvecualMC.MATERIALIZER_BLOCK) return MATERIALIZER;
         if (block == EvecualMC.ELECTRIC_GRINDER_BLOCK) return ELECTRIC_GRINDER;
+        if (block == EvecualMC.ITEM_CHARGER_BLOCK) return ITEM_CHARGER;
         if (block == EvecualMC.STATIONARY_RC_CONTROLLER_BLOCK) return STATIONARY_RC_CONTROLLER;
         if (block == EvecualMC.HELI_CHARGER_BLOCK) return HELI_CHARGER;
         if (block == EvecualMC.DRONE_PICKUP_BLOCK) return DRONE_PICKUP;
@@ -1215,6 +1242,7 @@ public enum TipTopic {
         if (item == EvecualMC.ELECTRONIC_DUPER_ITEM) return ELECTRONIC_DUPER;
         if (item == EvecualMC.MATERIALIZER_ITEM) return MATERIALIZER;
         if (item == EvecualMC.ELECTRIC_GRINDER_ITEM) return ELECTRIC_GRINDER;
+        if (item == EvecualMC.ITEM_CHARGER_ITEM) return ITEM_CHARGER;
         if (item == EvecualMC.ELACTORITE) return ELACTORITE;
         if (item == EvecualMC.ELECTRONIC_ZAPPER) return ELECTRONIC_ZAPPER;
         if (item == EvecualMC.STEEL_ROD) return STEEL_ROD;

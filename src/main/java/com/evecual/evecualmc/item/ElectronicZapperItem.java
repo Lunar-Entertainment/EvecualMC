@@ -1,5 +1,6 @@
 package com.evecual.evecualmc.item;
 
+import com.evecual.evecualmc.energy.ItemEnergyHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
@@ -33,6 +34,11 @@ public class ElectronicZapperItem extends Item {
     public static final String MODE_KEY = "ZapperMode";
     public static final int MODE_ATTACK = 0;
     public static final int MODE_ZAP = 1;
+
+    public static final int MAX_ENERGY = ItemEnergyHelper.ZAPPER_MAX_ENERGY; // 1000 EU
+    public static final int COST_ZAP_BLOCK = 5;
+    public static final int COST_ATTACK_MELEE = 10;
+    public static final int COST_ATTACK_RANGED = 20;
 
     public ElectronicZapperItem(Settings settings) {
         super(settings);
@@ -81,6 +87,8 @@ public class ElectronicZapperItem extends Item {
             return TypedActionResult.success(stack, world.isClient());
         }
 
+        long currentEnergy = ItemEnergyHelper.getEnergy(stack);
+
         // Zap Mode: Raycast up to 12 blocks to disintegrate blocks at range
         if (isZapMode(stack)) {
             HitResult hit = user.raycast(12.0, 0.0F, false);
@@ -90,8 +98,17 @@ public class ElectronicZapperItem extends Item {
                 BlockState state = world.getBlockState(targetPos);
 
                 if (state.getHardness(world, targetPos) >= 0 && !state.isAir()) {
+                    if (currentEnergy < COST_ZAP_BLOCK) {
+                        if (!world.isClient()) {
+                            user.sendMessage(Text.literal("§c⚡ Zapper Discharged! (" + currentEnergy + "/" + MAX_ENERGY + " EU) Charge in Item Charger."), true);
+                            world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 0.6F, 1.6F);
+                        }
+                        return TypedActionResult.fail(stack);
+                    }
+
                     if (!world.isClient()) {
                         ServerWorld serverWorld = (ServerWorld) world;
+                        ItemEnergyHelper.discharge(stack, COST_ZAP_BLOCK);
                         world.breakBlock(targetPos, true, user);
 
                         // Beam particle line from player to block
@@ -117,8 +134,17 @@ public class ElectronicZapperItem extends Item {
         if (isAttackMode(stack)) {
             LivingEntity target = getTargetEntity(user, 16.0);
             if (target != null) {
+                if (currentEnergy < COST_ATTACK_RANGED) {
+                    if (!world.isClient()) {
+                        user.sendMessage(Text.literal("§c⚡ Low Power! Need " + COST_ATTACK_RANGED + " EU for Plasma Arc (Have " + currentEnergy + " EU)."), true);
+                        world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 0.6F, 1.6F);
+                    }
+                    return TypedActionResult.fail(stack);
+                }
+
                 if (!world.isClient()) {
                     ServerWorld serverWorld = (ServerWorld) world;
+                    ItemEnergyHelper.discharge(stack, COST_ATTACK_RANGED);
                     target.damage(world.getDamageSources().playerAttack(user), 16.0F);
 
                     // Electric beam from player to target
@@ -138,8 +164,17 @@ public class ElectronicZapperItem extends Item {
                 return TypedActionResult.success(stack, world.isClient());
             } else {
                 // If no entity aimed at, fire a forward spark discharge
+                if (currentEnergy < 5) {
+                    if (!world.isClient()) {
+                        user.sendMessage(Text.literal("§c⚡ Zapper Discharged! Charge in Item Charger."), true);
+                        world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 0.5F, 1.8F);
+                    }
+                    return TypedActionResult.fail(stack);
+                }
+
                 if (!world.isClient()) {
                     ServerWorld serverWorld = (ServerWorld) world;
+                    ItemEnergyHelper.discharge(stack, 5);
                     Vec3d start = user.getEyePos().add(user.getRotationVector().multiply(0.3));
                     Vec3d end = start.add(user.getRotationVector().multiply(12.0));
                     spawnElectricBeam(serverWorld, start, end, 14);
@@ -167,8 +202,18 @@ public class ElectronicZapperItem extends Item {
             BlockState state = world.getBlockState(pos);
 
             if (state.getHardness(world, pos) >= 0 && !state.isAir()) {
+                long energy = ItemEnergyHelper.getEnergy(stack);
+                if (energy < COST_ZAP_BLOCK) {
+                    if (!world.isClient() && user != null) {
+                        user.sendMessage(Text.literal("§c⚡ Zapper Discharged! (" + energy + "/" + MAX_ENERGY + " EU) Charge in Item Charger."), true);
+                        world.playSound(null, pos, SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 0.6F, 1.6F);
+                    }
+                    return ActionResult.FAIL;
+                }
+
                 if (!world.isClient()) {
                     ServerWorld serverWorld = (ServerWorld) world;
+                    ItemEnergyHelper.discharge(stack, COST_ZAP_BLOCK);
                     world.breakBlock(pos, true, user);
 
                     serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 12, 0.2, 0.2, 0.2, 0.05);
@@ -191,34 +236,44 @@ public class ElectronicZapperItem extends Item {
     @Override
     public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         World world = attacker.getWorld();
+        long energy = ItemEnergyHelper.getEnergy(stack);
 
         if (isAttackMode(stack)) {
             // Enhanced Attack Mode: High electric strike + chain shock
-            if (!world.isClient() && attacker instanceof PlayerEntity player) {
-                ServerWorld serverWorld = (ServerWorld) world;
+            if (energy >= COST_ATTACK_MELEE) {
+                if (!world.isClient() && attacker instanceof PlayerEntity player) {
+                    ServerWorld serverWorld = (ServerWorld) world;
+                    ItemEnergyHelper.discharge(stack, COST_ATTACK_MELEE);
 
-                // Extra bonus electric shock damage
-                target.damage(world.getDamageSources().playerAttack(player), 14.0F);
+                    // Extra bonus electric shock damage
+                    target.damage(world.getDamageSources().playerAttack(player), 14.0F);
 
-                // Particle explosion
-                serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 0.8, target.getZ(), 20, 0.3, 0.3, 0.3, 0.08);
-                serverWorld.spawnParticles(ParticleTypes.FLASH, target.getX(), target.getY() + 1.0, target.getZ(), 1, 0, 0, 0, 0);
+                    // Particle explosion
+                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 0.8, target.getZ(), 20, 0.3, 0.3, 0.3, 0.08);
+                    serverWorld.spawnParticles(ParticleTypes.FLASH, target.getX(), target.getY() + 1.0, target.getZ(), 1, 0, 0, 0, 0);
 
-                world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.85F, 1.5F);
+                    world.playSound(null, target.getX(), target.getY(), target.getZ(),
+                            SoundEvents.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.85F, 1.5F);
 
-                // Chain electric arcs to up to 2 nearby hostile mobs within 6 blocks
-                Box nearbyBox = target.getBoundingBox().expand(6.0);
-                List<LivingEntity> nearby = world.getEntitiesByClass(LivingEntity.class, nearbyBox,
-                        e -> e != attacker && e != target && e.isAlive() && (e instanceof HostileEntity || e instanceof MobEntity));
+                    // Chain electric arcs to up to 2 nearby hostile mobs within 6 blocks
+                    Box nearbyBox = target.getBoundingBox().expand(6.0);
+                    List<LivingEntity> nearby = world.getEntitiesByClass(LivingEntity.class, nearbyBox,
+                            e -> e != attacker && e != target && e.isAlive() && (e instanceof HostileEntity || e instanceof MobEntity));
 
-                int chained = 0;
-                for (LivingEntity chainTarget : nearby) {
-                    if (chained >= 2) break;
-                    chainTarget.damage(world.getDamageSources().playerAttack(player), 8.0F);
-                    spawnElectricBeam(serverWorld, target.getEyePos(), chainTarget.getEyePos(), 10);
-                    serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, chainTarget.getX(), chainTarget.getY() + 0.5, chainTarget.getZ(), 10, 0.2, 0.2, 0.2, 0.04);
-                    chained++;
+                    int chained = 0;
+                    for (LivingEntity chainTarget : nearby) {
+                        if (chained >= 2) break;
+                        chainTarget.damage(world.getDamageSources().playerAttack(player), 8.0F);
+                        spawnElectricBeam(serverWorld, target.getEyePos(), chainTarget.getEyePos(), 10);
+                        serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, chainTarget.getX(), chainTarget.getY() + 0.5, chainTarget.getZ(), 10, 0.2, 0.2, 0.2, 0.04);
+                        chained++;
+                    }
+                }
+            } else {
+                // Out of energy in attack mode
+                if (!world.isClient() && attacker instanceof PlayerEntity player) {
+                    player.sendMessage(Text.literal("§c⚡ Zapper Discharged! (" + energy + "/" + MAX_ENERGY + " EU) Charge in Item Charger."), true);
+                    world.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.BLOCK_NOTE_BLOCK_SNARE.value(), SoundCategory.PLAYERS, 0.5F, 1.9F);
                 }
             }
         } else {
@@ -280,8 +335,34 @@ public class ElectronicZapperItem extends Item {
     }
 
     @Override
+    public boolean isItemBarVisible(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getItemBarStep(ItemStack stack) {
+        long energy = ItemEnergyHelper.getEnergy(stack);
+        return Math.round((float) energy * 13.0F / (float) MAX_ENERGY);
+    }
+
+    @Override
+    public int getItemBarColor(ItemStack stack) {
+        long energy = ItemEnergyHelper.getEnergy(stack);
+        float ratio = (float) energy / (float) MAX_ENERGY;
+        if (ratio > 0.5F) {
+            return 0x00E5FF; // Bright Cyan Electric
+        } else if (ratio > 0.2F) {
+            return 0xF59E0B; // Amber Warning
+        } else {
+            return 0xEF4444; // Red Critical
+        }
+    }
+
+    @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         boolean attack = isAttackMode(stack);
+        long energy = ItemEnergyHelper.getEnergy(stack);
+        int pct = (int) (energy * 100 / MAX_ENERGY);
 
         if (attack) {
             tooltip.add(Text.literal("§6⚡ Mode: §c⚔ ATTACK MODE §7(Enhanced Combat)"));
@@ -289,10 +370,11 @@ public class ElectronicZapperItem extends Item {
             tooltip.add(Text.literal("§6⚡ Mode: §b🌀 ZAP MODE §7(Block Disintegration)"));
         }
 
+        tooltip.add(Text.literal("§e⚡ Energy: §f" + energy + " / " + MAX_ENERGY + " EU §7(" + pct + "%)"));
         tooltip.add(Text.literal("§e• Shift + Right-Click: §fSwitch Active Mode"));
-        tooltip.add(Text.literal("§e• Zap Mode (RMB): §fInstantly disintegrates blocks at range"));
-        tooltip.add(Text.literal("§e• Attack Mode: §f+18 Melee Shock, Chain Lightning & Plasma Bolts"));
-        tooltip.add(Text.literal("§8Forged from high-voltage Elactorite & Steel Rod"));
+        tooltip.add(Text.literal("§e• Zap Mode (RMB): §fDisintegrate blocks (-5 EU)"));
+        tooltip.add(Text.literal("§e• Attack Mode: §f+14 Melee Shock (-10 EU) / Plasma Bolt (-20 EU)"));
+        tooltip.add(Text.literal("§8Recharge in an Item Charger station"));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

@@ -1,5 +1,28 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.18] - 2026-09-12
+### Added & Improved
+- **Item Charger Machine Block (`item_charger`)**:
+  - Added the **Item Charger**, a high-tech energy workstation designed to slowly trickle-charge any device, tool, weapon, battery, machine, drone, or vehicle in item form.
+  - **Slow Steady Charging Rate**: Charges items at a controlled high-tech rate of 1 EU/t (20 EU/second).
+  - **Energy Retention on World Placement**: Items charged in the Item Charger (Battery Blocks, Storage Units, Machines, Solar Panels, Turrets, RC Cars, RC Drones, Pickup Drones, Robots, and Helicopters) retain their exact stored energy amount when placed into the world!
+  - **Custom Charging GUI**: Sleek cybernetic interface featuring an animated charging cradle with glowing neon corner brackets, a vertical 4000 EU station power gauge, a horizontal item battery percentage gauge (0 - 100%), and real-time charging status telemetry.
+  - **Visual & Audio FX**: Emits electric sparks and portal shimmer around the top charging cradle while active, complete with gentle periodic charging hum audio (`BLOCK_RESPAWN_ANCHOR_CHARGE`).
+  - **Grid & Hopper Automation**: Fully compatible with Wire networks, Batteries, Solar Panels, and Wind Turbines. Supports top/side insertion via Hoppers/Chutes and automatic bottom extraction when items are fully charged.
+  - **Crafting Recipe**: 4 Steel Ingots, 2 Steel Rods, 1 Copper Plate, 1 Redstone Dust, and 1 Glass (`recipes/item_charger.json`).
+- **Electronic Zapper Battery & Energy Integration**:
+  - The **Electronic Zapper** now stores up to 1000 EU and requires power to operate!
+  - **Zap Mode Energy Consumption**: Disintegrating blocks consumes 5 EU per block. Warns and prevents firing if discharged.
+  - **Attack Mode Energy Consumption**: Melee shock strikes consume 10 EU (deals +14 electric shock damage and chain lightning), and long-range plasma bolts consume 20 EU. Deals baseline physical damage if discharged.
+  - **Dynamic In-Inventory Energy Bar**: Added custom cyan-amber-red battery level indicator rendered directly beneath the item in player hotbars and inventories.
+  - Updated hover tooltip with live `§e⚡ Energy: X / 1000 EU (Y%)` readout.
+- **Universal Item Energy System (`ItemEnergyHelper`)**:
+  - Built a centralized system for querying, charging, discharging, and syncing energy tags across all items and their corresponding placed blocks/entities.
+- **Field Guide & HUD Integration**:
+  - Added dedicated Field Guide topic for `ITEM_CHARGER` in `TipTopic.java`.
+  - Added real-time crosshair HUD overlay for Item Chargers in `EnergyHudOverlay.java`.
+  - Added English localization entries in `en_us.json` and `en-US.json`.
+
 ## [1.8.17] - 2026-09-12
 ### Added & Improved
 - **Electronic Zapper Handheld Tool & Weapon (`electronic_zapper`)**:

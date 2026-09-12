@@ -111,6 +111,8 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 renderMaterializerTip(drawContext, client, materializer);
             } else if (be instanceof com.evecual.evecualmc.block.entity.ElectricGrinderBlockEntity grinder) {
                 renderElectricGrinderTip(drawContext, client, grinder);
+            } else if (be instanceof com.evecual.evecualmc.block.entity.ItemChargerBlockEntity itemCharger) {
+                renderItemChargerTip(drawContext, client, itemCharger);
             } else if (be instanceof HeliChargerBlockEntity heliCharger) {
                 renderHeliChargerTip(drawContext, client, heliCharger);
             } else if (state.isOf(EvecualMC.WIND_TURBINE_BLOCK) || be instanceof com.evecual.evecualmc.block.entity.WindTurbineBlockEntity) {
@@ -232,6 +234,36 @@ public class EnergyHudOverlay implements HudRenderCallback {
                 energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
                 active ? (double) progress / Math.max(1, maxTicks) : null,
                 active ? 0xFFEA580C : null);
+    }
+
+    private void renderItemChargerTip(DrawContext context, MinecraftClient client, com.evecual.evecualmc.block.entity.ItemChargerBlockEntity itemCharger) {
+        long energy = itemCharger.getEnergy();
+        long maxEnergy = itemCharger.getMaxEnergy();
+        boolean active = itemCharger.isActive();
+        ItemStack stack = itemCharger.getStack(0);
+
+        String status;
+        if (!stack.isEmpty() && com.evecual.evecualmc.energy.ItemEnergyHelper.isChargeable(stack)) {
+            long itemE = com.evecual.evecualmc.energy.ItemEnergyHelper.getEnergy(stack);
+            long itemMaxE = com.evecual.evecualmc.energy.ItemEnergyHelper.getMaxEnergy(stack);
+            int pct = (int) (itemE * 100 / Math.max(1, itemMaxE));
+            if (active) {
+                status = "⚡ Slow Charging: " + stack.getName().getString() + " " + pct + "% (1 EU/t)";
+            } else if (itemE >= itemMaxE) {
+                status = "⚡ Fully Charged: " + stack.getName().getString() + " (" + itemE + " EU)";
+            } else if (energy < 1) {
+                status = "⚠️ Station Power Depleted (Needs EU)";
+            } else {
+                status = "⚡ Idle: " + stack.getName().getString() + " (" + pct + "%)";
+            }
+        } else {
+            status = "⚡ Idle - Insert Chargeable Item";
+        }
+        int color = active ? 0xFF38BDF8 : (energy > 0 ? 0xFF67E8F9 : 0xFFF87171);
+
+        renderUnifiedHud(context, client, "⚡", "Item Charger", 0xFF0284C7,
+                energy + " / " + maxEnergy + " EU", 0xFFFFFFFF, status, color,
+                (double) energy / Math.max(1, maxEnergy), 0xFF00E5FF);
     }
 
     private void renderChargerWaypoints(DrawContext context, MinecraftClient client) {
