@@ -109,5 +109,9 @@
   "block.evecualmc.item_charger": "Item Charger",
   "item.evecualmc.item_charger": "Item Charger",
   "container.evecualmc.item_charger": "Item Charger",
-  "category.evecualmc.evecual": "Evecual"
+  "category.evecualmc.evecual": "Evecual",
+  "block.evecualmc.item_fabricator": "Item Fabricator",
+  "item.evecualmc.item_fabricator": "Item Fabricator",
+  "container.evecualmc.item_fabricator": "Item Fabricator",
+  "item.evecualmc.railgun": "Lorentz Railgun"
 }

@@ -5,6 +5,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Rarity;
+import com.evecual.evecualmc.EvecualMC;
 
 import java.util.Set;
 
@@ -315,8 +316,36 @@ public class DuperRarityHelper {
             Items.BARREL
     );
 
+    public static boolean isDuplicable(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        Item item = stack.getItem();
+
+        // 1. Dupers (cannot duplicate duplicating machines)
+        if (stack.isOf(EvecualMC.ELECTRONIC_DUPER_ITEM)) return false;
+        if (item instanceof BlockItem bi && bi.getBlock() == EvecualMC.ELECTRONIC_DUPER_BLOCK) return false;
+
+        // 2. Lightning item
+        if (stack.isOf(EvecualMC.LIGHTNING_ITEM)) return false;
+
+        // 3. Zappers
+        if (stack.isOf(EvecualMC.ELECTRONIC_ZAPPER)) return false;
+
+        // 4. RC Vehicles & full vehicles
+        if (stack.isOf(EvecualMC.RC_CAR_ITEM)) return false;
+        if (stack.isOf(EvecualMC.RC_DRONE_ITEM)) return false;
+        if (stack.isOf(EvecualMC.RC_ROBOT_ITEM)) return false;
+        if (stack.isOf(EvecualMC.PICKUP_DRONE_ITEM)) return false;
+        if (stack.isOf(EvecualMC.CAR_ITEM)) return false;
+        if (stack.isOf(EvecualMC.HELI_ITEM)) return false;
+
+        // 5. Railgun
+        if (EvecualMC.RAILGUN_ITEM != null && stack.isOf(EvecualMC.RAILGUN_ITEM)) return false;
+
+        return true;
+    }
+
     public static int getRequiredTicks(ItemStack stack) {
-        if (stack.isEmpty()) return TICKS_COMMON;
+        if (stack.isEmpty() || !isDuplicable(stack)) return TICKS_COMMON;
         Item item = stack.getItem();
 
         if (NETHERITE_ITEMS.contains(item)) return TICKS_NETHERITE;
@@ -362,6 +391,7 @@ public class DuperRarityHelper {
 
     public static String getRarityLabel(ItemStack stack) {
         if (stack.isEmpty()) return "§7Basic";
+        if (!isDuplicable(stack)) return "§c§lNon-Duplicable (Protected)";
         Item item = stack.getItem();
 
         if (NETHERITE_ITEMS.contains(item)) return "§4§lMythic (Netherite)";

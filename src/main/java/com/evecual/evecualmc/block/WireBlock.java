@@ -62,6 +62,7 @@ public class WireBlock extends BlockWithEntity {
                 || state.isOf(EvecualMC.BATTERY_BLOCK)
                 || state.isOf(EvecualMC.ELECTRONIC_COMBINER_BLOCK)
                 || state.isOf(EvecualMC.ELECTRONIC_DUPER_BLOCK)
+                || state.isOf(EvecualMC.ITEM_FABRICATOR_BLOCK)
                 || state.isOf(EvecualMC.MATERIALIZER_BLOCK)
                 || state.isOf(EvecualMC.ELECTRIC_GRINDER_BLOCK)
                 || state.isOf(EvecualMC.ITEM_CHARGER_BLOCK)

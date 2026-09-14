@@ -1,0 +1,10 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "particle": "evecualmc:block/fabricator_front",
+    "top": "evecualmc:block/fabricator_top",
+    "bottom": "evecualmc:block/fabricator_bottom",
+    "front": "evecualmc:block/fabricator_front",
+    "side": "evecualmc:block/fabricator_side"
+  }
+}

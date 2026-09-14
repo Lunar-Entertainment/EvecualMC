@@ -85,14 +85,19 @@ public class ElectronicDuperScreen extends HandledScreen<ElectronicDuperScreenHa
             context.drawText(this.textRenderer, "Tier: " + com.evecual.evecualmc.util.DuperRarityHelper.getRarityLabel(input), x + 38, y + 70, 0xFF67E8F9, false);
         } else {
             if (!input.isEmpty()) {
-                String rarity = com.evecual.evecualmc.util.DuperRarityHelper.getRarityLabel(input);
-                String durStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(maxProgress);
-                if (energy < reqEnergy) {
-                    context.drawText(this.textRenderer, "⚡ Needs " + reqEnergy + " EU (" + energy + "/" + reqEnergy + ")", x + 38, y + 60, 0xFFFFAA00, false);
-                    context.drawText(this.textRenderer, "Time: " + durStr + " | " + rarity, x + 38, y + 70, 0xFF94A3B8, false);
+                if (!com.evecual.evecualmc.util.DuperRarityHelper.isDuplicable(input)) {
+                    context.drawText(this.textRenderer, "⛔ Non-Duplicable Technology!", x + 38, y + 60, 0xFFEF4444, false);
+                    context.drawText(this.textRenderer, "Protected item cannot be cloned", x + 38, y + 70, 0xFFF87171, false);
                 } else {
-                    context.drawText(this.textRenderer, "⚡ Ready: " + durStr + " (" + reqEnergy + " EU)", x + 38, y + 60, 0xFF55FF55, false);
-                    context.drawText(this.textRenderer, "Rarity: " + rarity, x + 38, y + 70, 0xFF67E8F9, false);
+                    String rarity = com.evecual.evecualmc.util.DuperRarityHelper.getRarityLabel(input);
+                    String durStr = com.evecual.evecualmc.util.DuperRarityHelper.formatDuration(maxProgress);
+                    if (energy < reqEnergy) {
+                        context.drawText(this.textRenderer, "⚡ Needs " + reqEnergy + " EU (" + energy + "/" + reqEnergy + ")", x + 38, y + 60, 0xFFFFAA00, false);
+                        context.drawText(this.textRenderer, "Time: " + durStr + " | " + rarity, x + 38, y + 70, 0xFF94A3B8, false);
+                    } else {
+                        context.drawText(this.textRenderer, "⚡ Ready: " + durStr + " (" + reqEnergy + " EU)", x + 38, y + 60, 0xFF55FF55, false);
+                        context.drawText(this.textRenderer, "Rarity: " + rarity, x + 38, y + 70, 0xFF67E8F9, false);
+                    }
                 }
             } else {
                 context.drawText(this.textRenderer, "⚡ Insert Item to Duplicate", x + 38, y + 62, 0xFF94A3B8, false);

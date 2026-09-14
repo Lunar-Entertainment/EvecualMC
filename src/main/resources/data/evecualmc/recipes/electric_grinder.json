@@ -21,7 +21,7 @@
     "B": {
       "item": "evecualmc:battery"
     }
-  ],
+  },
   "result": {
     "item": "evecualmc:electric_grinder",
     "count": 1

@@ -23,6 +23,7 @@ public class ItemEnergyHelper {
         Item item = stack.getItem();
 
         if (item instanceof ElectronicZapperItem) return true;
+        if (stack.isOf(EvecualMC.RAILGUN_ITEM)) return true;
         if (stack.isOf(EvecualMC.RC_CAR_ITEM)) return true;
         if (stack.isOf(EvecualMC.RC_DRONE_ITEM)) return true;
         if (stack.isOf(EvecualMC.PICKUP_DRONE_ITEM)) return true;
@@ -30,6 +31,7 @@ public class ItemEnergyHelper {
         if (stack.isOf(EvecualMC.HELI_ITEM)) return true;
 
         if (stack.isOf(EvecualMC.BATTERY_BLOCK.asItem())) return true;
+        if (stack.isOf(EvecualMC.ITEM_FABRICATOR_BLOCK.asItem())) return true;
         if (stack.isOf(EvecualMC.MATERIALIZER_BLOCK.asItem())) return true;
         if (stack.isOf(EvecualMC.ELECTRIC_GRINDER_BLOCK.asItem())) return true;
         if (stack.isOf(EvecualMC.ELECTRONIC_DUPER_BLOCK.asItem())) return true;
@@ -58,6 +60,7 @@ public class ItemEnergyHelper {
         Item item = stack.getItem();
 
         if (item instanceof ElectronicZapperItem) return ZAPPER_MAX_ENERGY;
+        if (stack.isOf(EvecualMC.RAILGUN_ITEM)) return 2000;
         if (stack.isOf(EvecualMC.RC_CAR_ITEM)) return RcCarEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.RC_DRONE_ITEM) || stack.isOf(EvecualMC.PICKUP_DRONE_ITEM)) return RcDroneEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.RC_ROBOT_ITEM)) return RcRobotEntity.MAX_ENERGY;
@@ -69,6 +72,7 @@ public class ItemEnergyHelper {
         }
 
         if (stack.isOf(EvecualMC.BATTERY_BLOCK.asItem())) return BatteryBlockEntity.MAX_CAPACITY;
+        if (stack.isOf(EvecualMC.ITEM_FABRICATOR_BLOCK.asItem())) return ItemFabricatorBlockEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.MATERIALIZER_BLOCK.asItem())) return MaterializerBlockEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.ELECTRIC_GRINDER_BLOCK.asItem())) return ElectricGrinderBlockEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.ELECTRONIC_DUPER_BLOCK.asItem())) return ElectronicDuperBlockEntity.MAX_ENERGY;

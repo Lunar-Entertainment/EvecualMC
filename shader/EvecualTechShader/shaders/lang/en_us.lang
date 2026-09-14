@@ -1,0 +1,85 @@
+# Evecual Tech Shaders Language File
+profile.LOW=Low
+profile.MEDIUM=Medium
+profile.HIGH=High
+profile.ULTRA=Ultra
+profile.comment=Cyber-tech performance presets
+
+option.QUALITY=Graphics Quality
+option.QUALITY.comment=Overall shader quality preset
+value.QUALITY.0=Low
+value.QUALITY.1=Medium
+value.QUALITY.2=High
+value.QUALITY.3=Ultra
+
+option.CONTACT_SHADOWS=Contact Shadows
+option.CONTACT_SHADOWS.comment=Screen-space micro contact shadows under edges and geometry
+
+option.VOLUMETRIC_RAYS=Volumetric Light Rays
+option.VOLUMETRIC_RAYS.comment=Atmospheric crepuscular rays (god rays) through terrain and clouds
+
+option.SSAO=Ambient Occlusion (SSAO)
+option.SSAO.comment=Screen-space ambient occlusion for realistic depth and crevices
+
+option.BLOOM=Bloom Lighting
+option.BLOOM.comment=High-dynamic-range glow around emissive blocks, lamps, and sunlight
+value.BLOOM.0=Off
+value.BLOOM.1=Medium
+value.BLOOM.2=High
+
+option.WAVING_PLANTS=Waving Foliage
+option.WAVING_PLANTS.comment=Wind animation for leaves, grass, crops, and foliage
+
+option.WAVING_WATER=Waving Water
+option.WAVING_WATER.comment=Dynamic surface wave displacement and specular refraction
+
+option.CLOUDS=Volumetric Clouds
+option.CLOUDS.comment=Multi-layered procedural volumetric cyber-skies
+
+option.ATMOSPHERIC_FOG=Atmospheric Fog
+option.ATMOSPHERIC_FOG.comment=Distance haze and futuristic atmospheric scattering
+
+option.MOTION_BLUR=Motion Blur
+option.MOTION_BLUR.comment=Cinematic camera velocity motion blur
+
+option.MOTION_BLUR_SAMPLES=Motion Blur Quality
+option.MOTION_BLUR_SAMPLES.comment=Number of samples along velocity vectors
+value.MOTION_BLUR_SAMPLES.3=3 Samples (Fast)
+value.MOTION_BLUR_SAMPLES.5=5 Samples (Balanced)
+value.MOTION_BLUR_SAMPLES.7=7 Samples (Smooth)
+
+option.CONNECTED_BLOCKS=Connected Blocks
+option.CONNECTED_BLOCKS.comment=Advanced grid detection and border highlighting for technical blocks
+
+option.CONNECTED_GLASS=Connected Glass
+option.CONNECTED_GLASS.comment=Borderless cybernetic seamless glass panels
+
+option.EMISSIVE_ORES=Emissive Ores
+option.EMISSIVE_ORES.comment=Glowing cyber-ore veins visible in dark caverns and deepslate
+
+option.ORE_GLOW_INTENSITY=Ore Glow Intensity
+option.ORE_GLOW_INTENSITY.comment=Intensity of emissive ore radiance
+value.ORE_GLOW_INTENSITY.0.50=Subtle
+value.ORE_GLOW_INTENSITY.1.00=Vibrant
+value.ORE_GLOW_INTENSITY.1.50=Radiant
+value.ORE_GLOW_INTENSITY.1.75=Hyper
+
+option.CHROMATIC_ABERRATION=Chromatic Aberration
+option.CHROMATIC_ABERRATION.comment=HUD optical dispersion along screen perimeters
+
+option.VIGNETTE=Cyber Vignette
+option.VIGNETTE.comment=Subtle perimeter lens shading for immersive cyber-cockpit feel
+
+option.TECH_CONTRAST=Tech Contrast
+option.TECH_CONTRAST.comment=Fine-tune image contrast and shadow depth
+value.TECH_CONTRAST.0.90=Soft
+value.TECH_CONTRAST.1.00=Normal
+value.TECH_CONTRAST.1.06=High
+value.TECH_CONTRAST.1.12=Ultra
+
+option.TECH_VIBRANCE=Tech Vibrance
+option.TECH_VIBRANCE.comment=Color saturation and cybernetic neon color boost
+value.TECH_VIBRANCE.0.90=Muted
+value.TECH_VIBRANCE.1.00=Normal
+value.TECH_VIBRANCE.1.12=Cyber
+value.TECH_VIBRANCE.1.20=Vivid

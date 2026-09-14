@@ -160,7 +160,7 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
         boolean canAcceptOutput = be.canAcceptOutput(be.duplicating ? be.duplicatingTarget : inputStack);
 
         // Start new duplication cycle if conditions are met
-        if (!be.duplicating && !inputStack.isEmpty() && be.energy >= be.energyCost && canAcceptOutput) {
+        if (!be.duplicating && !inputStack.isEmpty() && DuperRarityHelper.isDuplicable(inputStack) && be.energy >= be.energyCost && canAcceptOutput) {
             be.energy -= be.energyCost;
             be.duplicating = true;
             be.progressTicks = 0;
@@ -301,7 +301,12 @@ public class ElectronicDuperBlockEntity extends BlockEntity implements EnergySto
 
     @Override
     public boolean canInsert(int slot, ItemStack stack, @Nullable Direction dir) {
-        return slot == 0;
+        return slot == 0 && DuperRarityHelper.isDuplicable(stack);
+    }
+
+    @Override
+    public boolean isValid(int slot, ItemStack stack) {
+        return slot == 0 && DuperRarityHelper.isDuplicable(stack);
     }
 
     @Override

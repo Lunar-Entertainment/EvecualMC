@@ -206,6 +206,11 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "copper_plate"),
             new Item(new Item.Settings()));
 
+    public static final Item RAILGUN_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "railgun"),
+            new com.evecual.evecualmc.item.RailgunItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.EPIC)));
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -267,6 +272,17 @@ public class EvecualMC implements ModInitializer {
             Registries.ITEM,
             new Identifier(MOD_ID, "electronic_duper"),
             new BlockItem(ELECTRONIC_DUPER_BLOCK, new Item.Settings()));
+
+    public static final Block ITEM_FABRICATOR_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "item_fabricator"),
+            new com.evecual.evecualmc.block.ItemFabricatorBlock(
+                    FabricBlockSettings.create().strength(1.5f).sounds(BlockSoundGroup.METAL).luminance(state -> state.get(com.evecual.evecualmc.block.ItemFabricatorBlock.ACTIVE) ? 10 : 0)));
+
+    public static final Item ITEM_FABRICATOR_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "item_fabricator"),
+            new BlockItem(ITEM_FABRICATOR_BLOCK, new Item.Settings()));
 
     public static final Block MATERIALIZER_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -565,6 +581,15 @@ public class EvecualMC implements ModInitializer {
                                     ELECTRONIC_DUPER_BLOCK)
                             .build());
 
+    public static final BlockEntityType<com.evecual.evecualmc.block.entity.ItemFabricatorBlockEntity> ITEM_FABRICATOR_BLOCK_ENTITY = Registry
+            .register(
+                    Registries.BLOCK_ENTITY_TYPE,
+                    new Identifier(MOD_ID, "item_fabricator"),
+                    FabricBlockEntityTypeBuilder
+                            .create(com.evecual.evecualmc.block.entity.ItemFabricatorBlockEntity::new,
+                                    ITEM_FABRICATOR_BLOCK)
+                            .build());
+
     public static final BlockEntityType<com.evecual.evecualmc.block.entity.MaterializerBlockEntity> MATERIALIZER_BLOCK_ENTITY = Registry
             .register(
                     Registries.BLOCK_ENTITY_TYPE,
@@ -674,6 +699,13 @@ public class EvecualMC implements ModInitializer {
                     Registries.SCREEN_HANDLER,
                     new Identifier(MOD_ID, "electronic_duper"),
                     new ScreenHandlerType<>(com.evecual.evecualmc.screen.ElectronicDuperScreenHandler::new,
+                            FeatureFlags.VANILLA_FEATURES));
+
+    public static final ScreenHandlerType<com.evecual.evecualmc.screen.ItemFabricatorScreenHandler> ITEM_FABRICATOR_SCREEN_HANDLER = Registry
+            .register(
+                    Registries.SCREEN_HANDLER,
+                    new Identifier(MOD_ID, "item_fabricator"),
+                    new ScreenHandlerType<>(com.evecual.evecualmc.screen.ItemFabricatorScreenHandler::new,
                             FeatureFlags.VANILLA_FEATURES));
 
     public static final ScreenHandlerType<com.evecual.evecualmc.screen.MaterializerScreenHandler> MATERIALIZER_SCREEN_HANDLER = Registry
@@ -855,6 +887,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(TURRET_LINKER);
                 entries.add(STATIONARY_TURRET_ITEM);
                 entries.add(TURRET_AMMO_CONTAINER_ITEM);
+                entries.add(ITEM_FABRICATOR_ITEM);
+                entries.add(RAILGUN_ITEM);
             })
             .build();
 

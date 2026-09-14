@@ -1,5 +1,25 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.27] - 2026-09-14
+### Added & Improved
+- **Anti-Duplication Technology Restriction**:
+  - Implemented `DuperRarityHelper.isDuplicable(ItemStack stack)` protecting rare and advanced technical items.
+  - Electronic Dupers now strictly reject: Dupers themselves, Lightning Item, Zappers, RC Vehicles (RC Car, RC Drone, Pickup Drone, RC Robot, Car, Helicopter), and Railgun.
+  - GUI visually displays a warning `"⛔ Non-Duplicable Technology!"` and blocks slot insertion.
+- **Item Fabricator Block**:
+  - Added new advanced tier workstation: **Item Fabricator** (`evecualmc:item_fabricator`) with survival recipe (Netherite Scrap, Steel, Battery, Elactorite, Combiner).
+  - High-voltage energy consumer (4,000 EU storage) with full WireBlock connectivity.
+  - Interactive GUI featuring blueprint toggle selection: `[ ⚡ ZAPPER ]` and `[ 💥 RAILGUN ]`.
+  - Migrated Electronic Zapper crafting exclusively into the Item Fabricator.
+- **Lorentz Railgun (3D Modeled & Survival Craftable)**:
+  - Added heavy electromagnetic weapon: **Lorentz Railgun** (`evecualmc:railgun`).
+  - High survival cost recipe in Item Fabricator: 2x Netherite Ingots, 4x Elactorite, 4x Steel Rods, 1x Upgraded Engine, 4x Copper Plates, 4x Wires (consumes 1,500 EU & 200 ticks of fabrication).
+  - Stunning 3D model featuring dual parallel accelerator rails, central Lorentz chamber, tri-stage magnetic induction coils, high-density capacitor pack, ergonomic grip, shoulder stock, and holographic targeting sight.
+  - Supersonic kinetic hyper-velocity beam (80-block piercing range) dealing massive entity damage with sonic boom effects, block impact explosions, and ammo compatibility (Elactorite, Steel Rods, Steel Ammo, Iron/Copper Ammo, or internal EU plasma).
+- **Shader Validation Fix**:
+  - Fixed shaderpack packaging script `launch.ps1` to eliminate `.NET` framework version incompatibilities (`GetRelativePath`) on PowerShell 5.1.
+  - Properly synchronized Iris-compliant directory structure directly under `shaders/` and standardized `shaders.properties` configuration.
+
 ## [1.8.26] - 2026-09-14
 ### Added & Improved
 - **EvecualTechShader Iris Compatibility & Settings Menu Fix**:

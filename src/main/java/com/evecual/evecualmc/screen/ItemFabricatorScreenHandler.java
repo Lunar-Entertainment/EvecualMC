@@ -1,6 +1,7 @@
 package com.evecual.evecualmc.screen;
 
 import com.evecual.evecualmc.EvecualMC;
+import com.evecual.evecualmc.block.entity.ItemFabricatorBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -11,32 +12,34 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 
-public class ElectronicDuperScreenHandler extends ScreenHandler {
+public class ItemFabricatorScreenHandler extends ScreenHandler {
     private final Inventory inventory;
     private final PropertyDelegate propertyDelegate;
 
-    public ElectronicDuperScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(2), new ArrayPropertyDelegate(9));
+    public ItemFabricatorScreenHandler(int syncId, PlayerInventory playerInventory) {
+        this(syncId, playerInventory, new SimpleInventory(ItemFabricatorBlockEntity.INVENTORY_SIZE), new ArrayPropertyDelegate(10));
     }
 
-    public ElectronicDuperScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate) {
-        super(EvecualMC.ELECTRONIC_DUPER_SCREEN_HANDLER, syncId);
-        checkSize(inventory, 2);
+    public ItemFabricatorScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate) {
+        super(EvecualMC.ITEM_FABRICATOR_SCREEN_HANDLER, syncId);
+        checkSize(inventory, ItemFabricatorBlockEntity.INVENTORY_SIZE);
         this.inventory = inventory;
         this.propertyDelegate = propertyDelegate;
         inventory.onOpen(playerInventory.player);
         addProperties(propertyDelegate);
 
-        // Slot 0: Input Slot (x: 44, y: 35)
-        this.addSlot(new Slot(inventory, 0, 44, 35) {
-            @Override
-            public boolean canInsert(ItemStack stack) {
-                return com.evecual.evecualmc.util.DuperRarityHelper.isDuplicable(stack);
-            }
-        });
+        // Input slots 0..5 (3 columns x 2 rows)
+        // Row 0
+        this.addSlot(new Slot(inventory, 0, 44, 26));
+        this.addSlot(new Slot(inventory, 1, 62, 26));
+        this.addSlot(new Slot(inventory, 2, 80, 26));
+        // Row 1
+        this.addSlot(new Slot(inventory, 3, 44, 44));
+        this.addSlot(new Slot(inventory, 4, 62, 44));
+        this.addSlot(new Slot(inventory, 5, 80, 44));
 
-        // Slot 1: Output Slot (x: 132, y: 35)
-        this.addSlot(new Slot(inventory, 1, 132, 35) {
+        // Output slot 6 (x: 134, y: 35)
+        this.addSlot(new Slot(inventory, 6, 134, 35) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return false;
@@ -60,26 +63,43 @@ public class ElectronicDuperScreenHandler extends ScreenHandler {
         return (this.propertyDelegate.get(0) & 0xFFFF) | ((this.propertyDelegate.get(1) & 0xFFFF) << 16);
     }
 
+    public int getMaxEnergy() {
+        int val = (this.propertyDelegate.get(2) & 0xFFFF) | ((this.propertyDelegate.get(3) & 0xFFFF) << 16);
+        return val > 0 ? val : ItemFabricatorBlockEntity.MAX_ENERGY;
+    }
+
     public int getProgressTicks() {
-        return (this.propertyDelegate.get(2) & 0xFFFF) | ((this.propertyDelegate.get(3) & 0xFFFF) << 16);
+        return (this.propertyDelegate.get(4) & 0xFFFF) | ((this.propertyDelegate.get(5) & 0xFFFF) << 16);
     }
 
     public int getTotalTicks() {
-        int val = (this.propertyDelegate.get(4) & 0xFFFF) | ((this.propertyDelegate.get(5) & 0xFFFF) << 16);
-        return val > 0 ? val : 300;
-    }
-
-    public boolean isDuplicating() {
-        return this.propertyDelegate.get(6) == 1;
-    }
-
-    public int getEnergyCost() {
-        int val = (this.propertyDelegate.get(7) & 0xFFFF) | ((this.propertyDelegate.get(8) & 0xFFFF) << 16);
+        int val = (this.propertyDelegate.get(6) & 0xFFFF) | ((this.propertyDelegate.get(7) & 0xFFFF) << 16);
         return val > 0 ? val : 100;
     }
 
-    public ItemStack getInputStack() {
-        return this.inventory.getStack(0);
+    public boolean isActive() {
+        return this.propertyDelegate.get(8) == 1;
+    }
+
+    public int getSelectedRecipe() {
+        return this.propertyDelegate.get(9);
+    }
+
+    public ItemStack getStackInSlot(int slot) {
+        return this.inventory.getStack(slot);
+    }
+
+    @Override
+    public boolean onButtonClick(PlayerEntity player, int id) {
+        if (id == ItemFabricatorBlockEntity.RECIPE_ZAPPER || id == ItemFabricatorBlockEntity.RECIPE_RAILGUN) {
+            if (this.inventory instanceof ItemFabricatorBlockEntity be) {
+                be.setSelectedRecipe(id);
+            } else {
+                this.propertyDelegate.set(9, id);
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -96,14 +116,14 @@ public class ElectronicDuperScreenHandler extends ScreenHandler {
             ItemStack originalStack = slot.getStack();
             newStack = originalStack.copy();
 
-            if (invSlot < 2) {
+            if (invSlot < 7) {
                 // From machine slots to player inventory
-                if (!this.insertItem(originalStack, 2, 38, true)) {
+                if (!this.insertItem(originalStack, 7, 43, true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
-                // From player inventory to Input Slot (Slot 0)
-                if (!this.insertItem(originalStack, 0, 1, false)) {
+                // From player inventory to input slots (0..5)
+                if (!this.insertItem(originalStack, 0, 6, false)) {
                     return ItemStack.EMPTY;
                 }
             }
