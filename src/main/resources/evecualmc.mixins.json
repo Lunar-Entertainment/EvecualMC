@@ -6,7 +6,10 @@
   "mixins": [
     "ExampleMixin",
     "SlotAccessor",
-    "LightningEntityMixin"
+    "LightningEntityMixin",
+    "PlayerEntityMixin",
+    "ServerPlayerEntityMixin",
+    "PlayerScreenHandlerMixin"
   ],
   "client": [
     "KeyboardInputMixin",
@@ -14,7 +17,9 @@
     "MouseMixin",
     "GameRendererMixin",
     "InGameHudMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "InventoryScreenMixin",
+    "CreativeInventoryScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
