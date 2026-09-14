@@ -2,34 +2,15 @@
 
 ## [1.8.26] - 2026-09-14
 ### Added & Improved
-- **Mechanical Crown & Borgers Crown Items**:
-  - Added **Mechanical Crown**: An epic cyberpunk-steampunk crown forged from steel, gold, redstone, and an electric engine. Overclocks the Lightning Item into a devastating soul-lightning catalyst.
-  - Added **Borgers Crown**: A rare, magnificent crown crafted from golden ingots, toasted bread bun, and juicy burger beef patty. Provides regal vitality, continuous Resistance, and passive nourishment (hunger and saturation restoration).
-- **Special Crown Accessory Slot & GUI**:
-  - Added a dedicated **Crown Accessory Slot** (`Slot 46`) to the player inventory (`PlayerScreenHandler`), located symmetrically opposite the helmet slot at `(77, 8)`.
-  - Decorated with an authentic Minecraft GUI inset slot frame and an empty crown icon silhouette (`textures/gui/crown_slot.png`).
-  - Displays hover tooltip: `"👑 Crown Accessory Slot"` when hovered while empty.
-  - Seamless shift-click (`quickMove`) support: shift-clicking a Crown from the player inventory or hotbar automatically equips it into the Crown slot, and shift-clicking the Crown slot returns it to inventory.
-  - Right-click equip: right-clicking either crown while holding it in hand automatically equips or swaps it with the current crown with a golden armor equip sound effect.
-  - Full persistence across saves via NBT (`EvecualCrownInventory`), multiplayer and third-person synchronization via `DataTracker`, and drop on death when `keepInventory` is false.
-  - Creative Inventory Screen integration: neatly positioned in the Creative Survival inventory tab (`35, 2`) with slot frame.
-- **Enhanced Soul Lightning Item (Mechanical Crown Synergy)**:
-  - **150 Total Uses**: Equipping the Mechanical Crown elevates the Lightning Item to a massive 150 uses pool (consuming 1 durability per strike instead of 6).
-  - **Soul Fire Ignition**: Summons hypercharged soul-lightning bolts that convert surface ground to Soul Soil and ignite with persistent blue Soul Fire.
-  - **Massive Soul Shockwave**: Deals 20.0 direct magic damage in an 8-block area of effect around the strike location, setting hostile mobs ablaze and spawning soul flame and sonic shockwave bursts.
-  - **Radiant Cyan Durability Bar**: Durability bar dynamically glows in vibrant cyan (`0x00E5FF`) while enhanced by the crown.
-  - **Reduced Cooldown**: Cooldown reduced from 4.0s (80 ticks) to 2.5s (50 ticks).
-  - **Dynamic Tooltips & Mode Toggle**: Context-aware tooltips and sneak-toggle notifications displaying crown overclock status.
-- **Player Crown Feature Renderer & Ambient Particles**:
-  - Implemented `CrownFeatureRenderer` to render the equipped Crown model directly onto the player's head in third-person and inventory preview.
-  - Subtle ambient spark particles around the player's head while wearing the Mechanical Crown and golden sparkles for the Borgers Crown.
-- **EvecualTechShader Iris Compatibility & Validation Fix**:
+- **EvecualTechShader Iris Compatibility & Settings Menu Fix**:
   - Fixed shaderpack ZIP structure: replaced backslash paths with standard forward slash delimiters and added explicit `shaders/` directory entries, resolving Iris's invalid shaderpack rejection.
-  - Fixed shader option resolution for `ORE_GLOW_INTENSITY`, `TECH_CONTRAST`, `TECH_VIBRANCE`, and `ATMOSPHERIC_FOG` in Iris shader settings menu.
+  - Fixed shader settings menu screen configuration: restored standard `screen=<options>` root menu and `<profile>` selector token so Iris renders the interactive graphical options screen properly.
+  - Standardized profile definitions syntax (`OPTION=value` and `!OPTION`) for Low, Medium, High, and Ultra presets.
   - Synchronized and validated all shaderpacks across `shader/`, `run/shaderpacks/`, and `release/`.
-- **Shaped Crafting Recipes**:
-  - `recipes/mechanical_crown.json`: Steel Ingots + Gold Ingot + Redstone + Electric Engine.
-  - `recipes/borgers_crown.json`: Bread + Cooked Beef + Gold Ingots.
+- **Removed Crown Accessory Items**:
+  - Removed crown items, accessory slots, and custom crown mixins per design request.
+  - Restored Lightning Item to its original 25-use pure lightning weapon configuration.
+
 ### Added & Improved
 - **Auto Pickup Item Blacklist Filter & RMB Configuration GUI**:
   - Right-clicking (RMB) on the Auto Pickup Station now opens a dedicated **Auto Pickup Filter Configuration GUI**.

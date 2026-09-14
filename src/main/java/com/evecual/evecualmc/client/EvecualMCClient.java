@@ -588,13 +588,6 @@ public class EvecualMCClient implements ClientModInitializer {
         // Register Turret Bullet Renderer
         EntityRendererRegistry.register(EvecualMC.TURRET_BULLET_ENTITY, com.evecual.evecualmc.client.render.TurretBulletEntityRenderer::new);
 
-        // Register Crown Feature Renderer for Player Model
-        net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
-            if (entityRenderer instanceof net.minecraft.client.render.entity.PlayerEntityRenderer playerRenderer) {
-                registrationHelper.register(new com.evecual.evecualmc.client.render.CrownFeatureRenderer(playerRenderer));
-            }
-        });
-
         // Explicitly render the Player in the world when looking through RC Camera view
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             MinecraftClient client = MinecraftClient.getInstance();

@@ -50,17 +50,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item LIGHTNING_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "lightning"),
-            new LightningItem(new Item.Settings().maxCount(1).maxDamage(150)));
-
-    public static final Item MECHANICAL_CROWN = Registry.register(
-            Registries.ITEM,
-            new Identifier(MOD_ID, "mechanical_crown"),
-            new com.evecual.evecualmc.item.MechanicalCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.EPIC)));
-
-    public static final Item BORGERS_CROWN = Registry.register(
-            Registries.ITEM,
-            new Identifier(MOD_ID, "borgers_crown"),
-            new com.evecual.evecualmc.item.BorgersCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.RARE)));
+            new LightningItem(new Item.Settings().maxCount(1).maxDamage(25)));
 
     public static final Item STEEL_INGOT = Registry.register(
             Registries.ITEM,
@@ -809,8 +799,6 @@ public class EvecualMC implements ModInitializer {
             .displayName(Text.translatable("itemGroup.evecualmc.evecual"))
             .entries((displayContext, entries) -> {
                 entries.add(LIGHTNING_ITEM);
-                entries.add(MECHANICAL_CROWN);
-                entries.add(BORGERS_CROWN);
                 entries.add(STEEL_INGOT);
                 entries.add(ENGINE);
                 entries.add(UPGRADED_ENGINE);
