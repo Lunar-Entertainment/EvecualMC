@@ -37,12 +37,16 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
 
     public static final int RECIPE_ZAPPER = 1;
     public static final int RECIPE_RAILGUN = 2;
+    public static final int RECIPE_DUPER = 3;
 
     public static final int ZAPPER_TICKS = 100;    // 5 seconds
     public static final int ZAPPER_EU_TICK = 5;    // 500 EU total
 
     public static final int RAILGUN_TICKS = 250;   // 12.5 seconds
     public static final int RAILGUN_EU_TICK = 10;  // 2500 EU total
+
+    public static final int DUPER_TICKS = 300;     // 15 seconds
+    public static final int DUPER_EU_TICK = 10;    // 3000 EU total
 
     private static final int[] INPUT_SLOTS = new int[]{0, 1, 2, 3, 4, 5};
     private static final int[] OUTPUT_SLOTS = new int[]{6};
@@ -108,7 +112,7 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
         if (this.selectedRecipe != recipe) {
             this.selectedRecipe = recipe;
             this.progressTicks = 0;
-            this.totalTicks = (recipe == RECIPE_RAILGUN) ? RAILGUN_TICKS : ZAPPER_TICKS;
+            this.totalTicks = (recipe == RECIPE_DUPER) ? DUPER_TICKS : ((recipe == RECIPE_RAILGUN) ? RAILGUN_TICKS : ZAPPER_TICKS);
             markDirty();
             sync();
         }
@@ -119,8 +123,8 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
 
         ServerWorld serverWorld = (ServerWorld) world;
         int targetRecipe = be.selectedRecipe;
-        be.totalTicks = (targetRecipe == RECIPE_RAILGUN) ? RAILGUN_TICKS : ZAPPER_TICKS;
-        int euPerTick = (targetRecipe == RECIPE_RAILGUN) ? RAILGUN_EU_TICK : ZAPPER_EU_TICK;
+        be.totalTicks = (targetRecipe == RECIPE_DUPER) ? DUPER_TICKS : ((targetRecipe == RECIPE_RAILGUN) ? RAILGUN_TICKS : ZAPPER_TICKS);
+        int euPerTick = (targetRecipe == RECIPE_DUPER) ? DUPER_EU_TICK : ((targetRecipe == RECIPE_RAILGUN) ? RAILGUN_EU_TICK : ZAPPER_EU_TICK);
 
         boolean canCraft = be.canCraft(targetRecipe);
         boolean canAccept = be.canAcceptOutput(targetRecipe);
@@ -214,6 +218,27 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
                    s3.isOf(EvecualMC.UPGRADED_ENGINE) && s3.getCount() >= 1 &&
                    s4.isOf(EvecualMC.COPPER_PLATE) && s4.getCount() >= 4 &&
                    s5.isOf(EvecualMC.WIRE_ITEM) && s5.getCount() >= 4;
+        } else if (recipe == RECIPE_DUPER) {
+            // Hard Survival Recipe for Electronic Duper:
+            // Slot 0: Quantum Materializer (1)
+            // Slot 1: Netherite Ingot (1)
+            // Slot 2: Elactorite (4)
+            // Slot 3: Upgraded Electric Engine (1)
+            // Slot 4: Diamond Block (1)
+            // Slot 5: Wire (8)
+            ItemStack s0 = this.inventory.get(0);
+            ItemStack s1 = this.inventory.get(1);
+            ItemStack s2 = this.inventory.get(2);
+            ItemStack s3 = this.inventory.get(3);
+            ItemStack s4 = this.inventory.get(4);
+            ItemStack s5 = this.inventory.get(5);
+
+            return s0.isOf(EvecualMC.MATERIALIZER_ITEM) && s0.getCount() >= 1 &&
+                   s1.isOf(Items.NETHERITE_INGOT) && s1.getCount() >= 1 &&
+                   s2.isOf(EvecualMC.ELACTORITE) && s2.getCount() >= 4 &&
+                   s3.isOf(EvecualMC.UPGRADED_ENGINE) && s3.getCount() >= 1 &&
+                   s4.isOf(Items.DIAMOND_BLOCK) && s4.getCount() >= 1 &&
+                   s5.isOf(EvecualMC.WIRE_ITEM) && s5.getCount() >= 8;
         }
         return false;
     }
@@ -231,6 +256,8 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
             return new ItemStack(EvecualMC.ELECTRONIC_ZAPPER, 1);
         } else if (recipe == RECIPE_RAILGUN) {
             return new ItemStack(EvecualMC.RAILGUN_ITEM, 1);
+        } else if (recipe == RECIPE_DUPER) {
+            return new ItemStack(EvecualMC.ELECTRONIC_DUPER_ITEM, 1);
         }
         return ItemStack.EMPTY;
     }
@@ -250,6 +277,13 @@ public class ItemFabricatorBlockEntity extends BlockEntity implements EnergyStor
             this.inventory.get(3).decrement(1);
             this.inventory.get(4).decrement(4);
             this.inventory.get(5).decrement(4);
+        } else if (recipe == RECIPE_DUPER) {
+            this.inventory.get(0).decrement(1);
+            this.inventory.get(1).decrement(1);
+            this.inventory.get(2).decrement(4);
+            this.inventory.get(3).decrement(1);
+            this.inventory.get(4).decrement(1);
+            this.inventory.get(5).decrement(8);
         }
 
         ItemStack result = getResultStack(recipe);

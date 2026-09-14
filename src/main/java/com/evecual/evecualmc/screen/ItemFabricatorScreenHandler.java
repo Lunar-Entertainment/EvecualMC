@@ -91,7 +91,7 @@ public class ItemFabricatorScreenHandler extends ScreenHandler {
 
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
-        if (id == ItemFabricatorBlockEntity.RECIPE_ZAPPER || id == ItemFabricatorBlockEntity.RECIPE_RAILGUN) {
+        if (id == ItemFabricatorBlockEntity.RECIPE_ZAPPER || id == ItemFabricatorBlockEntity.RECIPE_RAILGUN || id == ItemFabricatorBlockEntity.RECIPE_DUPER) {
             if (this.inventory instanceof ItemFabricatorBlockEntity be) {
                 be.setSelectedRecipe(id);
             } else {

@@ -40,21 +40,33 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         int recipe = this.handler.getSelectedRecipe();
 
         // Blueprint Toggle Buttons
-        // Button 1: ZAPPER (x: 44, y: 14, w: 50, h: 10)
+        // Button 1: ZAPPER (x: 32, y: 14, w: 42, h: 10)
         boolean zapperSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_ZAPPER);
         int zapperBg = zapperSelected ? 0xFF0284C7 : 0xFF0F172A;
         int zapperBorder = zapperSelected ? 0xFF38BDF8 : 0xFF334155;
-        context.fill(x + 44, y + 14, x + 94, y + 24, zapperBg);
-        context.drawBorder(x + 44, y + 14, 50, 10, zapperBorder);
-        context.drawText(this.textRenderer, "⚡ ZAPPER", x + 48, y + 15, zapperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+        context.fill(x + 32, y + 14, x + 74, y + 24, zapperBg);
+        context.drawBorder(x + 32, y + 14, 42, 10, zapperBorder);
+        context.drawText(this.textRenderer, "⚡ZAPPER", x + 34, y + 15, zapperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
 
-        // Button 2: RAILGUN (x: 98, y: 14, w: 54, h: 10)
+        // Button 2: RAILGUN (x: 77, y: 14, w: 46, h: 10)
         boolean railgunSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_RAILGUN);
         int railgunBg = railgunSelected ? 0xFF9333EA : 0xFF0F172A;
         int railgunBorder = railgunSelected ? 0xFFC084FC : 0xFF334155;
-        context.fill(x + 98, y + 14, x + 152, y + 24, railgunBg);
-        context.drawBorder(x + 98, y + 14, 54, 10, railgunBorder);
-        context.drawText(this.textRenderer, "💥 RAILGUN", x + 101, y + 15, railgunSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+        context.fill(x + 77, y + 14, x + 123, y + 24, railgunBg);
+        context.drawBorder(x + 77, y + 14, 46, 10, railgunBorder);
+        context.drawText(this.textRenderer, "💥RAILGUN", x + 79, y + 15, railgunSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+
+        // Button 3: DUPER (x: 126, y: 14, w: 44, h: 10)
+        boolean duperSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_DUPER);
+        int duperBg = duperSelected ? 0xFFB45309 : 0xFF0F172A;
+        int duperBorder = duperSelected ? 0xFFFBBF24 : 0xFF334155;
+        context.fill(x + 126, y + 14, x + 170, y + 24, duperBg);
+        context.drawBorder(x + 126, y + 14, 44, 10, duperBorder);
+        context.drawText(this.textRenderer, "💠DUPER", x + 129, y + 15, duperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+
+        // Theme border color for active recipe
+        int themeBorder = zapperSelected ? 0xFF00E5FF : (railgunSelected ? 0xFFA855F7 : 0xFFF59E0B);
+        int themeFill = zapperSelected ? 0xFF38BDF8 : (railgunSelected ? 0xFFC084FC : 0xFFFCD34D);
 
         // Input Slot Frames (3 columns x 2 rows)
         int[] slotXs = new int[]{44, 62, 80, 44, 62, 80};
@@ -63,7 +75,7 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
             int sx = x + slotXs[i] - 1;
             int sy = y + slotYs[i] - 1;
             context.fill(sx, sy, sx + 18, sy + 18, 0xFF0E1726);
-            context.drawBorder(sx, sy, 18, 18, zapperSelected ? 0xFF00E5FF : 0xFFA855F7);
+            context.drawBorder(sx, sy, 18, 18, themeBorder);
         }
 
         // Output Slot Frame (Slot 6, x: 134, y: 35)
@@ -91,10 +103,10 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         int progressFillWidth = (int) (28 * progressRatio);
 
         context.fill(x + 100, y + 39, x + 130, y + 49, 0xFF080D1A);
-        context.drawBorder(x + 100, y + 39, 30, 10, zapperSelected ? 0xFF00E5FF : 0xFFA855F7);
+        context.drawBorder(x + 100, y + 39, 30, 10, themeBorder);
 
         if (progressFillWidth > 0) {
-            context.fill(x + 101, y + 40, x + 101 + progressFillWidth, y + 48, zapperSelected ? 0xFF38BDF8 : 0xFFC084FC);
+            context.fill(x + 101, y + 40, x + 101 + progressFillWidth, y + 48, themeFill);
         }
 
         // Status description & blueprint components guidance below grid
@@ -102,16 +114,19 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
             int pct = (int) (progressRatio * 100);
             int remTicks = Math.max(0, maxProgress - progress);
             int remSec = remTicks / 20;
-            String itemName = zapperSelected ? "Electronic Zapper" : "Hypervelocity Railgun";
+            String itemName = zapperSelected ? "Electronic Zapper" : (railgunSelected ? "Hypervelocity Railgun" : "Electronic Duper");
             context.drawText(this.textRenderer, "🌀 Fabricating: " + pct + "% (" + remSec + "s)", x + 38, y + 64, 0xFFFFD700, false);
             context.drawText(this.textRenderer, itemName + " assembly active", x + 38, y + 73, 0xFF67E8F9, false);
         } else {
             if (zapperSelected) {
                 context.drawText(this.textRenderer, "Req: 1 Elactorite, 2 Rods, 1 Battery, 2 Wires", x + 30, y + 64, 0xFF38BDF8, false);
                 context.drawText(this.textRenderer, "Energy: 500 EU (5 EU/t) | High-Voltage Tool", x + 30, y + 73, 0xFF94A3B8, false);
-            } else {
+            } else if (railgunSelected) {
                 context.drawText(this.textRenderer, "Req: 2 Netherite, 4 Elactorite, 4 Rods,", x + 30, y + 64, 0xFFA855F7, false);
                 context.drawText(this.textRenderer, "1 Engine+, 4 Cu-Plates, 4 Wires (2500 EU)", x + 30, y + 73, 0xFFE2E8F0, false);
+            } else {
+                context.drawText(this.textRenderer, "Req: 1 Materializer, 1 Netherite, 4 Elactorite,", x + 30, y + 64, 0xFFF59E0B, false);
+                context.drawText(this.textRenderer, "1 Engine+, 1 Diamond Block, 8 Wires (3000 EU)", x + 30, y + 73, 0xFFFDE68A, false);
             }
         }
 
@@ -136,7 +151,7 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         int y = (this.height - this.backgroundHeight) / 2;
 
         // Check Button 1: ZAPPER
-        if (mouseX >= x + 44 && mouseX <= x + 94 && mouseY >= y + 14 && mouseY <= y + 24) {
+        if (mouseX >= x + 32 && mouseX <= x + 74 && mouseY >= y + 14 && mouseY <= y + 24) {
             if (this.client != null && this.client.interactionManager != null) {
                 this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_ZAPPER);
                 return true;
@@ -144,9 +159,17 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         }
 
         // Check Button 2: RAILGUN
-        if (mouseX >= x + 98 && mouseX <= x + 152 && mouseY >= y + 14 && mouseY <= y + 24) {
+        if (mouseX >= x + 77 && mouseX <= x + 123 && mouseY >= y + 14 && mouseY <= y + 24) {
             if (this.client != null && this.client.interactionManager != null) {
                 this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_RAILGUN);
+                return true;
+            }
+        }
+
+        // Check Button 3: DUPER
+        if (mouseX >= x + 126 && mouseX <= x + 170 && mouseY >= y + 14 && mouseY <= y + 24) {
+            if (this.client != null && this.client.interactionManager != null) {
+                this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_DUPER);
                 return true;
             }
         }

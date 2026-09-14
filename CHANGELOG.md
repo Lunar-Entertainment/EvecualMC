@@ -1,5 +1,20 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.28] - 2026-09-14
+### Added & Improved
+- **Electronic Duper Manufacturing Rebalance**:
+  - Removed standard crafting table recipe for the Electronic Duper to eliminate cheap early-game duplication.
+  - Electronic Dupers must now be assembled in the **Item Fabricator** using an advanced high-tier blueprint.
+  - High-tier fabrication recipe:
+    - 1x Quantum Materializer
+    - 1x Netherite Ingot
+    - 4x Elactorite
+    - 1x Upgraded Electric Engine
+    - 1x Diamond Block
+    - 8x Wires
+  - Fabrication process consumes 3,000 EU at 10 EU/t (300 ticks / 15 seconds) of intense electromagnetic assembly.
+  - Added dedicated `[ 💠 DUPER ]` blueprint selection button with amber cyber-tech styling to the Item Fabricator GUI.
+
 ## [1.8.27] - 2026-09-14
 ### Added & Improved
 - **Anti-Duplication Technology Restriction**:
