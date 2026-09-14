@@ -66,13 +66,41 @@ if ($BuildOnly) {
 }
 
 # Ensure shaderpack in run/shaderpacks is always up to date with the latest code
-$runShaderDir = "run/shaderpacks"
-if (-not (Test-Path $runShaderDir)) {
-    New-Item -ItemType Directory -Path $runShaderDir -Force | Out-Null
+function Package-ShaderZip($sourceDir, $zipPath) {
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    if (Test-Path $zipPath) {
+        Remove-Item $zipPath -Force
+    }
+    $destDir = Split-Path -Parent $zipPath
+    if (-not (Test-Path $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
+    $zipStream = [System.IO.File]::Open($zipPath, [System.IO.FileMode]::CreateNew)
+    $archive = New-Object System.IO.Compression.ZipArchive($zipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+    $null = $archive.CreateEntry("shaders/", [System.IO.Compression.CompressionLevel]::Optimal)
+    $shaderFiles = Get-ChildItem -Path (Join-Path $sourceDir "shaders") -File
+    foreach ($file in $shaderFiles) {
+        $entry = $archive.CreateEntry("shaders/" + $file.Name, [System.IO.Compression.CompressionLevel]::Optimal)
+        $entryStream = $entry.Open()
+        $fileStream = [System.IO.File]::OpenRead($file.FullName)
+        $fileStream.CopyTo($entryStream)
+        $fileStream.Dispose()
+        $entryStream.Dispose()
+    }
+    $archive.Dispose()
+    $zipStream.Dispose()
 }
-if (Test-Path "shader/EvecualTechShader.zip") {
+
+$shaderSource = "shader/EvecualTechShader"
+if (Test-Path $shaderSource) {
+    Package-ShaderZip $shaderSource "shader/EvecualTechShader.zip"
+    $runShaderDir = "run/shaderpacks"
+    if (-not (Test-Path $runShaderDir)) {
+        New-Item -ItemType Directory -Path $runShaderDir -Force | Out-Null
+    }
     Copy-Item -Path "shader/EvecualTechShader.zip" -Destination (Join-Path $runShaderDir "EvecualTechShader.zip") -Force
-    Write-Host "Synchronized EvecualTechShader.zip to $runShaderDir" -ForegroundColor Green
+    Write-Host "Synchronized and verified EvecualTechShader.zip to $runShaderDir" -ForegroundColor Green
 }
 
 Write-Host "Launching Minecraft 1.20.1 with EvecualMC mod..." -ForegroundColor Green

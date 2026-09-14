@@ -23,6 +23,10 @@
 - **Player Crown Feature Renderer & Ambient Particles**:
   - Implemented `CrownFeatureRenderer` to render the equipped Crown model directly onto the player's head in third-person and inventory preview.
   - Subtle ambient spark particles around the player's head while wearing the Mechanical Crown and golden sparkles for the Borgers Crown.
+- **EvecualTechShader Iris Compatibility & Validation Fix**:
+  - Fixed shaderpack ZIP structure: replaced backslash paths with standard forward slash delimiters and added explicit `shaders/` directory entries, resolving Iris's invalid shaderpack rejection.
+  - Fixed shader option resolution for `ORE_GLOW_INTENSITY`, `TECH_CONTRAST`, `TECH_VIBRANCE`, and `ATMOSPHERIC_FOG` in Iris shader settings menu.
+  - Synchronized and validated all shaderpacks across `shader/`, `run/shaderpacks/`, and `release/`.
 - **Shaped Crafting Recipes**:
   - `recipes/mechanical_crown.json`: Steel Ingots + Gold Ingot + Redstone + Electric Engine.
   - `recipes/borgers_crown.json`: Bread + Cooked Beef + Gold Ingots.

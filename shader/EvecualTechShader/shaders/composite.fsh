@@ -14,8 +14,8 @@
 #define CHROMATIC_ABERRATION  // [true false]
 #define MOTION_BLUR           // [true false]
 #define MOTION_BLUR_SAMPLES 7 // [3 5 7]
-#define TECH_CONTRAST 1.08    // [0.90 1.00 1.08 1.15]
-#define TECH_VIBRANCE 1.15    // [0.90 1.00 1.15 1.25]
+#define TECH_CONTRAST 1.06    // [0.90 1.00 1.06 1.12]
+#define TECH_VIBRANCE 1.12    // [0.90 1.00 1.12 1.20]
 #define ATMOSPHERIC_FOG       // [true false]
 
 uniform sampler2D colortex0;

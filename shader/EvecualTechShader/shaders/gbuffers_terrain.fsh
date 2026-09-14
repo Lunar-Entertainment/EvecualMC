@@ -3,7 +3,8 @@
 #define CONNECTED_BLOCKS
 #define CONNECTED_GLASS
 #define EMISSIVE_ORES
-#define ORE_GLOW_INTENSITY 1.50
+#define ORE_GLOW_INTENSITY 1.50 // [0.50 1.00 1.50 1.75]
+
 
 uniform sampler2D texture;
 uniform sampler2D lightmap;
