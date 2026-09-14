@@ -1,5 +1,20 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.29] - 2026-09-14
+### Added & Improved
+- **Railgun 3D Model & Missing Texture Fix**:
+  - Resolved `JsonParseException: Invalid rotation -15.0 found` by aligning tactical grip model rotation to standard Minecraft engine rotation steps (`-22.5°`).
+  - Scaled model UV coordinate mappings from 32-pixel space into normalized Minecraft 16-coordinate atlas space, ensuring the 32x32 texture atlas maps properly with zero texture bleed or missing sprite fallbacks.
+  - Railgun now renders in full 3D in 1st-person, 3rd-person, hotbar, and inventory with glowing holographic sight, Lorentz accelerator chamber, and alloy body.
+- **Item Fabricator UI Overhaul**:
+  - Redesigned the Item Fabricator GUI into an expanded 194px glassmorphic cyber-deck HUD.
+  - Eliminated duplicate title text rendering and overlapping requirement labels on player inventory slots.
+  - Added interactive ghost item previews and required quantity counters in empty input slots for all blueprints (`⚡ Zapper`, `💥 Railgun`, `💠 Duper`).
+  - Added real-time dynamic slot validation: slot borders glow green (`✔`) when correct items and amounts are provided, amber when more items are needed, and red if an incorrect item is inserted.
+  - Added ghost item preview in the output slot showing what item will be synthesized.
+  - Enhanced blueprint tabs with clear layout, hover tooltips displaying complete ingredient checklists, energy cost, and craft times.
+  - Repositioned player inventory and hotbar cleanly with dedicated spacing and no visual clipping.
+
 ## [1.8.28] - 2026-09-14
 ### Added & Improved
 - **Electronic Duper Manufacturing Rebalance**:

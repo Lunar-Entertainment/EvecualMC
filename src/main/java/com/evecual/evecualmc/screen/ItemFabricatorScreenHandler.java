@@ -30,32 +30,32 @@ public class ItemFabricatorScreenHandler extends ScreenHandler {
 
         // Input slots 0..5 (3 columns x 2 rows)
         // Row 0
-        this.addSlot(new Slot(inventory, 0, 44, 26));
-        this.addSlot(new Slot(inventory, 1, 62, 26));
-        this.addSlot(new Slot(inventory, 2, 80, 26));
+        this.addSlot(new Slot(inventory, 0, 44, 34));
+        this.addSlot(new Slot(inventory, 1, 62, 34));
+        this.addSlot(new Slot(inventory, 2, 80, 34));
         // Row 1
-        this.addSlot(new Slot(inventory, 3, 44, 44));
-        this.addSlot(new Slot(inventory, 4, 62, 44));
-        this.addSlot(new Slot(inventory, 5, 80, 44));
+        this.addSlot(new Slot(inventory, 3, 44, 52));
+        this.addSlot(new Slot(inventory, 4, 62, 52));
+        this.addSlot(new Slot(inventory, 5, 80, 52));
 
-        // Output slot 6 (x: 134, y: 35)
-        this.addSlot(new Slot(inventory, 6, 134, 35) {
+        // Output slot 6 (x: 134, y: 43)
+        this.addSlot(new Slot(inventory, 6, 134, 43) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return false;
             }
         });
 
-        // Player Inventory (3 rows x 9 columns)
+        // Player Inventory (3 rows x 9 columns) at y = 112
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 112 + i * 18));
             }
         }
 
-        // Player Hotbar (1 row x 9 columns)
+        // Player Hotbar (1 row x 9 columns) at y = 170
         for (int i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 170));
         }
     }
 
