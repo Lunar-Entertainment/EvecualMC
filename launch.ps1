@@ -108,6 +108,13 @@ if ($Install) {
     foreach ($jar in $jarFiles) {
         Copy-Item -Path $jar.FullName -Destination $modsDir -Force
         Write-Host "Installed $($jar.Name) to $modsDir" -ForegroundColor Green
+
+        $releaseDir = "release"
+        if (Test-Path $releaseDir) {
+            Get-ChildItem -Path $releaseDir -Filter "evecualmc-*.jar" | Remove-Item -Force
+            Copy-Item -Path $jar.FullName -Destination (Join-Path $releaseDir $jar.Name) -Force
+            Write-Host "Updated release jar in $releaseDir/$($jar.Name)" -ForegroundColor Green
+        }
     }
 
     Write-Host "`nMod and Shader installed successfully into .minecraft!" -ForegroundColor Cyan
@@ -117,6 +124,17 @@ if ($Install) {
 if ($BuildOnly) {
     Write-Host "Building mod JAR..." -ForegroundColor Green
     & .\gradlew.bat build
+    if ($LASTEXITCODE -eq 0) {
+        $releaseDir = "release"
+        if (Test-Path $releaseDir) {
+            $jarFiles = Get-ChildItem -Path "build\libs" -Filter "evecualmc-*.jar" | Where-Object { $_.Name -notmatch "sources" }
+            foreach ($jar in $jarFiles) {
+                Get-ChildItem -Path $releaseDir -Filter "evecualmc-*.jar" | Remove-Item -Force
+                Copy-Item -Path $jar.FullName -Destination (Join-Path $releaseDir $jar.Name) -Force
+                Write-Host "Updated release jar in $releaseDir/$($jar.Name)" -ForegroundColor Green
+            }
+        }
+    }
     exit $LASTEXITCODE
 }
 
