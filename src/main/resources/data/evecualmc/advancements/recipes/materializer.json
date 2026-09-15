@@ -1,0 +1,60 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evecualmc:materializer"
+    ]
+  },
+  "criteria": {
+    "has_steel": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:steel_ingot"
+            ]
+          }
+        ]
+      }
+    },
+    "has_wire": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:wire"
+            ]
+          }
+        ]
+      }
+    },
+    "has_engine": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electric_engine"
+            ]
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "evecualmc:materializer"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_steel",
+      "has_wire",
+      "has_engine",
+      "has_the_recipe"
+    ]
+  ]
+}

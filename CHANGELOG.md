@@ -1,5 +1,22 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.30] - 2026-09-15
+### Added & Improved
+- **Quantum Materializer Fabrication & Recipe Accessibility**:
+  - Added dedicated **Quantum Materializer** blueprint tab (`[ ⚛ MAT ]`) to the **Item Fabricator** terminal.
+  - Fabricator recipe: 4x Steel Ingot, 4x Electrical Wire, 2x Battery, 1x Electric Engine, 2x Diamond, 2x Elactorite (consumes 1,600 EU at 10 EU/t, 8.0s).
+  - Added recipe unlock advancement for standard Crafting Table assembly (`materializer.json`) so it automatically populates in the recipe book upon acquiring steel, wire, or electric engines.
+- **Rich Informational Tooltips on Advanced Blocks**:
+  - Implemented custom `BlockItem` tooltips across all recently added machinery:
+    - **Item Fabricator** (`evecualmc:item_fabricator`): Displays energy capacity (4,000 EU), available blueprints (Zapper, Railgun, Materializer, Duper), and terminal usage guidance.
+    - **Quantum Materializer** (`evecualmc:materializer`): Displays energy buffer (8,000 EU), role in quantum synthesis, and note that it is the required core for the Electronic Duper.
+    - **Electronic Duper** (`evecualmc:electronic_duper`): Displays energy capacity (10,000 EU), replication rate, and explicit blacklist warning (no weapons, dupers, or vehicles).
+    - **Electric Grinder** (`evecualmc:electric_grinder`): Displays energy capacity (2,000 EU), 4 EU/t consumption rate, and ore doubling yield information.
+    - **Item Charger** (`evecualmc:item_charger`): Displays 5,000 EU storage buffer, inductive recharge rate, and list of supported equipment.
+- **Item Fabricator UI 4-Tab Alignment**:
+  - Balanced 4 blueprint tabs (`⚡ ZAP`, `💥 RAIL`, `⚛ MAT`, `💠 DUPE`) symmetrically within the glassmorphic cyber-deck HUD.
+  - Added full tooltip breakdown and live ghost item previews for the Quantum Materializer synthesis process.
+
 ## [1.8.29] - 2026-09-14
 ### Added & Improved
 - **Railgun 3D Model & Missing Texture Fix**:

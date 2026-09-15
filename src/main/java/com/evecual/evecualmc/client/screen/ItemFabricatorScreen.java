@@ -47,9 +47,23 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         boolean zapperSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_ZAPPER);
         boolean railgunSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_RAILGUN);
         boolean duperSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_DUPER);
+        boolean matSelected = (recipe == ItemFabricatorBlockEntity.RECIPE_MATERIALIZER);
 
-        int themeBorder = zapperSelected ? 0xFF00E5FF : (railgunSelected ? 0xFFA855F7 : 0xFFF59E0B);
-        int themeFill = zapperSelected ? 0xFF38BDF8 : (railgunSelected ? 0xFFC084FC : 0xFFFCD34D);
+        int themeBorder;
+        int themeFill;
+        if (zapperSelected) {
+            themeBorder = 0xFF00E5FF;
+            themeFill = 0xFF38BDF8;
+        } else if (railgunSelected) {
+            themeBorder = 0xFFA855F7;
+            themeFill = 0xFFC084FC;
+        } else if (matSelected) {
+            themeBorder = 0xFF06B6D4;
+            themeFill = 0xFF22D3EE;
+        } else {
+            themeBorder = 0xFFF59E0B;
+            themeFill = 0xFFFCD34D;
+        }
 
         // 1. Dark Glassmorphic Backdrop
         context.fill(x, y, x + this.backgroundWidth, y + this.backgroundHeight, 0xF0070B14);
@@ -61,27 +75,34 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         context.drawText(this.textRenderer, "⚡ ITEM FABRICATOR", x + 8, y + 4, 0xFF00E5FF, false);
         context.drawText(this.textRenderer, "MK-II", x + 140, y + 4, 0xFF38BDF8, false);
 
-        // 3. Blueprint Selection Tabs (y = 17 to 28, height 11)
-        // Tab 1: ZAPPER (x: 8..58, w: 50)
+        // 3. Blueprint Selection Tabs (y = 17 to 28, height 11, 4 tabs)
+        // Tab 1: ZAPPER (x: 7..43, w: 36)
         int zapperBg = zapperSelected ? 0xFF0284C7 : 0xFF0F172A;
         int zapperBorder = zapperSelected ? 0xFF38BDF8 : 0xFF334155;
-        context.fill(x + 8, y + 17, x + 58, y + 28, zapperBg);
-        context.drawBorder(x + 8, y + 17, 50, 11, zapperBorder);
-        context.drawText(this.textRenderer, "⚡ ZAPPER", x + 10, y + 19, zapperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+        context.fill(x + 7, y + 17, x + 43, y + 28, zapperBg);
+        context.drawBorder(x + 7, y + 17, 36, 11, zapperBorder);
+        context.drawText(this.textRenderer, "⚡ZAP", x + 9, y + 19, zapperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
 
-        // Tab 2: RAILGUN (x: 62..114, w: 52)
+        // Tab 2: RAILGUN (x: 46..86, w: 40)
         int railgunBg = railgunSelected ? 0xFF7E22CE : 0xFF0F172A;
         int railgunBorder = railgunSelected ? 0xFFC084FC : 0xFF334155;
-        context.fill(x + 62, y + 17, x + 114, y + 28, railgunBg);
-        context.drawBorder(x + 62, y + 17, 52, 11, railgunBorder);
-        context.drawText(this.textRenderer, "💥 RAILGUN", x + 64, y + 19, railgunSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+        context.fill(x + 46, y + 17, x + 86, y + 28, railgunBg);
+        context.drawBorder(x + 46, y + 17, 40, 11, railgunBorder);
+        context.drawText(this.textRenderer, "💥RAIL", x + 48, y + 19, railgunSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
 
-        // Tab 3: DUPER (x: 118..168, w: 50)
+        // Tab 3: MATERIALIZER (x: 89..129, w: 40)
+        int matBg = matSelected ? 0xFF0E7490 : 0xFF0F172A;
+        int matBorder = matSelected ? 0xFF22D3EE : 0xFF334155;
+        context.fill(x + 89, y + 17, x + 129, y + 28, matBg);
+        context.drawBorder(x + 89, y + 17, 40, 11, matBorder);
+        context.drawText(this.textRenderer, "⚛MAT", x + 92, y + 19, matSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+
+        // Tab 4: DUPER (x: 132..169, w: 37)
         int duperBg = duperSelected ? 0xFFB45309 : 0xFF0F172A;
         int duperBorder = duperSelected ? 0xFFFBBF24 : 0xFF334155;
-        context.fill(x + 118, y + 17, x + 168, y + 28, duperBg);
-        context.drawBorder(x + 118, y + 17, 50, 11, duperBorder);
-        context.drawText(this.textRenderer, "💠 DUPER", x + 122, y + 19, duperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
+        context.fill(x + 132, y + 17, x + 169, y + 28, duperBg);
+        context.drawBorder(x + 132, y + 17, 37, 11, duperBorder);
+        context.drawText(this.textRenderer, "💠DUPE", x + 134, y + 19, duperSelected ? 0xFFFFFFFF : 0xFF94A3B8, false);
 
         // 4. Energy Storage Gauge Bar (x: 10, y: 34, w: 14, h: 36)
         int energy = this.handler.getEnergy();
@@ -187,7 +208,16 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
             int pct = (int) (progressRatio * 100);
             int remTicks = Math.max(0, maxProgress - progress);
             int remSec = remTicks / 20;
-            String itemName = zapperSelected ? "Electronic Zapper" : (railgunSelected ? "Hypervelocity Railgun" : "Electronic Duper");
+            String itemName;
+            if (zapperSelected) {
+                itemName = "Electronic Zapper";
+            } else if (railgunSelected) {
+                itemName = "Hypervelocity Railgun";
+            } else if (matSelected) {
+                itemName = "Quantum Materializer";
+            } else {
+                itemName = "Electronic Duper";
+            }
             context.drawText(this.textRenderer, "🌀 Fabricating: " + pct + "% (" + remSec + "s)", x + 12, y + 76, 0xFFFFD700, false);
             context.drawText(this.textRenderer, itemName + " assembly active...", x + 12, y + 86, 0xFF67E8F9, false);
         } else {
@@ -195,6 +225,8 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
                 context.drawText(this.textRenderer, "⚡ Zapper [500 EU | 5.0s]", x + 12, y + 76, 0xFF38BDF8, false);
             } else if (railgunSelected) {
                 context.drawText(this.textRenderer, "💥 Railgun [2500 EU | 12.5s]", x + 12, y + 76, 0xFFC084FC, false);
+            } else if (matSelected) {
+                context.drawText(this.textRenderer, "⚛ Materializer [1600 EU | 8.0s]", x + 12, y + 76, 0xFF22D3EE, false);
             } else {
                 context.drawText(this.textRenderer, "💠 Duper [3000 EU | 15.0s]", x + 12, y + 76, 0xFFFCD34D, false);
             }
@@ -255,6 +287,16 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
                 case 5 -> new ItemStack(EvecualMC.WIRE_ITEM, 4);
                 default -> ItemStack.EMPTY;
             };
+        } else if (recipe == ItemFabricatorBlockEntity.RECIPE_MATERIALIZER) {
+            return switch (slotIndex) {
+                case 0 -> new ItemStack(EvecualMC.STEEL_INGOT, 4);
+                case 1 -> new ItemStack(EvecualMC.WIRE_ITEM, 4);
+                case 2 -> new ItemStack(EvecualMC.BATTERY_ITEM, 2);
+                case 3 -> new ItemStack(EvecualMC.ENGINE, 1);
+                case 4 -> new ItemStack(Items.DIAMOND, 2);
+                case 5 -> new ItemStack(EvecualMC.ELACTORITE, 2);
+                default -> ItemStack.EMPTY;
+            };
         } else if (recipe == ItemFabricatorBlockEntity.RECIPE_DUPER) {
             return switch (slotIndex) {
                 case 0 -> new ItemStack(EvecualMC.MATERIALIZER_ITEM, 1);
@@ -273,6 +315,7 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         return switch (recipe) {
             case ItemFabricatorBlockEntity.RECIPE_ZAPPER -> new ItemStack(EvecualMC.ELECTRONIC_ZAPPER);
             case ItemFabricatorBlockEntity.RECIPE_RAILGUN -> new ItemStack(EvecualMC.RAILGUN_ITEM);
+            case ItemFabricatorBlockEntity.RECIPE_MATERIALIZER -> new ItemStack(EvecualMC.MATERIALIZER_ITEM);
             case ItemFabricatorBlockEntity.RECIPE_DUPER -> new ItemStack(EvecualMC.ELECTRONIC_DUPER_ITEM);
             default -> ItemStack.EMPTY;
         };
@@ -287,22 +330,29 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         int relY = (int) mouseY - y;
 
         if (relY >= 17 && relY <= 28) {
-            // Check Button 1: ZAPPER (x: 8..58)
-            if (relX >= 8 && relX <= 58) {
+            // Tab 1: ZAPPER (x: 7..43)
+            if (relX >= 7 && relX <= 43) {
                 if (this.client != null && this.client.interactionManager != null) {
                     this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_ZAPPER);
                     return true;
                 }
             }
-            // Check Button 2: RAILGUN (x: 62..114)
-            if (relX >= 62 && relX <= 114) {
+            // Tab 2: RAILGUN (x: 46..86)
+            if (relX >= 46 && relX <= 86) {
                 if (this.client != null && this.client.interactionManager != null) {
                     this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_RAILGUN);
                     return true;
                 }
             }
-            // Check Button 3: DUPER (x: 118..168)
-            if (relX >= 118 && relX <= 168) {
+            // Tab 3: MATERIALIZER (x: 89..129)
+            if (relX >= 89 && relX <= 129) {
+                if (this.client != null && this.client.interactionManager != null) {
+                    this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_MATERIALIZER);
+                    return true;
+                }
+            }
+            // Tab 4: DUPER (x: 132..169)
+            if (relX >= 132 && relX <= 169) {
                 if (this.client != null && this.client.interactionManager != null) {
                     this.client.interactionManager.clickButton(this.handler.syncId, ItemFabricatorBlockEntity.RECIPE_DUPER);
                     return true;
@@ -330,7 +380,16 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
         if (relX >= 10 && relX <= 24 && relY >= 34 && relY <= 70) {
             int energy = this.handler.getEnergy();
             int max = this.handler.getMaxEnergy();
-            int needed = (recipe == ItemFabricatorBlockEntity.RECIPE_DUPER) ? 3000 : ((recipe == ItemFabricatorBlockEntity.RECIPE_RAILGUN) ? 2500 : 500);
+            int needed;
+            if (recipe == ItemFabricatorBlockEntity.RECIPE_DUPER) {
+                needed = 3000;
+            } else if (recipe == ItemFabricatorBlockEntity.RECIPE_MATERIALIZER) {
+                needed = 1600;
+            } else if (recipe == ItemFabricatorBlockEntity.RECIPE_RAILGUN) {
+                needed = 2500;
+            } else {
+                needed = 500;
+            }
             List<Text> lines = new ArrayList<>();
             lines.add(Text.literal("§b⚡ Stored Energy: §f" + energy + " / " + max + " EU"));
             lines.add(Text.literal("§7Fabrication Cost: §e" + needed + " EU"));
@@ -341,7 +400,7 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
 
         // Tab Tooltips
         if (relY >= 17 && relY <= 28) {
-            if (relX >= 8 && relX <= 58) {
+            if (relX >= 7 && relX <= 43) {
                 List<Text> lines = new ArrayList<>();
                 lines.add(Text.literal("§b⚡ Electronic Zapper Blueprint"));
                 lines.add(Text.literal("§7Required Parts:"));
@@ -352,7 +411,7 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
                 lines.add(Text.literal("§eEnergy: 500 EU §7| §6Time: 5.0s"));
                 context.drawTooltip(this.textRenderer, lines, mouseX, mouseY);
                 return;
-            } else if (relX >= 62 && relX <= 114) {
+            } else if (relX >= 46 && relX <= 86) {
                 List<Text> lines = new ArrayList<>();
                 lines.add(Text.literal("§d💥 Hypervelocity Railgun Blueprint"));
                 lines.add(Text.literal("§7Required Parts:"));
@@ -365,7 +424,20 @@ public class ItemFabricatorScreen extends HandledScreen<ItemFabricatorScreenHand
                 lines.add(Text.literal("§eEnergy: 2500 EU §7| §6Time: 12.5s"));
                 context.drawTooltip(this.textRenderer, lines, mouseX, mouseY);
                 return;
-            } else if (relX >= 118 && relX <= 168) {
+            } else if (relX >= 89 && relX <= 129) {
+                List<Text> lines = new ArrayList<>();
+                lines.add(Text.literal("§b⚛ Quantum Materializer Blueprint"));
+                lines.add(Text.literal("§7Required Parts:"));
+                lines.add(Text.literal(" §f• 4x Steel Ingot"));
+                lines.add(Text.literal(" §f• 4x Insulated Wire"));
+                lines.add(Text.literal(" §f• 2x Battery"));
+                lines.add(Text.literal(" §f• 1x Electric Engine"));
+                lines.add(Text.literal(" §f• 2x Diamond"));
+                lines.add(Text.literal(" §f• 2x Elactorite"));
+                lines.add(Text.literal("§eEnergy: 1600 EU §7| §6Time: 8.0s"));
+                context.drawTooltip(this.textRenderer, lines, mouseX, mouseY);
+                return;
+            } else if (relX >= 132 && relX <= 169) {
                 List<Text> lines = new ArrayList<>();
                 lines.add(Text.literal("§6💠 Electronic Duper Blueprint"));
                 lines.add(Text.literal("§7Required Parts:"));

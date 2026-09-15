@@ -271,7 +271,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item ELECTRONIC_DUPER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "electronic_duper"),
-            new BlockItem(ELECTRONIC_DUPER_BLOCK, new Item.Settings()));
+            new com.evecual.evecualmc.item.ElectronicDuperBlockItem(ELECTRONIC_DUPER_BLOCK, new Item.Settings()));
 
     public static final Block ITEM_FABRICATOR_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -282,7 +282,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item ITEM_FABRICATOR_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "item_fabricator"),
-            new BlockItem(ITEM_FABRICATOR_BLOCK, new Item.Settings()));
+            new com.evecual.evecualmc.item.ItemFabricatorBlockItem(ITEM_FABRICATOR_BLOCK, new Item.Settings()));
 
     public static final Block MATERIALIZER_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -293,7 +293,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item MATERIALIZER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "materializer"),
-            new BlockItem(MATERIALIZER_BLOCK, new Item.Settings()));
+            new com.evecual.evecualmc.item.MaterializerBlockItem(MATERIALIZER_BLOCK, new Item.Settings()));
 
     public static final Block ELECTRIC_GRINDER_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -304,7 +304,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item ELECTRIC_GRINDER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "electric_grinder"),
-            new BlockItem(ELECTRIC_GRINDER_BLOCK, new Item.Settings()));
+            new com.evecual.evecualmc.item.ElectricGrinderBlockItem(ELECTRIC_GRINDER_BLOCK, new Item.Settings()));
 
     public static final Block ITEM_CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -315,7 +315,7 @@ public class EvecualMC implements ModInitializer {
     public static final Item ITEM_CHARGER_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "item_charger"),
-            new BlockItem(ITEM_CHARGER_BLOCK, new Item.Settings()));
+            new com.evecual.evecualmc.item.ItemChargerBlockItem(ITEM_CHARGER_BLOCK, new Item.Settings()));
 
     public static final Block CHARGER_BLOCK = Registry.register(
             Registries.BLOCK,
