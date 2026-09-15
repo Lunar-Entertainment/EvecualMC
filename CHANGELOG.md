@@ -1,5 +1,13 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.31] - 2026-09-15
+### Added & Improved
+- **Railgun Hand Hold & Orientation Fix**:
+  - Fixed 3D Lorentz Railgun model being held sideways in third-person and first-person views.
+  - Replaced legacy 2D sprite rotations (`0, -90, 55`) with true 3D rifle transforms (`-80, 0, -10` in third-person and `-90, 0, -30` in first-person).
+  - Aligned translation offsets (`0, 4.0, -2.5`) so the player's hand palm grips the tactical handle rather than the center of the accelerator chamber.
+  - The railgun is now held upright with the holographic sight on top, the handle in the hand, and the barrel pointing forward.
+
 ## [1.8.30] - 2026-09-15
 ### Added & Improved
 - **Quantum Materializer Fabrication & Recipe Accessibility**:
