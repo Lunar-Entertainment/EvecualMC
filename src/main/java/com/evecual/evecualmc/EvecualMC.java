@@ -29,6 +29,9 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.MusicDiscItem;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Rarity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -225,6 +228,33 @@ public class EvecualMC implements ModInitializer {
             Registries.ITEM,
             new Identifier(MOD_ID, "the_castles_crown"),
             new com.evecual.evecualmc.item.crown.CastlesCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.RARE)));
+
+    // Music Discs
+    public static final Identifier MUSIC_DISC_CIRCUIT_AND_STONE_ID = new Identifier(MOD_ID, "music_disc.circuit_and_stone");
+    public static final SoundEvent MUSIC_DISC_CIRCUIT_AND_STONE = Registry.register(
+            Registries.SOUND_EVENT,
+            MUSIC_DISC_CIRCUIT_AND_STONE_ID,
+            SoundEvent.of(MUSIC_DISC_CIRCUIT_AND_STONE_ID)
+    );
+
+    public static final Identifier MUSIC_DISC_VOLTAGE_VALLEY_ID = new Identifier(MOD_ID, "music_disc.voltage_valley");
+    public static final SoundEvent MUSIC_DISC_VOLTAGE_VALLEY = Registry.register(
+            Registries.SOUND_EVENT,
+            MUSIC_DISC_VOLTAGE_VALLEY_ID,
+            SoundEvent.of(MUSIC_DISC_VOLTAGE_VALLEY_ID)
+    );
+
+    public static final Item MUSIC_DISC_CIRCUIT_AND_STONE_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "music_disc_circuit_and_stone"),
+            new MusicDiscItem(14, MUSIC_DISC_CIRCUIT_AND_STONE, new Item.Settings().maxCount(1).rarity(Rarity.RARE), 171)
+    );
+
+    public static final Item MUSIC_DISC_VOLTAGE_VALLEY_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "music_disc_voltage_valley"),
+            new MusicDiscItem(15, MUSIC_DISC_VOLTAGE_VALLEY, new Item.Settings().maxCount(1).rarity(Rarity.RARE), 179)
+    );
 
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
@@ -907,6 +937,8 @@ public class EvecualMC implements ModInitializer {
                 entries.add(THE_MECHANICALS_CROWN);
                 entries.add(THE_ELECTRICIANS_CROWN);
                 entries.add(THE_CASTLES_CROWN);
+                entries.add(MUSIC_DISC_CIRCUIT_AND_STONE_ITEM);
+                entries.add(MUSIC_DISC_VOLTAGE_VALLEY_ITEM);
             })
             .build();
 

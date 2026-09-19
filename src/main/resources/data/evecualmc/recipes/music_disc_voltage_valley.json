@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " E ",
+    "CGC",
+    " W "
+  ],
+  "key": {
+    "E": {
+      "item": "evecualmc:elactorite"
+    },
+    "C": {
+      "item": "evecualmc:copper_plate"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    }
+  },
+  "result": {
+    "item": "evecualmc:music_disc_voltage_valley",
+    "count": 1
+  }
+}

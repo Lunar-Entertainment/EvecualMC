@@ -117,5 +117,11 @@
   "item.evecualmc.the_mechanicals_crown": "The Mechanicals",
   "item.evecualmc.the_electricians_crown": "The Electricians",
   "item.evecualmc.the_castles_crown": "The Castles",
-  "key.evecualmc.crown_ability": "Crown Special Ability"
+  "key.evecualmc.crown_ability": "Crown Special Ability",
+  "item.evecualmc.music_disc_circuit_and_stone": "Music Disc",
+  "item.evecualmc.music_disc_circuit_and_stone.desc": "Circuit & Stone",
+  "subtitles.evecualmc.music_disc.circuit_and_stone": "Circuit & Stone plays",
+  "item.evecualmc.music_disc_voltage_valley": "Music Disc",
+  "item.evecualmc.music_disc_voltage_valley.desc": "Voltage Valley",
+  "subtitles.evecualmc.music_disc.voltage_valley": "Voltage Valley plays"
 }

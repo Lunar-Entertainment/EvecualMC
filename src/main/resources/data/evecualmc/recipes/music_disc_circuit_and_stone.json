@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " C ",
+    "SGS",
+    " W "
+  ],
+  "key": {
+    "C": {
+      "item": "evecualmc:copper_plate"
+    },
+    "S": {
+      "item": "minecraft:stone"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    }
+  },
+  "result": {
+    "item": "evecualmc:music_disc_circuit_and_stone",
+    "count": 1
+  }
+}

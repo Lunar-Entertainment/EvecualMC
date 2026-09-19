@@ -1,0 +1,18 @@
+{
+  "music_disc.circuit_and_stone": {
+    "sounds": [
+      {
+        "name": "evecualmc:records/circuit_and_stone",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.voltage_valley": {
+    "sounds": [
+      {
+        "name": "evecualmc:records/voltage_valley",
+        "stream": true
+      }
+    ]
+  }
+}

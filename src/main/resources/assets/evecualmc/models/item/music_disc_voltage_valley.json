@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "evecualmc:item/music_disc_voltage_valley"
+  }
+}

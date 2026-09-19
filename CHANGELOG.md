@@ -1,5 +1,25 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.36] - 2026-09-19
+### Added & Improved
+- **Custom Music Discs: "Circuit & Stone" and "Voltage Valley"**:
+  - Integrated high-fidelity custom soundtrack discs crafted from `/msc/` audio tracks:
+    - **Circuit & Stone** (`evecualmc:music_disc_circuit_and_stone`):
+      - Duration: 2 minutes 51 seconds (171s).
+      - Redstone comparator output: 14.
+      - Shaped recipe: Copper Plate, Stone, Gold Ingot, and Wire.
+    - **Voltage Valley** (`evecualmc:music_disc_voltage_valley`):
+      - Duration: 2 minutes 59 seconds (179s).
+      - Redstone comparator output: 15.
+      - Shaped recipe: Elactorite, Copper Plates, Gold Ingot, and Wire.
+  - **Full Jukebox & Audio Streaming Compatibility**:
+    - Converted high-bitrate stereo MP3 master recordings to clean Ogg Vorbis stream tracks located in `assets/evecualmc/sounds/records/`.
+    - Registered streaming audio entries in `sounds.json` (`music_disc.circuit_and_stone` & `music_disc.voltage_valley`) with memory-efficient background audio streaming (`"stream": true`).
+    - Added both discs to Minecraft's global `#minecraft:music_discs` item tag (`data/minecraft/tags/items/music_discs.json`), ensuring full native jukebox insertion, song playing, particles, and jukebox comparator signal emission.
+  - **Custom Artwork & Models**:
+    - Created high-contrast 16x16 pixel-art disc textures matching mod color themes (emerald-copper circuit tones for Circuit & Stone, electrifying violet-cyan neon tones for Voltage Valley).
+    - Added clean standard handheld/inventory item models and creative tab registration under the EvecualMC item group.
+
 ## [1.8.35] - 2026-09-19
 ### Added & Improved
 - **Dedicated Crown Inventory Slot (Hover-Revealed on Head)**:
