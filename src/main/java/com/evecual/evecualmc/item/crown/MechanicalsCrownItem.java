@@ -36,8 +36,8 @@ public class MechanicalsCrownItem extends ArmorItem {
             return;
         }
 
-        // Only active when equipped on the head
-        if (player.getEquippedStack(EquipmentSlot.HEAD) == stack) {
+        // Active when equipped on the head or in the dedicated crown slot
+        if (com.evecual.evecualmc.util.CrownHelper.isEquipped(player, stack)) {
             // Constant mechanical haste and speed
             if (!player.hasStatusEffect(StatusEffects.HASTE) || player.getStatusEffect(StatusEffects.HASTE).getDuration() <= 20) {
                 player.addStatusEffect(new StatusEffectInstance(StatusEffects.HASTE, 60, 1, true, false, true));

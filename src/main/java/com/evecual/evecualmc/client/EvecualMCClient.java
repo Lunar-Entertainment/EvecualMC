@@ -571,6 +571,15 @@ public class EvecualMCClient implements ClientModInitializer {
                 EvecualMC.THE_ELECTRICIANS_CROWN,
                 EvecualMC.THE_CASTLES_CROWN
         );
+
+        // Register Crown Feature Renderer for dedicated Crown Slot rendering on players
+        net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register(
+                (entityType, entityRenderer, registrationHelper, context) -> {
+                    if (entityRenderer instanceof net.minecraft.client.render.entity.PlayerEntityRenderer playerRenderer) {
+                        registrationHelper.register(new com.evecual.evecualmc.client.render.CrownFeatureRenderer(playerRenderer));
+                    }
+                }
+        );
         HandledScreens.register(EvecualMC.CAR_TRUNK_SCREEN_HANDLER, CarTrunkScreen::new);
         HandledScreens.register(EvecualMC.HELI_UPGRADE_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.HeliUpgradeScreen::new);
         HandledScreens.register(EvecualMC.RC_ROBOT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.RcRobotScreen::new);
@@ -754,6 +763,20 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register Crown Sync S2C receiver
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.CROWN_SYNC_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            int entityId = buf.readInt();
+            net.minecraft.item.ItemStack crown = buf.readItemStack();
+            client.execute(() -> {
+                if (client.world != null) {
+                    Entity entity = client.world.getEntityById(entityId);
+                    if (entity instanceof com.evecual.evecualmc.util.CrownHolder holder) {
+                        holder.evecualmc$setCrown(crown);
+                    }
+                }
+            });
+        });
+
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             RcHudManager.tick();
@@ -855,10 +878,11 @@ public class EvecualMCClient implements ClientModInitializer {
                 // Crown Special Ability Key ('V')
                 while (CROWN_ABILITY_KEY.wasPressed()) {
                     if (client.player != null) {
-                        net.minecraft.item.ItemStack head = client.player.getEquippedStack(net.minecraft.entity.EquipmentSlot.HEAD);
-                        if (!head.isEmpty() && (head.getItem() instanceof com.evecual.evecualmc.item.crown.MechanicalsCrownItem
-                                || head.getItem() instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem
-                                || head.getItem() instanceof com.evecual.evecualmc.item.crown.CastlesCrownItem)) {
+                        net.minecraft.item.ItemStack crown = client.player.getEquippedStack(net.minecraft.entity.EquipmentSlot.HEAD);
+                        if (!com.evecual.evecualmc.util.CrownHelper.isCrown(crown)) {
+                            crown = com.evecual.evecualmc.util.CrownHelper.getCrown(client.player);
+                        }
+                        if (!crown.isEmpty() && com.evecual.evecualmc.util.CrownHelper.isCrown(crown)) {
                             ClientPlayNetworking.send(EvecualMC.CROWN_ABILITY_PACKET_ID, PacketByteBufs.create());
                         }
                     }

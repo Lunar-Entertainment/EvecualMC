@@ -29,9 +29,9 @@ public class CrownArmorRenderer implements ArmorRenderer {
     private static final Identifier ELECTRICIANS_TEXTURE = new Identifier(EvecualMC.MOD_ID, "textures/models/armor/crown_electricians_3d.png");
     private static final Identifier CASTLES_TEXTURE = new Identifier(EvecualMC.MOD_ID, "textures/models/armor/crown_castles_3d.png");
 
-    private ModelPart mechanicalsCrown;
-    private ModelPart electriciansCrown;
-    private ModelPart castlesCrown;
+    private static ModelPart mechanicalsCrown;
+    private static ModelPart electriciansCrown;
+    private static ModelPart castlesCrown;
 
     @Override
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ItemStack stack,
@@ -40,23 +40,31 @@ public class CrownArmorRenderer implements ArmorRenderer {
         if (slot != EquipmentSlot.HEAD) {
             return;
         }
+        renderCrownDirectly(matrices, vertexConsumers, stack, light, contextModel);
+    }
 
-        if (this.mechanicalsCrown == null) {
-            this.mechanicalsCrown = createMechanicalsModel();
-            this.electriciansCrown = createElectriciansModel();
-            this.castlesCrown = createCastlesModel();
+    public static void renderCrownDirectly(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ItemStack stack,
+                                          int light, BipedEntityModel<?> contextModel) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+
+        if (mechanicalsCrown == null) {
+            mechanicalsCrown = createMechanicalsModel();
+            electriciansCrown = createElectriciansModel();
+            castlesCrown = createCastlesModel();
         }
 
         ModelPart model;
         Identifier texture;
         if (stack.isOf(EvecualMC.THE_MECHANICALS_CROWN)) {
-            model = this.mechanicalsCrown;
+            model = mechanicalsCrown;
             texture = MECHANICALS_TEXTURE;
         } else if (stack.isOf(EvecualMC.THE_ELECTRICIANS_CROWN)) {
-            model = this.electriciansCrown;
+            model = electriciansCrown;
             texture = ELECTRICIANS_TEXTURE;
         } else if (stack.isOf(EvecualMC.THE_CASTLES_CROWN)) {
-            model = this.castlesCrown;
+            model = castlesCrown;
             texture = CASTLES_TEXTURE;
         } else {
             return;

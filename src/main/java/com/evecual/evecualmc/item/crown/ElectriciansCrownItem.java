@@ -47,8 +47,8 @@ public class ElectriciansCrownItem extends ArmorItem {
             return;
         }
 
-        // Only active when equipped on the head
-        if (player.getEquippedStack(EquipmentSlot.HEAD) == stack) {
+        // Active when equipped on the head or in the dedicated crown slot
+        if (com.evecual.evecualmc.util.CrownHelper.isEquipped(player, stack)) {
             long currentEnergy = ItemEnergyHelper.getEnergy(stack);
 
             // Constant energetic speed and jump boost

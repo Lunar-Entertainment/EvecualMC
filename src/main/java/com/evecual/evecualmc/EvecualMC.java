@@ -911,6 +911,7 @@ public class EvecualMC implements ModInitializer {
             .build();
 
     public static final Identifier CROWN_ABILITY_PACKET_ID = new Identifier(MOD_ID, "crown_ability");
+    public static final Identifier CROWN_SYNC_S2C_PACKET_ID = new Identifier(MOD_ID, "crown_sync");
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier HELI_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_input");
     public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
@@ -1593,6 +1594,9 @@ public class EvecualMC implements ModInitializer {
                 (server, player, handler, buf, responseSender) -> {
                     server.execute(() -> {
                         ItemStack headStack = player.getEquippedStack(net.minecraft.entity.EquipmentSlot.HEAD);
+                        if (!com.evecual.evecualmc.util.CrownHelper.isCrown(headStack)) {
+                            headStack = com.evecual.evecualmc.util.CrownHelper.getCrown(player);
+                        }
                         if (headStack.getItem() instanceof com.evecual.evecualmc.item.crown.MechanicalsCrownItem) {
                             if (!player.getItemCooldownManager().isCoolingDown(headStack.getItem())) {
                                 player.getItemCooldownManager().set(headStack.getItem(), 100);
@@ -1625,6 +1629,11 @@ public class EvecualMC implements ModInitializer {
                         }
                     });
                 });
+
+        // Sync equipped crown to player and tracking players when joining
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            com.evecual.evecualmc.util.CrownHelper.syncCrownToTracking(handler.player);
+        });
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");

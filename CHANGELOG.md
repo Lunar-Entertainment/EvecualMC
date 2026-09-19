@@ -1,5 +1,26 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.35] - 2026-09-19
+### Added & Improved
+- **Dedicated Crown Inventory Slot (Hover-Revealed on Head)**:
+  - **Dynamic Hover Reveal**:
+    - Moving the mouse cursor over the head (either the helmet armor slot `(x=8, y=8)` or the player model preview head `(x=40..62, y=8..32)`) reveals a dedicated Crown Slot popping up directly on top of the head at `x=8, y=-19`.
+    - Integrated a ~1.5s smooth cursor hover grace timer, allowing fluid navigation between the head and the crown slot without premature closing.
+    - Slot remains visible and accessible whenever a crown is equipped.
+    - Custom container tab styling with 3D beveled borders, recessed slot background, and a delicate pixel-art golden crown watermark when empty.
+    - Custom tooltip: `§6👑 Crown Slot - §eLegendary Crowns Only`.
+  - **Strict Slot Validation ("Nothing Else Can Be In There")**:
+    - CrownSlot enforces strict filtering in `canInsert(stack)`: only allows `evecualmc:the_mechanicals_crown`, `evecualmc:the_electricians_crown`, and `evecualmc:the_castles_crown`. Any other item (helmets, blocks, tools) is completely rejected.
+    - Quick-move / shift-clicking crowns automatically equips them into the Crown Slot, and shift-clicking the Crown Slot returns it to the main inventory.
+  - **3D Crown Rendering in Crown Slot**:
+    - Implemented `CrownFeatureRenderer` registered on `PlayerEntityRenderer` via Fabric API.
+    - Equipping a crown in the Crown Slot immediately renders its 3D model on the player's head both in the world and inside the inventory character preview.
+  - **Full Functional Parity**:
+    - All crown passives (Kinetic Momentum, Clockwork Mending, Lightning static harvesting, wireless recharge, fortified resilience) tick every tick while equipped in the Crown Slot.
+    - Keybind **[V]** triggers the active ability (Overclock Burst, Lightning Surge, Cannon Artillery) seamlessly from either the helmet slot or the dedicated crown slot.
+  - **Persistence & Multiplayer Sync**:
+    - Saved into player NBT (`EvecualMCCrown`), respects `keepInventory`, and syncs in real-time across multiplayer via `CROWN_SYNC_S2C_PACKET_ID`.
+
 ## [1.8.34] - 2026-09-19
 ### Fixed & Improved
 - **Crown 3D Head Positioning Fix**:

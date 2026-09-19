@@ -40,8 +40,8 @@ public class CastlesCrownItem extends ArmorItem {
             return;
         }
 
-        // Only active when equipped on the head
-        if (player.getEquippedStack(EquipmentSlot.HEAD) == stack) {
+        // Active when equipped on the head or in the dedicated crown slot
+        if (com.evecual.evecualmc.util.CrownHelper.isEquipped(player, stack)) {
             // Permanent fortified resilience
             if (!player.hasStatusEffect(StatusEffects.RESISTANCE) || player.getStatusEffect(StatusEffects.RESISTANCE).getDuration() <= 20) {
                 player.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 60, 1, true, false, true));
