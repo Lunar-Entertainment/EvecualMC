@@ -83,6 +83,11 @@ public class MechanicalsCrownItem extends ArmorItem {
                 .append(Text.literal("Automatically repairs held tools over time").formatted(Formatting.WHITE)));
         tooltip.add(Text.literal(" ⚙ Heavy Steampunk Armor: ").formatted(Formatting.GOLD)
                 .append(Text.literal("+4 Armor, +2 Toughness").formatted(Formatting.WHITE)));
+        tooltip.add(Text.empty());
+        tooltip.add(Text.literal("✖ Non-Duplicable: ").formatted(Formatting.RED)
+                .append(Text.literal("Protected Artifact").formatted(Formatting.GRAY)));
+        tooltip.add(Text.literal("✨ Animated: ").formatted(Formatting.LIGHT_PURPLE)
+                .append(Text.literal("Living Clockwork Mechanism").formatted(Formatting.GRAY)));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

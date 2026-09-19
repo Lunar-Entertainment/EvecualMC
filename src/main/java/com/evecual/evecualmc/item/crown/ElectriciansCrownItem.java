@@ -165,6 +165,11 @@ public class ElectriciansCrownItem extends ArmorItem {
                 .append(Text.literal("Permanent Speed II & lightning immunity").formatted(Formatting.WHITE)));
         tooltip.add(Text.literal(" ⚡ Active Ability [Key V]: ").formatted(Formatting.GOLD)
                 .append(Text.literal("Calls targeted lightning bolt (-150 EU)").formatted(Formatting.WHITE)));
+        tooltip.add(Text.empty());
+        tooltip.add(Text.literal("✖ Non-Duplicable: ").formatted(Formatting.RED)
+                .append(Text.literal("Protected Artifact").formatted(Formatting.GRAY)));
+        tooltip.add(Text.literal("✨ Animated: ").formatted(Formatting.AQUA)
+                .append(Text.literal("Pulsing Energy Grid & Micro-Arcs").formatted(Formatting.GRAY)));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

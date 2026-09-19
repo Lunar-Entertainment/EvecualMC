@@ -341,6 +341,14 @@ public class DuperRarityHelper {
         // 5. Railgun
         if (EvecualMC.RAILGUN_ITEM != null && stack.isOf(EvecualMC.RAILGUN_ITEM)) return false;
 
+        // 6. Royal Crowns (Legendary un-dupable artifacts)
+        if (stack.isOf(EvecualMC.THE_MECHANICALS_CROWN)) return false;
+        if (stack.isOf(EvecualMC.THE_ELECTRICIANS_CROWN)) return false;
+        if (stack.isOf(EvecualMC.THE_CASTLES_CROWN)) return false;
+        if (item instanceof com.evecual.evecualmc.item.crown.MechanicalsCrownItem
+                || item instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem
+                || item instanceof com.evecual.evecualmc.item.crown.CastlesCrownItem) return false;
+
         return true;
     }
 

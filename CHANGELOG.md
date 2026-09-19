@@ -1,5 +1,18 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.33] - 2026-09-19
+### Added & Improved
+- **Crowns Anti-Duplication Protection & Dynamic Animation**:
+  - **Duplication Blacklist**:
+    - Blacklisted all three crowns (`evecualmc:the_mechanicals_crown`, `evecualmc:the_electricians_crown`, `evecualmc:the_castles_crown`) from the **Electronic Duper** replication chamber in `DuperRarityHelper.isDuplicable`.
+    - Crowns cannot be duplicated or placed in the duper input slot, protecting their legendary status.
+  - **Animated Multi-Frame Textures (`.png` + `.png.mcmeta`)**:
+    - **The Mechanicals**: 8-frame clockwork animation with central brass cog rotating 360°, side gears meshing in reverse synchrony, and escapement spring ticks.
+    - **The Electricians**: 8-frame high-voltage animation with pulsing Elactorite crystal gem, electric lightning surge traveling up the central spire, and crackling tesla coil micro-arcs.
+    - **The Castles**: 8-frame fortress animation with glowing hot ember muzzles in the twin cannons, wisps of black powder smoke rising, and a sweeping royal gold sheen across the battlement parapets.
+  - **Tooltip Updates**:
+    - Added `✖ Non-Duplicable (Protected Artifact)` and `✨ Animated` badges across all three crown tooltips.
+
 ## [1.8.32] - 2026-09-19
 ### Added & Improved
 - **The Three Royal Crowns**:

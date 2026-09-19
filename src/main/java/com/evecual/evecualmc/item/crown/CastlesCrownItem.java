@@ -157,6 +157,11 @@ public class CastlesCrownItem extends ArmorItem {
                 .append(Text.literal("Heavy sprint charge shoves and damages foes").formatted(Formatting.WHITE)));
         tooltip.add(Text.literal(" 🏰 Twin Siege Cannons [Key V]: ").formatted(Formatting.GOLD)
                 .append(Text.literal("Fires dual steel artillery cannonballs").formatted(Formatting.WHITE)));
+        tooltip.add(Text.empty());
+        tooltip.add(Text.literal("✖ Non-Duplicable: ").formatted(Formatting.RED)
+                .append(Text.literal("Protected Artifact").formatted(Formatting.GRAY)));
+        tooltip.add(Text.literal("✨ Animated: ").formatted(Formatting.GOLD)
+                .append(Text.literal("Muzzle Embers, Smoke & Sheen").formatted(Formatting.GRAY)));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }
