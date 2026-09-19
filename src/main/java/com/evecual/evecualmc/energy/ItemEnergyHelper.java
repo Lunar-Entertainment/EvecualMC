@@ -23,6 +23,7 @@ public class ItemEnergyHelper {
         Item item = stack.getItem();
 
         if (item instanceof ElectronicZapperItem) return true;
+        if (item instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem) return true;
         if (stack.isOf(EvecualMC.RAILGUN_ITEM)) return true;
         if (stack.isOf(EvecualMC.RC_CAR_ITEM)) return true;
         if (stack.isOf(EvecualMC.RC_DRONE_ITEM)) return true;
@@ -60,6 +61,7 @@ public class ItemEnergyHelper {
         Item item = stack.getItem();
 
         if (item instanceof ElectronicZapperItem) return ZAPPER_MAX_ENERGY;
+        if (item instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem) return com.evecual.evecualmc.item.crown.ElectriciansCrownItem.MAX_ENERGY;
         if (stack.isOf(EvecualMC.RAILGUN_ITEM)) return 2000;
         if (stack.isOf(EvecualMC.RC_CAR_ITEM)) return RcCarEntity.MAX_ENERGY;
         if (stack.isOf(EvecualMC.RC_DRONE_ITEM) || stack.isOf(EvecualMC.PICKUP_DRONE_ITEM)) return RcDroneEntity.MAX_ENERGY;

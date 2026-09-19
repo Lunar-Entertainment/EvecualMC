@@ -211,6 +211,21 @@ public class EvecualMC implements ModInitializer {
             new Identifier(MOD_ID, "railgun"),
             new com.evecual.evecualmc.item.RailgunItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.EPIC)));
 
+    public static final Item THE_MECHANICALS_CROWN = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "the_mechanicals_crown"),
+            new com.evecual.evecualmc.item.crown.MechanicalsCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.RARE)));
+
+    public static final Item THE_ELECTRICIANS_CROWN = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "the_electricians_crown"),
+            new com.evecual.evecualmc.item.crown.ElectriciansCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.EPIC)));
+
+    public static final Item THE_CASTLES_CROWN = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "the_castles_crown"),
+            new com.evecual.evecualmc.item.crown.CastlesCrownItem(new Item.Settings().maxCount(1).rarity(net.minecraft.util.Rarity.RARE)));
+
     // Blocks (All mineable by hand and drop themselves!)
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -889,9 +904,13 @@ public class EvecualMC implements ModInitializer {
                 entries.add(TURRET_AMMO_CONTAINER_ITEM);
                 entries.add(ITEM_FABRICATOR_ITEM);
                 entries.add(RAILGUN_ITEM);
+                entries.add(THE_MECHANICALS_CROWN);
+                entries.add(THE_ELECTRICIANS_CROWN);
+                entries.add(THE_CASTLES_CROWN);
             })
             .build();
 
+    public static final Identifier CROWN_ABILITY_PACKET_ID = new Identifier(MOD_ID, "crown_ability");
     public static final Identifier CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "car_input");
     public static final Identifier HELI_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_input");
     public static final Identifier RC_CAR_INPUT_PACKET_ID = new Identifier(MOD_ID, "rc_car_input");
@@ -1568,6 +1587,44 @@ public class EvecualMC implements ModInitializer {
             return net.minecraft.util.ActionResult.PASS;
         });
 
+
+        // Crown Special Ability Packet Handler
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CROWN_ABILITY_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        ItemStack headStack = player.getEquippedStack(net.minecraft.entity.EquipmentSlot.HEAD);
+                        if (headStack.getItem() instanceof com.evecual.evecualmc.item.crown.MechanicalsCrownItem) {
+                            if (!player.getItemCooldownManager().isCoolingDown(headStack.getItem())) {
+                                player.getItemCooldownManager().set(headStack.getItem(), 100);
+                                player.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(net.minecraft.entity.effect.StatusEffects.HASTE, 160, 2, true, false, true));
+                                player.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(net.minecraft.entity.effect.StatusEffects.SPEED, 160, 2, true, false, true));
+                                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                        net.minecraft.sound.SoundEvents.BLOCK_ANVIL_USE, net.minecraft.sound.SoundCategory.PLAYERS, 0.8f, 1.7f);
+                                if (player.getWorld() instanceof net.minecraft.server.world.ServerWorld sw) {
+                                    sw.spawnParticles(net.minecraft.particle.ParticleTypes.CRIT,
+                                            player.getX(), player.getY() + 1.0, player.getZ(), 20, 0.5, 0.5, 0.5, 0.2);
+                                }
+                                net.minecraft.util.math.Box box = player.getBoundingBox().expand(5.0);
+                                java.util.List<net.minecraft.entity.LivingEntity> mobs = player.getWorld().getEntitiesByClass(
+                                        net.minecraft.entity.LivingEntity.class, box, e -> e != player && e.isAlive() && !e.isTeammate(player));
+                                for (net.minecraft.entity.LivingEntity mob : mobs) {
+                                    net.minecraft.util.math.Vec3d knock = mob.getPos().subtract(player.getPos()).normalize().multiply(1.2).add(0, 0.35, 0);
+                                    mob.takeKnockback(1.0, -knock.x, -knock.z);
+                                    mob.damage(player.getWorld().getDamageSources().playerAttack(player), 8.0f);
+                                }
+                                player.sendMessage(Text.literal("§6⚙ Mechanical Overdrive Activated! (Radial Kinetic Wave)").formatted(net.minecraft.util.Formatting.GOLD), true);
+                            }
+                        } else if (headStack.getItem() instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem) {
+                            if (!player.getItemCooldownManager().isCoolingDown(headStack.getItem())) {
+                                if (com.evecual.evecualmc.item.crown.ElectriciansCrownItem.triggerLightningAbility(player, headStack)) {
+                                    player.getItemCooldownManager().set(headStack.getItem(), 30);
+                                }
+                            }
+                        } else if (headStack.getItem() instanceof com.evecual.evecualmc.item.crown.CastlesCrownItem) {
+                            com.evecual.evecualmc.item.crown.CastlesCrownItem.triggerArtilleryAbility(player, headStack);
+                        }
+                    });
+                });
 
         LOGGER.info("========================================");
         LOGGER.info("  EvecualMC Initialized!                ");

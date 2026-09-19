@@ -1,5 +1,35 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.32] - 2026-09-19
+### Added & Improved
+- **The Three Royal Crowns**:
+  - Added **The Mechanicals** (`evecualmc:the_mechanicals_crown`):
+    - Steampunk brass, copper, and iron circlet with interlocking cogs and precision clockwork springs.
+    - Passive: Permanent **Kinetic Momentum** granting Haste II and Speed I while equipped.
+    - Passive: **Clockwork Mending** automatically restores durability to carried equipment and tools every 10 seconds.
+    - Active Ability (**Key [V]**): Triggers an **Overclock Burst**, pushing all surrounding hostiles away with a kinetic shockwave and dealing damage.
+    - Crafted with Copper Plates, Steel Ingots, Gold, and an Electric Engine.
+  - Added **The Electricians** (`evecualmc:the_electricians_crown`):
+    - High-voltage crown embedded with resonated Elactorite crystals and energized tesla coil emitters.
+    - Integrated 5,000 EU internal capacitor buffer compatible with mod chargers.
+    - Passive: Automatically harvests static electrical charge from active thunderstorms and rainfall to recharge its energy buffer.
+    - Passive: Wirelessly supplies inductive power to any carried electric items (Electronic Zapper, Railgun, Batteries).
+    - Passive: Grants total lightning strike immunity and Speed II.
+    - Active Ability (**Key [V]**): Summons a targeted, focused lightning bolt on crosshairs (consuming 150 EU).
+    - Crafted with Elactorite, Lightning, Electrical Wires, a Battery, and Steel Ingots.
+  - Added **The Castles** (`evecualmc:the_castles_crown`):
+    - Ancient fortress crown chiseled from weathered stone bricks, featuring battlement crenellations and royal gold inlay.
+    - Flanked by twin functional cast-iron siege cannons on the ramparts.
+    - Passive: **Fortress Bulwark** granting heavy defense (+6 Armor, +3.5 Toughness) and permanent Resistance II.
+    - Passive: **Siege Ram** shoves and deals heavy impact damage to enemies collided with while sprinting.
+    - Active Ability (**Key [V]**): Fires dual explosive artillery rounds from the twin cannons with muzzle smoke and blast acoustics.
+    - Crafted with Steel Ammo, Steel Ingots, Iron Ingots, Gunpowder, and Stone Bricks.
+- **Crown Armor Renderer & Visual Integration**:
+  - Implemented Fabric `ArmorRenderer` for all three crowns so they render directly on entity and player heads.
+  - Created custom 16x16 pixel art item icons and 64x32 armor textures with thematic shading and highlights.
+  - Added crown registrations to the Evecual creative tab.
+  - Added full English and Swedish translations.
+
 ## [1.8.31] - 2026-09-15
 ### Added & Improved
 - **Railgun Hand Hold & Orientation Fix**:

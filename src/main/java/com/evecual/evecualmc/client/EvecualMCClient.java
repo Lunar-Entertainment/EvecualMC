@@ -123,6 +123,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding CROWN_ABILITY_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.crown_ability",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            "category.evecualmc.evecual"
+    ));
+
     public static boolean isKeyOrMousePressed(KeyBinding keyBinding, long windowHandle) {
         if (keyBinding == null) return false;
         if (keyBinding.isPressed()) return true;
@@ -556,6 +563,14 @@ public class EvecualMCClient implements ClientModInitializer {
         HandledScreens.register(EvecualMC.MATERIALIZER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.MaterializerScreen::new);
         HandledScreens.register(EvecualMC.ELECTRIC_GRINDER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.ElectricGrinderScreen::new);
         HandledScreens.register(EvecualMC.ITEM_CHARGER_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.ItemChargerScreen::new);
+
+        // Register Crown Armor Renderer
+        net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer.register(
+                new com.evecual.evecualmc.client.render.CrownArmorRenderer(),
+                EvecualMC.THE_MECHANICALS_CROWN,
+                EvecualMC.THE_ELECTRICIANS_CROWN,
+                EvecualMC.THE_CASTLES_CROWN
+        );
         HandledScreens.register(EvecualMC.CAR_TRUNK_SCREEN_HANDLER, CarTrunkScreen::new);
         HandledScreens.register(EvecualMC.HELI_UPGRADE_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.HeliUpgradeScreen::new);
         HandledScreens.register(EvecualMC.RC_ROBOT_SCREEN_HANDLER, com.evecual.evecualmc.client.screen.RcRobotScreen::new);
@@ -833,6 +848,18 @@ public class EvecualMCClient implements ClientModInitializer {
                             PacketByteBuf buf = PacketByteBufs.create();
                             buf.writeInt(closest.getId());
                             ClientPlayNetworking.send(EvecualMC.OPEN_TRUNK_PACKET_ID, buf);
+                        }
+                    }
+                }
+
+                // Crown Special Ability Key ('V')
+                while (CROWN_ABILITY_KEY.wasPressed()) {
+                    if (client.player != null) {
+                        net.minecraft.item.ItemStack head = client.player.getEquippedStack(net.minecraft.entity.EquipmentSlot.HEAD);
+                        if (!head.isEmpty() && (head.getItem() instanceof com.evecual.evecualmc.item.crown.MechanicalsCrownItem
+                                || head.getItem() instanceof com.evecual.evecualmc.item.crown.ElectriciansCrownItem
+                                || head.getItem() instanceof com.evecual.evecualmc.item.crown.CastlesCrownItem)) {
+                            ClientPlayNetworking.send(EvecualMC.CROWN_ABILITY_PACKET_ID, PacketByteBufs.create());
                         }
                     }
                 }

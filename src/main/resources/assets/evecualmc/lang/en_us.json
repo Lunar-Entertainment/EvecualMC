@@ -113,5 +113,9 @@
   "block.evecualmc.item_fabricator": "Item Fabricator",
   "item.evecualmc.item_fabricator": "Item Fabricator",
   "container.evecualmc.item_fabricator": "Item Fabricator",
-  "item.evecualmc.railgun": "Lorentz Railgun"
+  "item.evecualmc.railgun": "Lorentz Railgun",
+  "item.evecualmc.the_mechanicals_crown": "The Mechanicals",
+  "item.evecualmc.the_electricians_crown": "The Electricians",
+  "item.evecualmc.the_castles_crown": "The Castles",
+  "key.evecualmc.crown_ability": "Crown Special Ability"
 }

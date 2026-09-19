@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CEC",
+    "SGS",
+    "SSS"
+  ],
+  "key": {
+    "C": {
+      "item": "evecualmc:copper_plate"
+    },
+    "E": {
+      "item": "evecualmc:electric_engine"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "evecualmc:the_mechanicals_crown",
+    "count": 1
+  }
+}

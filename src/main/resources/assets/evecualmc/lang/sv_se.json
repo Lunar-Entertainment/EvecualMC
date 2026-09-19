@@ -113,5 +113,9 @@
   "block.evecualmc.item_fabricator": "Föremålstillverkare",
   "item.evecualmc.item_fabricator": "Föremålstillverkare",
   "container.evecualmc.item_fabricator": "Föremålstillverkare",
-  "item.evecualmc.railgun": "Lorentz Railgun"
+  "item.evecualmc.railgun": "Lorentz Railgun",
+  "item.evecualmc.the_mechanicals_crown": "The Mechanicals",
+  "item.evecualmc.the_electricians_crown": "The Electricians",
+  "item.evecualmc.the_castles_crown": "The Castles",
+  "key.evecualmc.crown_ability": "Krona Specialförmåga"
 }

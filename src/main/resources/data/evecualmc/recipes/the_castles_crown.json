@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ASA",
+    "IGI",
+    "BBB"
+  ],
+  "key": {
+    "A": {
+      "item": "evecualmc:steel_ammo"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "B": {
+      "item": "minecraft:stone_bricks"
+    }
+  },
+  "result": {
+    "item": "evecualmc:the_castles_crown",
+    "count": 1
+  }
+}

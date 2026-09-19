@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LEL",
+    "WBW",
+    "SSS"
+  ],
+  "key": {
+    "L": {
+      "item": "evecualmc:elactorite"
+    },
+    "E": {
+      "item": "evecualmc:lightning"
+    },
+    "W": {
+      "item": "evecualmc:wire"
+    },
+    "B": {
+      "item": "evecualmc:battery"
+    },
+    "S": {
+      "item": "evecualmc:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "evecualmc:the_electricians_crown",
+    "count": 1
+  }
+}
