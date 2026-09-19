@@ -1,5 +1,20 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.34] - 2026-09-19
+### Fixed & Improved
+- **Crown 3D Head Positioning Fix**:
+  - Completely overhauled the crown armor rendering engine in `CrownArmorRenderer.java` using custom 3D `ModelPart` geometry.
+  - Crowns now render firmly and accurately on top of the head/forehead (`Y = -6.5F` to `Y = -14.5F` relative to head pivot), completely eliminating the issue where they previously appeared around the throat/neck.
+  - Custom 3D Features & Dedicated 64x64 Armor Textures:
+    - **The Mechanicals**: 3D brass circlet band, 8 perimeter cog teeth/spires, prominent 8-point grand center cog with steel axle pin, twin side-meshing copper gears on temples, and rear steam boiler pressure gauge.
+    - **The Electricians**: Sleek superconductor alloy band with conductive traces, front faceted Elactorite core crystal in heavy alloy bezel, twin swept lightning horn spires, twin temple Tesla coils with silver discharge spheres, and central lightning mast.
+    - **The Castles**: Chiseled ashlar stone fortress battlement with royal gold bottom moulding, 4 corner watchtowers with crenellated parapets, central fortress keep crowned with a golden spire, twin forward-facing 3D heavy wrought-iron siege cannons with brass trunnions, and rear cannonball pyramid stack.
+- **Removed Crafting Recipes**:
+  - Permanently removed all crafting table recipe definitions for the three crowns (`the_mechanicals_crown.json`, `the_electricians_crown.json`, `the_castles_crown.json`), ensuring they cannot be crafted and remain exclusive, un-craftable artifacts.
+- **Anti-Duplication & Animation Preserved**:
+  - Maintained complete anti-duplication protection in `DuperRarityHelper` against the Electronic Duper.
+  - Maintained multi-frame animated item textures with `.mcmeta` files.
+
 ## [1.8.33] - 2026-09-19
 ### Added & Improved
 - **Crowns Anti-Duplication Protection & Dynamic Animation**:

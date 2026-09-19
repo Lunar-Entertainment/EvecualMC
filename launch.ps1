@@ -104,16 +104,17 @@ if ($Install) {
         New-Item -ItemType Directory -Path $modsDir -Force | Out-Null
     }
 
-    $jarFiles = Get-ChildItem -Path "build\libs" -Filter "evecualmc-*.jar" | Where-Object { $_.Name -notmatch "sources" }
-    foreach ($jar in $jarFiles) {
-        Copy-Item -Path $jar.FullName -Destination $modsDir -Force
-        Write-Host "Installed $($jar.Name) to $modsDir" -ForegroundColor Green
+    $latestJar = Get-ChildItem -Path "build\libs" -Filter "evecualmc-*.jar" | Where-Object { $_.Name -notmatch "sources" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($latestJar) {
+        Get-ChildItem -Path $modsDir -Filter "evecualmc-*.jar" | Where-Object { $_.Name -ne $latestJar.Name } | Remove-Item -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path $latestJar.FullName -Destination $modsDir -Force
+        Write-Host "Installed $($latestJar.Name) to $modsDir" -ForegroundColor Green
 
         $releaseDir = "release"
         if (Test-Path $releaseDir) {
             Get-ChildItem -Path $releaseDir -Filter "evecualmc-*.jar" | Remove-Item -Force
-            Copy-Item -Path $jar.FullName -Destination (Join-Path $releaseDir $jar.Name) -Force
-            Write-Host "Updated release jar in $releaseDir/$($jar.Name)" -ForegroundColor Green
+            Copy-Item -Path $latestJar.FullName -Destination (Join-Path $releaseDir $latestJar.Name) -Force
+            Write-Host "Updated release jar in $releaseDir/$($latestJar.Name)" -ForegroundColor Green
         }
     }
 
