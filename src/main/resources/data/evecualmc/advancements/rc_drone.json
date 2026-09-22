@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_drone"
+    },
+    "title": {
+      "text": "Micro Quadcopter"
+    },
+    "description": {
+      "text": "Craft an RC Drone to scout the surroundings and carry aerial payloads"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_rc_drone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_drone"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

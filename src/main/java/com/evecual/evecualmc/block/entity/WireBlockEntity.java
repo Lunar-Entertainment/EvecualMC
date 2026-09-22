@@ -33,10 +33,12 @@ public class WireBlockEntity extends BlockEntity {
     }
 
     public void recordEnergyTransfer(long amount) {
-        this.transferRate = (int) Math.max(this.transferRate, amount);
+        int newRate = (int) Math.max(this.transferRate, amount);
         this.tickTracker = 0;
-        markDirty();
-        sync();
+        if (newRate != this.transferRate) {
+            this.transferRate = newRate;
+            markDirty();
+        }
     }
 
     public int getTransferRate() {

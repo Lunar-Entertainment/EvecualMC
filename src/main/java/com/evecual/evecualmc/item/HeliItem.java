@@ -47,16 +47,6 @@ public class HeliItem extends Item {
         return ActionResult.success(world.isClient);
     }
 
-    @Override
-    public net.minecraft.util.TypedActionResult<ItemStack> use(World world, net.minecraft.entity.player.PlayerEntity user, net.minecraft.util.Hand hand) {
-        if (user.isSneaking()) {
-            if (!world.isClient && user instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-                EvecualMC.sendOpenTipScreen(serverPlayer, "ev_heli", 0, 2000, "🚁 EV Helicopter: High-speed drivable VTOL aircraft");
-            }
-            return net.minecraft.util.TypedActionResult.success(user.getStackInHand(hand));
-        }
-        return super.use(world, user, hand);
-    }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {

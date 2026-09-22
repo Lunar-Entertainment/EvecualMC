@@ -29,7 +29,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         super(EvecualMC.BATTERY_BLOCK_ENTITY, pos, state);
     }
 
-    public static final int MAX_WIRE_DISTANCE = 32;
+    public static final int MAX_WIRE_DISTANCE = 1024;
 
     public static void tick(net.minecraft.world.World world, BlockPos pos, BlockState state, BatteryBlockEntity be) {
         if (world.isClient) return;
@@ -40,7 +40,7 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
         }
 
         BatteryCluster cluster = be.getCluster();
-        // Only the first battery in the cluster drives the network transfer to avoid redundant or conflicting discharge
+        // Only the deterministic first battery in the sorted cluster drives the network transfer
         if (!cluster.batteries().isEmpty() && cluster.batteries().get(0) == be && cluster.totalEnergy() > 0) {
             be.transferEnergyToConsumers(world, pos, cluster);
         }
@@ -73,6 +73,9 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
                 }
             }
         }
+
+        // Sort deterministically by block coordinates so ALL batteries in the cluster agree on the exact same master
+        clusterBatteries.sort(java.util.Comparator.comparing(BlockEntity::getPos));
 
         long totalStored = 0;
         for (BatteryBlockEntity bbe : clusterBatteries) {
@@ -138,8 +141,8 @@ public class BatteryBlockEntity extends BlockEntity implements EnergyStorage {
             }
         }
 
-        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (32 blocks)
-        while (!queue.isEmpty()) {
+        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (1024 blocks)
+        while (!queue.isEmpty() && visited.size() <= 1024) {
             WireHop current = queue.poll();
 
             for (Direction dir : Direction.values()) {

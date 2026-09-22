@@ -77,13 +77,6 @@ public class PickupDroneParkingSpotBlock extends Block {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            boolean onPickup = world.getBlockState(pos.down()).isOf(EvecualMC.DRONE_PICKUP_BLOCK);
-            String status = onPickup
-                    ? "🛡️ Tactical Landing Pad: Ready on top of Drone Pickup Station"
-                    : "⚠️ Invalid Spot: Must be positioned on a Drone Pickup Station";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "pickup_drone_parking_spot", 0, 0, status);
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

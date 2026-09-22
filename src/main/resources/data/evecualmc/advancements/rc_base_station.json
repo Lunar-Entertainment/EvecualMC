@@ -1,0 +1,34 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_charger"
+    },
+    "title": {
+      "text": "Automated Fleet Dock"
+    },
+    "description": {
+      "text": "Craft an RC Charger or dedicated vehicle Parking Spot"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_dock_part": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_charger",
+              "evecualmc:rc_parking_spot",
+              "evecualmc:drone_parking_spot",
+              "evecualmc:robot_parking_spot"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

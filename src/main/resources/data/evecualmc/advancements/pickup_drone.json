@@ -1,0 +1,33 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:pickup_drone"
+    },
+    "title": {
+      "text": "Tactical Harvest Drone"
+    },
+    "description": {
+      "text": "Deploy a Pickup Drone or Drone Pickup station to collect mob drops and mined ores"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_pickup_drone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:pickup_drone",
+              "evecualmc:drone_pickup",
+              "evecualmc:pickup_drone_parking_spot"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

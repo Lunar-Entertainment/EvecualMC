@@ -1,5 +1,5 @@
 {
-  "parent": "evecualmc:root",
+  "parent": "evecualmc:electric_engine",
   "display": {
     "icon": {
       "item": "evecualmc:car"

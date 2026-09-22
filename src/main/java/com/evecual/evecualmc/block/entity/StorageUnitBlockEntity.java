@@ -85,8 +85,8 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
 
             if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
                 wireQueue.add(neighborPos);
-            } else if (neighbor instanceof com.evecual.evecualmc.energy.EnergyStorage storage
-                    && !(neighbor instanceof StorageUnitBlockEntity)) {
+            } else if ((neighbor instanceof BatteryBlockEntity || neighbor instanceof SolarPanelBlockEntity || neighbor instanceof WindTurbineBlockEntity)
+                    && neighbor instanceof com.evecual.evecualmc.energy.EnergyStorage storage) {
                 int needed = MAX_ENERGY - this.energy;
                 long extracted = storage.extractEnergy(Math.min(needed, 50), false);
                 if (extracted > 0) {
@@ -98,7 +98,7 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
         }
 
         // 2. BFS traverse connected wire network
-        while (!wireQueue.isEmpty() && visited.size() <= 64) {
+        while (!wireQueue.isEmpty() && visited.size() <= 1024) {
             BlockPos wirePos = wireQueue.poll();
             for (Direction dir : Direction.values()) {
                 BlockPos next = wirePos.offset(dir);
@@ -109,8 +109,8 @@ public class StorageUnitBlockEntity extends BlockEntity implements Inventory, Na
 
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
                     wireQueue.add(next);
-                } else if (nextBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage
-                        && !(nextBe instanceof StorageUnitBlockEntity)) {
+                } else if ((nextBe instanceof BatteryBlockEntity || nextBe instanceof SolarPanelBlockEntity || nextBe instanceof WindTurbineBlockEntity)
+                        && nextBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage) {
                     int needed = MAX_ENERGY - this.energy;
                     long extracted = storage.extractEnergy(Math.min(needed, 50), false);
                     if (extracted > 0) {

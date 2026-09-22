@@ -1,5 +1,37 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.37] - 2026-09-22
+### Added & Improved
+- **Turret Whitelist & Blacklist Player Filtering**:
+  - Added full gametag filtering to Stationary Turrets with Whitelist and Blacklist modes.
+  - Interactive dual-tab screen: `[⚙ Targets]` for mob target types and `[👥 Filter]` for player gametag management.
+  - In-game text field with `+ Add` button, paginated player entries with `✕` removal buttons, and `Clear All`.
+  - Dedicated client-to-server and server-to-client network packets ensuring seamless filter sync in multiplayer.
+- **Fixed Turret Aiming & Ballistics**:
+  - Corrected yaw azimuth calculation, resolving horizontal barrel aiming inversion.
+  - Implemented predictive target leading: turrets calculate projectile flight time and target velocity to lead fast-moving targets.
+  - Clamped pitch rotation (-60° to +45°) to prevent erratic upside-down twisting.
+  - Smooth client-side barrel interpolation using previous tick angles.
+  - Offset bullet muzzle spawn point and added initial tick grace to prevent projectiles from colliding with the turret base.
+- **Crown Slot Mod Compatibility Overhaul**:
+  - Permanently resolved item-overriding bug with Trinkets, Traveler's Backpack, and Elytra Slot.
+  - Removed crown slot injection from vanilla `PlayerScreenHandler.slots`, preserving exact slot IDs across all third-party inventory mods.
+  - Crown slot is rendered as an isolated client-side widget with dedicated packet handling (`CROWN_SLOT_CLICK_PACKET_ID`), preventing slot collision and random item replacement.
+- **Electrical Grid Stabilization & "Short Circuit" Fix**:
+  - Resolved circular energy loops where multiple generators or batteries would stall charging across the network.
+  - Solar panels and wind turbines prioritize machines before batteries and ignore peer generators.
+  - Battery clusters designate a deterministic master coordinator for network distribution.
+  - Throttled network synchronization packets in wires, preventing network lag and packet flood.
+- **Expanded Long-Distance Cable Range**:
+  - Increased cable power transfer range from 32 blocks to 1024 blocks, supporting large base grids and remote power plants.
+- **HUD & GUI Text Overlap Fixes**:
+  - Cleaned up container title rendering across all mod screens (`StationaryTurretScreen`, `StorageUnitScreen`, `ElectricGrinderScreen`, `ElectronicDuperScreen`, `ItemChargerScreen`, `MaterializerScreen`, `TurretAmmoContainerScreen`).
+  - Adjusted Energy HUD waypoint Y-offset and RC HUD bar position to eliminate overlaps with vehicle gauges and action bar messages.
+- **Removed Right-Click Help Spam**:
+  - Completely removed unsolicited tip screen popups when interacting with blocks or items.
+- **Extensive Advancement Progression Tree**:
+  - Added 45+ advancement entries covering every machine, energy component, vehicle, RC robot, weapon, ammo type, and crown in EvecualMC.
+
 ## [1.8.36] - 2026-09-19
 ### Added & Improved
 - **Custom Music Discs: "Circuit & Stone" and "Voltage Valley"**:

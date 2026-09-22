@@ -145,13 +145,6 @@ public class ElectricChuteBlock extends BlockWithEntity {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (be instanceof ElectricChuteBlockEntity chute) {
-                String status = chute.getStatusMessage();
-                EvecualMC.sendOpenTipScreen(serverPlayer, "electric_chute", (int) chute.getEnergy(), ElectricChuteBlockEntity.MAX_ENERGY, status);
-            }
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

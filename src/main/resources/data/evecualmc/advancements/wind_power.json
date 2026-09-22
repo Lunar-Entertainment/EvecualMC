@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:wire",
+  "display": {
+    "icon": {
+      "item": "evecualmc:wind_turbine"
+    },
+    "title": {
+      "text": "Ride the Wind"
+    },
+    "description": {
+      "text": "Build a Wind Turbine to harness clean wind power"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_wind_turbine": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:wind_turbine"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

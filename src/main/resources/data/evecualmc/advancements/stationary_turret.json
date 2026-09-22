@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:stationary_turret"
+    },
+    "title": {
+      "text": "Perimeter Sentry"
+    },
+    "description": {
+      "text": "Construct an automated Stationary Turret with predictive targeting and whitelist controls"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_turret": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:stationary_turret"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

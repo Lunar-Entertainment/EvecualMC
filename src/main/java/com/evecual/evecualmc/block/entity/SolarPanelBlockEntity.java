@@ -66,7 +66,7 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
         }
     }
 
-    public static final int MAX_WIRE_DISTANCE = 32;
+    public static final int MAX_WIRE_DISTANCE = 1024;
 
     private record WireHop(BlockPos pos, int distance) {}
 
@@ -90,14 +90,16 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
                 }
             } else {
                 BlockEntity neighborBe = world.getBlockEntity(neighbor);
-                if (neighborBe instanceof EnergyStorage storage && neighborBe != this) {
+                if (neighborBe instanceof EnergyStorage storage
+                        && !(neighborBe instanceof SolarPanelBlockEntity)
+                        && !(neighborBe instanceof WindTurbineBlockEntity)) {
                     targets.add(storage);
                 }
             }
         }
 
-        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (32 blocks)
-        while (!queue.isEmpty()) {
+        // BFS through connected wire network limited to MAX_WIRE_DISTANCE (1024 blocks)
+        while (!queue.isEmpty() && visited.size() <= 1024) {
             WireHop current = queue.poll();
 
             for (Direction dir : Direction.values()) {
@@ -115,15 +117,26 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
                     }
                 } else {
                     BlockEntity nextBe = world.getBlockEntity(next);
-                    if (nextBe instanceof EnergyStorage storage && nextBe != this) {
+                    if (nextBe instanceof EnergyStorage storage
+                            && !(nextBe instanceof SolarPanelBlockEntity)
+                            && !(nextBe instanceof WindTurbineBlockEntity)) {
                         targets.add(storage);
                     }
                 }
             }
         }
 
-        // Push energy to connected consumers
+        // Push energy to connected consumers (machines first, batteries second)
         if (!targets.isEmpty()) {
+            targets.sort((a, b) -> {
+                boolean aBat = a instanceof BatteryBlockEntity;
+                boolean bBat = b instanceof BatteryBlockEntity;
+                if (aBat && !bBat) return 1;
+                if (!aBat && bBat) return -1;
+                return 0;
+            });
+
+            long initialEnergy = this.energy;
             for (EnergyStorage storage : targets) {
                 if (this.energy <= 0) break;
 
@@ -132,9 +145,11 @@ public class SolarPanelBlockEntity extends BlockEntity implements EnergyStorage 
                     long toSend = Math.min(this.energy, Math.min(needed, 5)); // Transfer speed per tick
                     long inserted = storage.insertEnergy(toSend, false);
                     this.energy -= inserted;
-                    this.markDirty();
-                    this.sync();
                 }
+            }
+            if (this.energy != initialEnergy) {
+                this.markDirty();
+                this.sync();
             }
         }
     }

@@ -105,19 +105,6 @@ public class BatteryBlock extends BlockWithEntity {
 
     @Override
     public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
-        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (be instanceof BatteryBlockEntity bbe) {
-                BatteryBlockEntity.BatteryCluster cluster = bbe.getCluster();
-                int energy = (int) cluster.totalEnergy();
-                int max = (int) cluster.maxCapacity();
-                int count = cluster.size();
-                String status = count > 1
-                        ? "🔋 Seamless Multi-Block Battery Cluster: " + energy + " / " + max + " EU (" + count + " Blocks)"
-                        : "🔋 Storing " + energy + " / " + max + " EU (" + (int) ((energy / (double) max) * 100) + "%)";
-                com.evecual.evecualmc.EvecualMC.sendOpenTipScreen(serverPlayer, "battery", energy, max, status);
-            }
-        }
-        return net.minecraft.util.ActionResult.SUCCESS;
+        return net.minecraft.util.ActionResult.PASS;
     }
 }

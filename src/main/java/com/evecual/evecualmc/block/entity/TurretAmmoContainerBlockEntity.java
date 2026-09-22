@@ -64,6 +64,19 @@ public class TurretAmmoContainerBlockEntity extends BlockEntity implements Sided
     }
 
     @Nullable
+    public synchronized AmmoType peekBestAmmo() {
+        for (AmmoType priority : new AmmoType[]{AmmoType.ELACTORITE, AmmoType.DIAMOND, AmmoType.STEEL, AmmoType.IRON, AmmoType.COPPER}) {
+            for (int i = 0; i < inventory.size(); i++) {
+                ItemStack stack = inventory.get(i);
+                if (!stack.isEmpty() && AmmoType.fromStack(stack) == priority) {
+                    return priority;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public synchronized AmmoType consumeBestAmmo() {
         // Preference: Elactorite -> Diamond -> Steel -> Iron -> Copper
         for (AmmoType priority : new AmmoType[]{AmmoType.ELACTORITE, AmmoType.DIAMOND, AmmoType.STEEL, AmmoType.IRON, AmmoType.COPPER}) {

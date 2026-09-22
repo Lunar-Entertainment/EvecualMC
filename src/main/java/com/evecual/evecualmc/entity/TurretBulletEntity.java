@@ -82,37 +82,50 @@ public class TurretBulletEntity extends Entity {
                 this
         ));
 
+        boolean validBlockHit = false;
         if (blockHit.getType() != HitResult.Type.MISS) {
-            end = blockHit.getPos();
+            // On first tick, ignore blocks within 1.5 blocks of spawn to prevent collision with source turret pedestal
+            if (this.lifeTicks > 0 || start.squaredDistanceTo(Vec3d.ofCenter(blockHit.getBlockPos())) > 2.25) {
+                end = blockHit.getPos();
+                validBlockHit = true;
+            }
         }
 
         // 2. Entity Hit Detection along raycast trajectory
-        Box scanBox = this.getBoundingBox().stretch(velocity).expand(1.0);
-        List<Entity> candidateEntities = this.getWorld().getOtherEntities(this, scanBox, e -> e instanceof LivingEntity && e.isAlive());
+        Box searchBox = new Box(start, end).expand(1.2);
+        List<LivingEntity> candidates = this.getWorld().getEntitiesByClass(
+                LivingEntity.class,
+                searchBox,
+                e -> e.isAlive() && !e.isSpectator()
+        );
 
-        EntityHitResult entityHit = null;
-        double minDistanceSq = Double.MAX_VALUE;
+        LivingEntity closestTarget = null;
+        double closestDistSq = Double.MAX_VALUE;
+        Vec3d trajVec = end.subtract(start);
+        double trajLenSq = trajVec.lengthSquared();
 
-        for (Entity candidate : candidateEntities) {
-            Box candidateBox = candidate.getBoundingBox().expand(0.3);
-            var optHit = candidateBox.raycast(start, end);
-            if (optHit.isPresent()) {
-                double dSq = start.squaredDistanceTo(optHit.get());
-                if (dSq < minDistanceSq) {
-                    minDistanceSq = dSq;
-                    entityHit = new EntityHitResult(candidate, optHit.get());
+        for (LivingEntity entity : candidates) {
+            Box entityBox = entity.getBoundingBox().expand(0.3);
+            Vec3d toEntity = entity.getEyePos().subtract(start);
+            double t = Math.max(0.0, Math.min(1.0, toEntity.dotProduct(trajVec) / Math.max(0.0001, trajLenSq)));
+            Vec3d projection = start.add(trajVec.multiply(t));
+            if (entityBox.contains(projection) || projection.distanceTo(entity.getEyePos()) <= 1.0) {
+                double distSq = start.squaredDistanceTo(projection);
+                if (distSq < closestDistSq) {
+                    closestDistSq = distSq;
+                    closestTarget = entity;
                 }
             }
         }
 
         // 3. Process Entity Hit
-        if (entityHit != null) {
-            this.onEntityHit(entityHit);
+        if (closestTarget != null) {
+            this.onEntityHit(new EntityHitResult(closestTarget));
             return;
         }
 
         // 4. Process Block Hit
-        if (blockHit.getType() != HitResult.Type.MISS) {
+        if (validBlockHit) {
             this.onBlockHit(blockHit);
             return;
         }

@@ -1,0 +1,34 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electric_ice_cream"
+    },
+    "title": {
+      "text": "Voltage Gelato"
+    },
+    "description": {
+      "text": "Taste any flavor of Evecual Ice Cream (Vanilla, Chocolate, Sweet Berry, or Electric)"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_ice_cream": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:vanilla_ice_cream",
+              "evecualmc:chocolate_ice_cream",
+              "evecualmc:sweet_berry_ice_cream",
+              "evecualmc:electric_ice_cream"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

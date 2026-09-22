@@ -1,0 +1,32 @@
+{
+  "parent": "evecualmc:electronic_combiner",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_sender"
+    },
+    "title": {
+      "text": "Radio Frequencies"
+    },
+    "description": {
+      "text": "Craft an RC Sender or RC Receiver to transmit wireless commands"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_rc_parts": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_sender",
+              "evecualmc:rc_receiver"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

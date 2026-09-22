@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:ev_helicopter",
+  "display": {
+    "icon": {
+      "item": "evecualmc:heli_charger"
+    },
+    "title": {
+      "text": "Helipad Ready"
+    },
+    "description": {
+      "text": "Construct a Heli Charger to rapidly recharge helicopters upon landing"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_heli_charger": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:heli_charger"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:vehicle_ing",
+  "display": {
+    "icon": {
+      "item": "evecualmc:trunk_upgrade"
+    },
+    "title": {
+      "text": "Cargo Capacity"
+    },
+    "description": {
+      "text": "Craft a Trunk Upgrade to expand on-board vehicle cargo space"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_trunk_upgrade": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:trunk_upgrade"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

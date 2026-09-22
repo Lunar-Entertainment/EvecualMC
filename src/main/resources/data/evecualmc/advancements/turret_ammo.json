@@ -1,0 +1,33 @@
+{
+  "parent": "evecualmc:stationary_turret",
+  "display": {
+    "icon": {
+      "item": "evecualmc:steel_ammo"
+    },
+    "title": {
+      "text": "Armory Calibers"
+    },
+    "description": {
+      "text": "Manufacture Copper, Iron, or Steel Ammunition for defense turrets"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_ammo": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:copper_ammo",
+              "evecualmc:iron_ammo",
+              "evecualmc:steel_ammo"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

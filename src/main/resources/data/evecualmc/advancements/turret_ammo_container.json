@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:stationary_turret",
+  "display": {
+    "icon": {
+      "item": "evecualmc:turret_ammo_container"
+    },
+    "title": {
+      "text": "Munitions Depot"
+    },
+    "description": {
+      "text": "Craft a Turret Ammo Container to stockpile large reserves of ammunition"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_container": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:turret_ammo_container"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

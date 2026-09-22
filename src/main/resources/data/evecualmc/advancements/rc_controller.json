@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:rc_electronics",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_controller"
+    },
+    "title": {
+      "text": "Master Controller"
+    },
+    "description": {
+      "text": "Craft an RC Controller to bind and steer remote vehicles"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_controller": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_controller"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:electrical_storage",
+  "display": {
+    "icon": {
+      "item": "evecualmc:charger"
+    },
+    "title": {
+      "text": "Supercharger"
+    },
+    "description": {
+      "text": "Construct an EV Charger for electric vehicles"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_charger": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:charger"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

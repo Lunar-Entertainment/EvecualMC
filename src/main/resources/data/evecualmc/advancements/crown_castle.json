@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:the_castles_crown"
+    },
+    "title": {
+      "text": "Monarch of Fortresses"
+    },
+    "description": {
+      "text": "Attain The Castle's Crown to fortify your dominion"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_castle_crown": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:the_castles_crown"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

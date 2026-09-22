@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:charger",
+  "display": {
+    "icon": {
+      "item": "evecualmc:item_charger"
+    },
+    "title": {
+      "text": "Wireless Induction"
+    },
+    "description": {
+      "text": "Craft an Item Charger to recharge electronic tools and handheld devices"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_item_charger": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:item_charger"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:stationary_turret",
+  "display": {
+    "icon": {
+      "item": "evecualmc:turret_linker"
+    },
+    "title": {
+      "text": "Wireless Ammo Feed"
+    },
+    "description": {
+      "text": "Craft a Turret Linker to connect turrets to remote ammo containers"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_linker": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:turret_linker"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

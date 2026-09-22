@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:copper_plate"
+    },
+    "title": {
+      "text": "Pressed Plates"
+    },
+    "description": {
+      "text": "Forge a Copper Plate for heat sinking and electronic casing"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_copper_plate": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:copper_plate"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

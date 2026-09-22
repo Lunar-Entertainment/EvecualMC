@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:elactorite",
+  "display": {
+    "icon": {
+      "item": "evecualmc:materializer"
+    },
+    "title": {
+      "text": "Creation Ex Nihilo"
+    },
+    "description": {
+      "text": "Construct a Quantum Materializer to synthesize matter directly from electricity"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_materializer": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:materializer"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

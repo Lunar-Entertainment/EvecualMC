@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:storage_unit",
+  "display": {
+    "icon": {
+      "item": "evecualmc:auto_pickup"
+    },
+    "title": {
+      "text": "Item Vacuum"
+    },
+    "description": {
+      "text": "Craft an Auto Pickup Hopper to vacuum floating drops automatically"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_auto_pickup": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:auto_pickup"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

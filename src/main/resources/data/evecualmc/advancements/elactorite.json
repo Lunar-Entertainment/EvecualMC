@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:elactorite"
+    },
+    "title": {
+      "text": "Electrifying Mineral"
+    },
+    "description": {
+      "text": "Discover or synthesize rare Elactorite crystal"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_elactorite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:elactorite"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -70,13 +70,6 @@ public class DronePickupBlock extends BlockWithEntity {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (be instanceof DronePickupBlockEntity dpbe) {
-                String status = dpbe.getStatusMessage();
-                EvecualMC.sendOpenTipScreen(serverPlayer, "drone_pickup", 0, 0, status);
-            }
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

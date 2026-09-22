@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:elactorite",
+  "display": {
+    "icon": {
+      "item": "evecualmc:railgun"
+    },
+    "title": {
+      "text": "Hypervelocity Kinetic"
+    },
+    "description": {
+      "text": "Forge a Railgun capable of piercing armored barriers at tremendous speed"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_railgun": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:railgun"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

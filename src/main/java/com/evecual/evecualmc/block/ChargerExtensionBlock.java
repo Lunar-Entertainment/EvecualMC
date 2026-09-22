@@ -89,15 +89,6 @@ public class ChargerExtensionBlock extends BlockWithEntity {
 
         ItemStack held = player.getStackInHand(hand);
 
-        // Sneak right click opens the interactive Field Guide / Tip Menu
-        if (player.isSneaking()) {
-            if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-                String status = be.isConnected() ? "⚡ Active: Charging Vehicle" : (be.hasCable() ? "🟡 Ready: Cable equipped, idle" : "⚪ Missing Cable: Equip Charger Cable");
-                EvecualMC.sendOpenTipScreen(serverPlayer, "charger_extension", 0, 0, status);
-            }
-            return ActionResult.SUCCESS;
-        }
-
         // 1. Right-click with Charger Cable in hand
         if (held.isOf(EvecualMC.CHARGER_CABLE)) {
             if (!world.isClient) {

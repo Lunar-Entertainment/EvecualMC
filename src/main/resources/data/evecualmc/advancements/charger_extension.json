@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:charger",
+  "display": {
+    "icon": {
+      "item": "evecualmc:charger_extension"
+    },
+    "title": {
+      "text": "Expanded Amperage"
+    },
+    "description": {
+      "text": "Upgrade charging speeds with a Charger Extension"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_charger_extension": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:charger_extension"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

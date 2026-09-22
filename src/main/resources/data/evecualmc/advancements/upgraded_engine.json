@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:vehicle_ing",
+  "display": {
+    "icon": {
+      "item": "evecualmc:upgraded_electric_engine"
+    },
+    "title": {
+      "text": "Overclocked Motors"
+    },
+    "description": {
+      "text": "Craft an Upgraded Electric Engine for maximum vehicle acceleration and speed"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_upgraded_engine": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:upgraded_electric_engine"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -295,37 +295,34 @@ public class EnergyHudOverlay implements HudRenderCallback {
 
         String distStr = "⚡ Charger [" + dist + "m]";
         int textWidth = tr.getWidth(distStr);
+        int badgeY = client.player.getVehicle() != null ? 62 : 6;
 
         if (Math.abs(angleDiff) < 45.0F) {
             int badgeX = (screenWidth / 2) + (int) (angleDiff * 3.5F);
             badgeX = MathHelper.clamp(badgeX, textWidth / 2 + 10, screenWidth - textWidth / 2 - 10);
-            int badgeY = 6;
 
             context.fill(badgeX - textWidth / 2 - 4, badgeY - 2, badgeX + textWidth / 2 + 4, badgeY + 12, 0xCC0F172A);
             context.drawBorder(badgeX - textWidth / 2 - 4, badgeY - 2, textWidth + 8, 14, 0xFFF59E0B);
             context.drawText(tr, Text.literal(distStr), badgeX - textWidth / 2, badgeY + 1, 0xFFFDE047, true);
         } else if (angleDiff <= -45.0F && angleDiff >= -135.0F) {
             String leftText = "◀ " + distStr;
-            int y = 6;
-            context.fill(6, y - 2, 6 + tr.getWidth(leftText) + 8, y + 12, 0xCC0F172A);
-            context.drawBorder(6, y - 2, tr.getWidth(leftText) + 8, 14, 0xFFF59E0B);
-            context.drawText(tr, Text.literal(leftText), 10, y + 1, 0xFFFDE047, true);
+            context.fill(6, badgeY - 2, 6 + tr.getWidth(leftText) + 8, badgeY + 12, 0xCC0F172A);
+            context.drawBorder(6, badgeY - 2, tr.getWidth(leftText) + 8, 14, 0xFFF59E0B);
+            context.drawText(tr, Text.literal(leftText), 10, badgeY + 1, 0xFFFDE047, true);
         } else if (angleDiff >= 45.0F && angleDiff <= 135.0F) {
             String rightText = distStr + " ▶";
             int rWidth = tr.getWidth(rightText);
             int x = screenWidth - rWidth - 14;
-            int y = 6;
-            context.fill(x - 2, y - 2, x + rWidth + 6, y + 12, 0xCC0F172A);
-            context.drawBorder(x - 2, y - 2, rWidth + 8, 14, 0xFFF59E0B);
-            context.drawText(tr, Text.literal(rightText), x + 2, y + 1, 0xFFFDE047, true);
+            context.fill(x - 2, badgeY - 2, x + rWidth + 6, badgeY + 12, 0xCC0F172A);
+            context.drawBorder(x - 2, badgeY - 2, rWidth + 8, 14, 0xFFF59E0B);
+            context.drawText(tr, Text.literal(rightText), x + 2, badgeY + 1, 0xFFFDE047, true);
         } else {
             String behindText = "▼ " + distStr + " (Behind)";
             int bWidth = tr.getWidth(behindText);
             int x = (screenWidth - bWidth) / 2;
-            int y = 6;
-            context.fill(x - 4, y - 2, x + bWidth + 4, y + 12, 0xCC0F172A);
-            context.drawBorder(x - 4, y - 2, bWidth + 8, 14, 0xFFF59E0B);
-            context.drawText(tr, Text.literal(behindText), x, y + 1, 0xFFFCD34D, true);
+            context.fill(x - 4, badgeY - 2, x + bWidth + 4, badgeY + 12, 0xCC0F172A);
+            context.drawBorder(x - 4, badgeY - 2, bWidth + 8, 14, 0xFFF59E0B);
+            context.drawText(tr, Text.literal(behindText), x, badgeY + 1, 0xFFFCD34D, true);
         }
     }
 

@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:electronic_combiner",
+  "display": {
+    "icon": {
+      "item": "evecualmc:item_fabricator"
+    },
+    "title": {
+      "text": "Automated Assembly"
+    },
+    "description": {
+      "text": "Craft an Item Fabricator for programmatic crafting automation"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_fabricator": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:item_fabricator"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

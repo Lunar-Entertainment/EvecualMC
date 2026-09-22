@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electronic_combiner"
+    },
+    "title": {
+      "text": "Circuit Fabrication"
+    },
+    "description": {
+      "text": "Craft an Electronic Combiner for automated precision synthesis"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_combiner": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electronic_combiner"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "evecualmc:ev_helicopter",
+  "display": {
+    "icon": {
+      "item": "evecualmc:heli_weapon_arm"
+    },
+    "title": {
+      "text": "Aerial Arsenal"
+    },
+    "description": {
+      "text": "Equip a Heli Mining Arm or Weapon Arm onto your helicopter"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_arm": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:heli_mining_arm",
+              "evecualmc:heli_weapon_arm"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

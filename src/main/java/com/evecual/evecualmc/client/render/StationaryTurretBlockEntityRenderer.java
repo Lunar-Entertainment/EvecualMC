@@ -33,7 +33,7 @@ public class StationaryTurretBlockEntityRenderer implements BlockEntityRenderer<
 
         // 2. Swiveling Turret Head (Rotates on Y axis)
         matrices.translate(0.0, 0.14, 0.0);
-        float yaw = MathHelper.lerpAngleDegrees(tickDelta, turret.curYaw, turret.curYaw);
+        float yaw = MathHelper.lerpAngleDegrees(tickDelta, turret.prevYaw, turret.curYaw);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(yaw));
 
         entry = matrices.peek();
@@ -46,7 +46,7 @@ public class StationaryTurretBlockEntityRenderer implements BlockEntityRenderer<
 
         // 3. Elevating Dual Barrels (Rotates on X axis)
         matrices.translate(0.0, 0.22, 0.0);
-        float pitch = MathHelper.lerp(tickDelta, turret.curPitch, turret.curPitch);
+        float pitch = MathHelper.lerp(tickDelta, turret.prevPitch, turret.curPitch);
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pitch));
 
         entry = matrices.peek();

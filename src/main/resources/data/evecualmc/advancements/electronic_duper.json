@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:electronic_combiner",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electronic_duper"
+    },
+    "title": {
+      "text": "Matter Replication"
+    },
+    "description": {
+      "text": "Craft an Electronic Duper to clone items using high-voltage current"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_duper": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electronic_duper"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

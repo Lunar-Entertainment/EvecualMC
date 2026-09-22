@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:steel_rod"
+    },
+    "title": {
+      "text": "Reinforced Chasis"
+    },
+    "description": {
+      "text": "Craft a Steel Rod for structural assemblies and precision mechanisms"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_steel_rod": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:steel_rod"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

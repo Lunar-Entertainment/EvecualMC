@@ -150,8 +150,8 @@ public class RcHudManager {
             }
         }
 
-        // Base Y position for persistent HUD (action bar height above hotbar)
-        int baseY = screenHeight - 68;
+        // Base Y position for persistent HUD (above vanilla action bar and hotbar)
+        int baseY = screenHeight - 74;
 
         // 3. Render Temporary Info Notification (Placed directly OVER the persistent info text)
         if (tempNotification != null && tempNotificationTicks > 0) {

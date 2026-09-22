@@ -10,13 +10,14 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.math.BlockPos;
+import org.jetbrains.annotations.Nullable;
 
 public class StationaryTurretScreenHandler extends ScreenHandler {
     private final PropertyDelegate propertyDelegate;
     private final StationaryTurretBlockEntity blockEntity;
 
     public StationaryTurretScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, null, new ArrayPropertyDelegate(11));
+        this(syncId, playerInventory, null, new ArrayPropertyDelegate(12));
     }
 
     public StationaryTurretScreenHandler(int syncId, PlayerInventory playerInventory, StationaryTurretBlockEntity blockEntity, PropertyDelegate propertyDelegate) {
@@ -36,6 +37,11 @@ public class StationaryTurretScreenHandler extends ScreenHandler {
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 160));
         }
+    }
+
+    @Nullable
+    public StationaryTurretBlockEntity getBlockEntity() {
+        return blockEntity;
     }
 
     public int getCooldown() {
@@ -73,6 +79,10 @@ public class StationaryTurretScreenHandler extends ScreenHandler {
 
     public boolean hasTarget() {
         return this.propertyDelegate.get(10) == 1;
+    }
+
+    public boolean isWhitelistMode() {
+        return this.propertyDelegate.get(11) == 0;
     }
 
     @Override
@@ -129,6 +139,17 @@ public class StationaryTurretScreenHandler extends ScreenHandler {
                 case 5 -> { // Unlink Container
                     blockEntity.setLinkedAmmoContainerPos(null);
                     this.propertyDelegate.set(6, 0);
+                    blockEntity.markDirty();
+                    blockEntity.sync();
+                    return true;
+                }
+                case 6 -> { // Toggle Filter Mode
+                    var cur = blockEntity.getTargetFilter().getFilterMode();
+                    var next = cur == com.evecual.evecualmc.turret.TurretTargetFilter.FilterMode.WHITELIST
+                            ? com.evecual.evecualmc.turret.TurretTargetFilter.FilterMode.BLACKLIST
+                            : com.evecual.evecualmc.turret.TurretTargetFilter.FilterMode.WHITELIST;
+                    blockEntity.getTargetFilter().setFilterMode(next);
+                    this.propertyDelegate.set(11, next == com.evecual.evecualmc.turret.TurretTargetFilter.FilterMode.WHITELIST ? 0 : 1);
                     blockEntity.markDirty();
                     blockEntity.sync();
                     return true;

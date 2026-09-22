@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:steel_ingot"
+    },
+    "title": {
+      "text": "The Steel Age"
+    },
+    "description": {
+      "text": "Smelt or craft high-strength Steel Ingot"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_steel": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:steel_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

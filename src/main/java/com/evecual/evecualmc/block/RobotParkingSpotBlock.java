@@ -57,9 +57,6 @@ public class RobotParkingSpotBlock extends Block {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            com.evecual.evecualmc.EvecualMC.sendOpenTipScreen(serverPlayer, "robot_parking_spot", 0, 0, "🤖 Standby: Ready to dock and power down RC Excavator Robots");
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

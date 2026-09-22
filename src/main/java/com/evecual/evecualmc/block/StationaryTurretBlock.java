@@ -104,6 +104,9 @@ public class StationaryTurretBlock extends BlockWithEntity {
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof StationaryTurretBlockEntity turret) {
                 player.openHandledScreen(turret);
+                if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                    EvecualMC.sendTurretFilterSync(serverPlayer, turret);
+                }
             }
         }
         return ActionResult.SUCCESS;

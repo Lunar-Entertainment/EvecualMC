@@ -974,6 +974,21 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier HELI_CONTROLLER_INPUT_PACKET_ID = new Identifier(MOD_ID, "heli_controller_input");
     public static final Identifier HELI_CONTROLLER_ARM_ACTION_PACKET_ID = new Identifier(MOD_ID, "heli_controller_arm_action");
     public static final Identifier HELI_CONTROLLER_AUTO_DOCK_PACKET_ID = new Identifier(MOD_ID, "heli_controller_auto_dock");
+    public static final Identifier TURRET_FILTER_UPDATE_PACKET_ID = new Identifier(MOD_ID, "turret_filter_update");
+    public static final Identifier TURRET_FILTER_SYNC_S2C_PACKET_ID = new Identifier(MOD_ID, "turret_filter_sync");
+    public static final Identifier CROWN_SLOT_CLICK_PACKET_ID = new Identifier(MOD_ID, "crown_slot_click");
+
+    public static void sendTurretFilterSync(net.minecraft.server.network.ServerPlayerEntity player, com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity turret) {
+        net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+        buf.writeBlockPos(turret.getPos());
+        buf.writeString(turret.getTargetFilter().getFilterMode().name());
+        java.util.Set<String> list = turret.getTargetFilter().getPlayerList();
+        buf.writeInt(list.size());
+        for (String name : list) {
+            buf.writeString(name);
+        }
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, TURRET_FILTER_SYNC_S2C_PACKET_ID, buf);
+    }
 
     public static void sendOpenTipScreen(net.minecraft.server.network.ServerPlayerEntity player, String topicId, int energy, int maxEnergy, String status) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -1658,6 +1673,87 @@ public class EvecualMC implements ModInitializer {
                             }
                         } else if (headStack.getItem() instanceof com.evecual.evecualmc.item.crown.CastlesCrownItem) {
                             com.evecual.evecualmc.item.crown.CastlesCrownItem.triggerArtilleryAbility(player, headStack);
+                        }
+                    });
+                });
+
+        // Turret Gametag Filter Update Receiver
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TURRET_FILTER_UPDATE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    int action = buf.readInt();
+                    String data = buf.readString(128);
+                    server.execute(() -> {
+                        if (player.currentScreenHandler instanceof com.evecual.evecualmc.screen.StationaryTurretScreenHandler turretHandler) {
+                            var be = turretHandler.getBlockEntity();
+                            if (be != null) {
+                                switch (action) {
+                                    case 0 -> be.getTargetFilter().addPlayer(data);
+                                    case 1 -> be.getTargetFilter().removePlayer(data);
+                                    case 2 -> {
+                                        try {
+                                            be.getTargetFilter().setFilterMode(com.evecual.evecualmc.turret.TurretTargetFilter.FilterMode.valueOf(data));
+                                        } catch (Exception ignored) {}
+                                    }
+                                    case 3 -> be.getTargetFilter().clearPlayers();
+                                }
+                                be.markDirty();
+                                be.sync();
+                                sendTurretFilterSync(player, be);
+                            }
+                        }
+                    });
+                });
+
+        // Dedicated Crown Slot Click Receiver (Handles clicks/swaps without altering PlayerScreenHandler.slots)
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(CROWN_SLOT_CLICK_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    boolean isShift = buf.readBoolean();
+                    int button = buf.readInt();
+                    server.execute(() -> {
+                        if (player instanceof com.evecual.evecualmc.util.CrownHolder holder) {
+                            ItemStack equippedCrown = holder.evecualmc$getCrown();
+                            ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
+
+                            if (isShift) {
+                                // Shift-clicking to unequip into inventory
+                                if (!equippedCrown.isEmpty()) {
+                                    if (player.getInventory().insertStack(equippedCrown)) {
+                                        holder.evecualmc$setCrown(ItemStack.EMPTY);
+                                        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                                net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+                                    }
+                                }
+                            } else {
+                                // Left or Right Click
+                                if (cursorStack.isEmpty() && !equippedCrown.isEmpty()) {
+                                    // Pick up equipped crown
+                                    player.currentScreenHandler.setCursorStack(equippedCrown);
+                                    holder.evecualmc$setCrown(ItemStack.EMPTY);
+                                    player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                            net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+                                } else if (com.evecual.evecualmc.util.CrownHelper.isCrown(cursorStack) && equippedCrown.isEmpty()) {
+                                    // Place cursor crown into empty slot
+                                    ItemStack toEquip = cursorStack.split(1);
+                                    holder.evecualmc$setCrown(toEquip);
+                                    player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                            net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+                                } else if (com.evecual.evecualmc.util.CrownHelper.isCrown(cursorStack) && !equippedCrown.isEmpty()) {
+                                    // Swap crowns
+                                    ItemStack newCrown = cursorStack.split(1);
+                                    holder.evecualmc$setCrown(newCrown);
+                                    if (cursorStack.isEmpty()) {
+                                        player.currentScreenHandler.setCursorStack(equippedCrown);
+                                    } else {
+                                        if (!player.getInventory().insertStack(equippedCrown)) {
+                                            player.dropItem(equippedCrown, true, false);
+                                        }
+                                    }
+                                    player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                            net.minecraft.sound.SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+                                }
+                            }
+                            com.evecual.evecualmc.util.CrownHelper.syncCrownToTracking(player);
+                            player.currentScreenHandler.syncState();
                         }
                     });
                 });

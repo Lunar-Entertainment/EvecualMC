@@ -158,17 +158,6 @@ public class ParkingLinesBlock extends BlockWithEntity {
 
     @Override
     public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
-        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            Direction facing = state.get(FACING);
-            Direction right = facing.rotateYClockwise();
-            ParkingLinesPart part = state.get(PART);
-            BlockPos origin = getOriginPos(pos, facing, right, part);
-            BlockEntity be = world.getBlockEntity(origin);
-            String status = (be instanceof ParkingLinesBlockEntity plbe && plbe.isCarParked())
-                    ? "🚗 Bay Occupied: Electric car safely parked"
-                    : "🅿️ Bay Free: Ready for vehicle parking";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "parking_lines", 0, 0, status);
-        }
-        return net.minecraft.util.ActionResult.SUCCESS;
+        return net.minecraft.util.ActionResult.PASS;
     }
 }

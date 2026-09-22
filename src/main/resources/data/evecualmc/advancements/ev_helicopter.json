@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:electric_engine",
+  "display": {
+    "icon": {
+      "item": "evecualmc:ev_heli"
+    },
+    "title": {
+      "text": "Skyward Bound"
+    },
+    "description": {
+      "text": "Craft an EV Helicopter for high-speed vertical flight"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_heli": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:ev_heli"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

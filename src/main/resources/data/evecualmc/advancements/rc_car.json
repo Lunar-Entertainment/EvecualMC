@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_car"
+    },
+    "title": {
+      "text": "Pocket Racer"
+    },
+    "description": {
+      "text": "Craft an RC Car and race it via remote control"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_rc_car": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_car"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

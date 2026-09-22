@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:the_mechanicals_crown"
+    },
+    "title": {
+      "text": "Gears of Glory"
+    },
+    "description": {
+      "text": "Attain The Mechanical's Crown and equip it in the dedicated Crown Slot"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_mechanical_crown": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:the_mechanicals_crown"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

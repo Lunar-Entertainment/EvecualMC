@@ -777,6 +777,22 @@ public class EvecualMCClient implements ClientModInitializer {
             });
         });
 
+        // Register Turret Filter Sync S2C receiver
+        ClientPlayNetworking.registerGlobalReceiver(EvecualMC.TURRET_FILTER_SYNC_S2C_PACKET_ID, (client, handler, buf, responseSender) -> {
+            net.minecraft.util.math.BlockPos turretPos = buf.readBlockPos();
+            String modeName = buf.readString(64);
+            int count = buf.readInt();
+            java.util.List<String> players = new java.util.ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                players.add(buf.readString(128));
+            }
+            client.execute(() -> {
+                if (client.currentScreen instanceof com.evecual.evecualmc.client.screen.StationaryTurretScreen screen) {
+                    screen.updateFilterData(modeName, players);
+                }
+            });
+        });
+
         // Client Tick Event
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             RcHudManager.tick();

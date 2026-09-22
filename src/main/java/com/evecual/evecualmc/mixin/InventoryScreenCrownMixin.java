@@ -1,19 +1,23 @@
 package com.evecual.evecualmc.mixin;
 
-import com.evecual.evecualmc.screen.CrownSlot;
+import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.util.CrownHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -30,8 +34,7 @@ public abstract class InventoryScreenCrownMixin extends AbstractInventoryScreen<
 
     @Inject(method = "render", at = @At("HEAD"))
     private void checkCrownSlotHover(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        CrownSlot crownSlot = evecualmc$findCrownSlot();
-        if (crownSlot == null) {
+        if (this.client == null || this.client.player == null) {
             return;
         }
 
@@ -54,24 +57,22 @@ public abstract class InventoryScreenCrownMixin extends AbstractInventoryScreen<
             }
             this.evecualmc$isRevealed = this.evecualmc$crownHoverTimer > 0;
         }
-
-        crownSlot.setRevealed(this.evecualmc$isRevealed);
     }
 
     @Inject(method = "drawBackground", at = @At("TAIL"))
     private void renderCrownSlotTabBackground(DrawContext context, float delta, int mouseX, int mouseY, CallbackInfo ci) {
-        CrownSlot crownSlot = evecualmc$findCrownSlot();
-        if (crownSlot == null) {
+        if (this.client == null || this.client.player == null) {
             return;
         }
 
-        boolean showSlot = this.evecualmc$isRevealed || crownSlot.hasStack();
+        ItemStack equippedCrown = CrownHelper.getCrown(this.client.player);
+        boolean showSlot = this.evecualmc$isRevealed || !equippedCrown.isEmpty();
         if (!showSlot) {
             return;
         }
 
-        int slotX = this.x + crownSlot.x;
-        int slotY = this.y + crownSlot.y;
+        int slotX = this.x + 8;
+        int slotY = this.y - 19;
 
         // Draw container tab background
         int tabLeft = this.x + 6;
@@ -104,23 +105,33 @@ public abstract class InventoryScreenCrownMixin extends AbstractInventoryScreen<
         context.fill(sX + 17, sY, sX + 18, sY + 18, 0xFFFFFFFF);
 
         // When empty, draw golden crown watermark
-        if (!crownSlot.hasStack()) {
+        if (equippedCrown.isEmpty()) {
             evecualmc$drawCrownWatermark(context, slotX, slotY);
+        } else {
+            // Render equipped crown item
+            context.drawItem(equippedCrown, slotX, slotY);
+            context.drawItemInSlot(this.textRenderer, equippedCrown, slotX, slotY);
         }
     }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void renderCrownSlotTooltip(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        CrownSlot crownSlot = evecualmc$findCrownSlot();
-        if (crownSlot == null || (!this.evecualmc$isRevealed && !crownSlot.hasStack())) {
+        if (this.client == null || this.client.player == null) {
             return;
         }
 
-        // If hovering over empty crown slot, show descriptive tooltip
-        int slotX = this.x + crownSlot.x;
-        int slotY = this.y + crownSlot.y;
-        if (mouseX >= slotX && mouseX <= slotX + 16 && mouseY >= slotY && mouseY <= slotY + 16 && !crownSlot.hasStack()) {
-            if (this.handler.getCursorStack().isEmpty()) {
+        ItemStack equippedCrown = CrownHelper.getCrown(this.client.player);
+        boolean showSlot = this.evecualmc$isRevealed || !equippedCrown.isEmpty();
+        if (!showSlot) {
+            return;
+        }
+
+        int slotX = this.x + 8;
+        int slotY = this.y - 19;
+        if (mouseX >= slotX && mouseX <= slotX + 16 && mouseY >= slotY && mouseY <= slotY + 16) {
+            if (!equippedCrown.isEmpty()) {
+                context.drawItemTooltip(this.textRenderer, equippedCrown, mouseX, mouseY);
+            } else if (this.handler.getCursorStack().isEmpty()) {
                 context.drawTooltip(this.textRenderer, List.of(
                         Text.literal("§6👑 Crown Slot"),
                         Text.literal("§eLegendary Crowns Only"),
@@ -130,14 +141,28 @@ public abstract class InventoryScreenCrownMixin extends AbstractInventoryScreen<
         }
     }
 
-    @Unique
-    private CrownSlot evecualmc$findCrownSlot() {
-        for (Slot slot : this.handler.slots) {
-            if (slot instanceof CrownSlot cs) {
-                return cs;
-            }
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void handleCrownSlotMouseClick(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+        if (this.client == null || this.client.player == null) {
+            return;
         }
-        return null;
+
+        ItemStack equippedCrown = CrownHelper.getCrown(this.client.player);
+        boolean showSlot = this.evecualmc$isRevealed || !equippedCrown.isEmpty();
+        if (!showSlot) {
+            return;
+        }
+
+        int slotX = this.x + 8;
+        int slotY = this.y - 19;
+        if (mouseX >= slotX && mouseX <= slotX + 16 && mouseY >= slotY && mouseY <= slotY + 16) {
+            boolean isShift = hasShiftDown();
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeBoolean(isShift);
+            buf.writeInt(button);
+            ClientPlayNetworking.send(EvecualMC.CROWN_SLOT_CLICK_PACKET_ID, buf);
+            cir.setReturnValue(true);
+        }
     }
 
     @Unique

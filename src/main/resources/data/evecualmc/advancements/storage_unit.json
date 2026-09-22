@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:electric_chute",
+  "display": {
+    "icon": {
+      "item": "evecualmc:storage_unit"
+    },
+    "title": {
+      "text": "Quantum Bulk Vault"
+    },
+    "description": {
+      "text": "Craft a high-capacity Multi-Tier Storage Unit with automated sorting"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_storage_unit": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:storage_unit"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

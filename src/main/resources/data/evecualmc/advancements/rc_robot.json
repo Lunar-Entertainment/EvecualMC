@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:rc_robot"
+    },
+    "title": {
+      "text": "Autonomous Excavator"
+    },
+    "description": {
+      "text": "Craft an RC Excavator Robot to quarry tunnels and gather subterranean resources"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_rc_robot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:rc_robot"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

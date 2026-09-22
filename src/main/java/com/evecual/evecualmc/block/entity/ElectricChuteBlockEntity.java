@@ -102,8 +102,8 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
 
             if (neighborState.isOf(EvecualMC.WIRE_BLOCK)) {
                 wireQueue.add(neighborPos);
-            } else if (neighborBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage
-                    && !(neighborBe instanceof ElectricChuteBlockEntity)) {
+            } else if ((neighborBe instanceof BatteryBlockEntity || neighborBe instanceof SolarPanelBlockEntity || neighborBe instanceof WindTurbineBlockEntity)
+                    && neighborBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage) {
                 int needed = MAX_ENERGY - this.energy;
                 long extracted = storage.extractEnergy(Math.min(needed, 50), false);
                 if (extracted > 0) {
@@ -116,7 +116,7 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
         }
 
         // 2. Traverse connected wires via BFS to pull from batteries/generators across network
-        while (!wireQueue.isEmpty() && visited.size() <= 48) {
+        while (!wireQueue.isEmpty() && visited.size() <= 1024) {
             BlockPos wirePos = wireQueue.poll();
             for (Direction dir : Direction.values()) {
                 BlockPos next = wirePos.offset(dir);
@@ -127,8 +127,8 @@ public class ElectricChuteBlockEntity extends BlockEntity implements com.evecual
 
                 if (nextState.isOf(EvecualMC.WIRE_BLOCK)) {
                     wireQueue.add(next);
-                } else if (nextBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage
-                        && !(nextBe instanceof ElectricChuteBlockEntity)) {
+                } else if ((nextBe instanceof BatteryBlockEntity || nextBe instanceof SolarPanelBlockEntity || nextBe instanceof WindTurbineBlockEntity)
+                        && nextBe instanceof com.evecual.evecualmc.energy.EnergyStorage storage) {
                     int needed = MAX_ENERGY - this.energy;
                     long extracted = storage.extractEnergy(Math.min(needed, 50), false);
                     if (extracted > 0) {

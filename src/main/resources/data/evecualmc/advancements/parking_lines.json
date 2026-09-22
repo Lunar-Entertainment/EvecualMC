@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:vehicle_ing",
+  "display": {
+    "icon": {
+      "item": "evecualmc:parking_lines"
+    },
+    "title": {
+      "text": "Mark Your Territory"
+    },
+    "description": {
+      "text": "Craft Parking Lines to lay out asphalt parking spots and garage lanes"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_parking_lines": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:parking_lines"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

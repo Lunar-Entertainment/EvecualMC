@@ -1,0 +1,32 @@
+{
+  "parent": "evecualmc:turret_ammo",
+  "display": {
+    "icon": {
+      "item": "evecualmc:elactorite_ammo"
+    },
+    "title": {
+      "text": "Hypercharged Munitions"
+    },
+    "description": {
+      "text": "Craft Diamond or high-damage Elactorite Ammunition"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_advanced_ammo": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:diamond_ammo",
+              "evecualmc:elactorite_ammo"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

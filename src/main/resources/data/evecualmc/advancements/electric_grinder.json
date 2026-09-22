@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electric_grinder"
+    },
+    "title": {
+      "text": "Industrial Crushing"
+    },
+    "description": {
+      "text": "Craft an Electric Grinder to pulverize ores and double raw yields"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_grinder": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electric_grinder"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -72,19 +72,6 @@ public class ItemChargerBlock extends BlockWithEntity {
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient) {
-            if (player.isSneaking() && player instanceof ServerPlayerEntity serverPlayer) {
-                BlockEntity be = world.getBlockEntity(pos);
-                if (be instanceof ItemChargerBlockEntity cbe) {
-                    int curE = (int) cbe.getEnergy();
-                    int maxE = (int) cbe.getMaxEnergy();
-                    String status = cbe.isActive()
-                            ? "⚡ Item Charger: Actively charging item buffer (1 EU/t)"
-                            : "⚡ Item Charger: Ready - Insert chargeable item to slow-charge";
-                    EvecualMC.sendOpenTipScreen(serverPlayer, "item_charger", curE, maxE, status);
-                    return ActionResult.SUCCESS;
-                }
-            }
-
             NamedScreenHandlerFactory screenHandlerFactory = state.createScreenHandlerFactory(world, pos);
             if (screenHandlerFactory != null) {
                 player.openHandledScreen(screenHandlerFactory);

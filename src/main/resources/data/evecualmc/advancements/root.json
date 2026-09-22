@@ -26,6 +26,8 @@
               "evecualmc:wire",
               "evecualmc:solar_panel",
               "evecualmc:battery",
+              "evecualmc:wind_turbine",
+              "evecualmc:copper_plate",
               "evecualmc:car"
             ]
           }

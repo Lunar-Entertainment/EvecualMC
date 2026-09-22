@@ -159,15 +159,6 @@ public class HeliChargerBlock extends BlockWithEntity {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            HeliChargerPart part = state.get(PART);
-            BlockPos center = getCenterPos(pos, part);
-            BlockEntity be = world.getBlockEntity(center);
-            int energy = be instanceof HeliChargerBlockEntity hcbe ? hcbe.getStoredEnergy() : 0;
-            int max = be instanceof HeliChargerBlockEntity hcbe ? hcbe.getMaxEnergy() : 2000;
-            String status = "🚁 3x3 Helipad Ready: Land EV Heli to recharge";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "heli_charger", energy, max, status);
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

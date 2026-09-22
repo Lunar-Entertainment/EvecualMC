@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:rc_controller",
+  "display": {
+    "icon": {
+      "item": "evecualmc:stationary_rc_controller"
+    },
+    "title": {
+      "text": "Mission Control"
+    },
+    "description": {
+      "text": "Construct a Stationary RC Controller console for multi-vehicle oversight"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_stationary_controller": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:stationary_rc_controller"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

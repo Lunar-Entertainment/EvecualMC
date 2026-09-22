@@ -81,13 +81,6 @@ public class ChargerBlock extends BlockWithEntity {
 
     @Override
     public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            BlockEntity be = world.getBlockEntity(pos);
-            int energy = be instanceof ChargerBlockEntity cbe ? (int) cbe.getEnergy() : 0;
-            int max = be instanceof ChargerBlockEntity cbe ? (int) cbe.getMaxEnergy() : 1000;
-            String status = "⚡ Storing " + energy + " / " + max + " EU (Connect extension above)";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "charger", energy, max, status);
-        }
-        return net.minecraft.util.ActionResult.SUCCESS;
+        return net.minecraft.util.ActionResult.PASS;
     }
 }

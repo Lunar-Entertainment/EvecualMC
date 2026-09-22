@@ -148,12 +148,6 @@ public class WireBlock extends BlockWithEntity {
 
     @Override
     public net.minecraft.util.ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, net.minecraft.util.Hand hand, net.minecraft.util.hit.BlockHitResult hit) {
-        if (!world.isClient && player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            BlockEntity be = world.getBlockEntity(pos);
-            int rate = be instanceof WireBlockEntity wbe ? wbe.getTransferRate() : 0;
-            String status = rate > 0 ? "⚡ Transferring: " + rate + " EU/t" : "🔌 Standby (0 EU/t throughput)";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "wire", rate, 100, status);
-        }
-        return net.minecraft.util.ActionResult.SUCCESS;
+        return net.minecraft.util.ActionResult.PASS;
     }
 }

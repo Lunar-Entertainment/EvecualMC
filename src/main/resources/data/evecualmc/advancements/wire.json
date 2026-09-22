@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:wire"
+    },
+    "title": {
+      "text": "Wiring Up"
+    },
+    "description": {
+      "text": "Craft copper wire to transmit electricity"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_wire": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:wire"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "evecualmc:root",
+  "display": {
+    "icon": {
+      "item": "evecualmc:music_disc_voltage_valley"
+    },
+    "title": {
+      "text": "Electric Grooves"
+    },
+    "description": {
+      "text": "Acquire an Evecual soundtrack disc (Circuit and Stone or Voltage Valley)"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_disc": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:music_disc_circuit_and_stone",
+              "evecualmc:music_disc_voltage_valley"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

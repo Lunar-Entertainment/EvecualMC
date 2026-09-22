@@ -122,15 +122,6 @@ public class WindTurbineBlock extends BlockWithEntity {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
-            int segment = state.get(SEGMENT);
-            BlockPos basePos = getBasePos(pos, segment);
-            BlockEntity be = world.getBlockEntity(basePos);
-            int energy = be instanceof WindTurbineBlockEntity wt ? (int) wt.getEnergy() : 0;
-            int max = be instanceof WindTurbineBlockEntity wt ? (int) wt.getMaxEnergy() : 100;
-            String status = "⚡ 4-Block High Wind Turbine: Generating 50 EU/t";
-            EvecualMC.sendOpenTipScreen(serverPlayer, "wind_turbine", energy, max, status);
-        }
-        return ActionResult.SUCCESS;
+        return ActionResult.PASS;
     }
 }

@@ -59,16 +59,6 @@ public class RcCarItem extends Item {
         return ActionResult.success(world.isClient);
     }
 
-    @Override
-    public net.minecraft.util.TypedActionResult<ItemStack> use(World world, net.minecraft.entity.player.PlayerEntity user, net.minecraft.util.Hand hand) {
-        if (user.isSneaking()) {
-            if (!world.isClient && user instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-                EvecualMC.sendOpenTipScreen(serverPlayer, "rc_car", 0, RcCarEntity.MAX_ENERGY, "🏎️ RC Micro Car: Deploy and remote drive with RC Controller");
-            }
-            return net.minecraft.util.TypedActionResult.success(user.getStackInHand(hand));
-        }
-        return super.use(world, user, hand);
-    }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {

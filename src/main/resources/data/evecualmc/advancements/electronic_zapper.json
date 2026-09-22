@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:elactorite",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electronic_zapper"
+    },
+    "title": {
+      "text": "Shock and Awe"
+    },
+    "description": {
+      "text": "Craft an Electronic Zapper to zap enemies with concentrated electric bursts"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_zapper": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electronic_zapper"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

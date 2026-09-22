@@ -57,10 +57,16 @@ public class StorageUnitScreen extends HandledScreen<StorageUnitScreenHandler> {
         int totalPages = this.handler.getTotalPages();
 
         String pageInfo = "P." + page + "/" + totalPages;
-        context.drawText(this.textRenderer, Text.literal("§6" + pageInfo), x + 88, y + 6, 0xFFFFFF, false);
+        context.drawText(this.textRenderer, Text.literal("§6" + pageInfo), x + 80, y + 6, 0xFFFFFF, false);
 
         String energyInfo = "§e⚡ " + energy + " EU §8| §b" + units + (units == 1 ? " Unit" : " Units");
         context.drawText(this.textRenderer, Text.literal(energyInfo), x + 8, y + this.backgroundHeight - 105, 0xFFFFFF, false);
+    }
+
+    @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        context.drawText(this.textRenderer, Text.literal("Storage"), 8, 6, 4210752, false);
+        context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
     }
 
     @Override

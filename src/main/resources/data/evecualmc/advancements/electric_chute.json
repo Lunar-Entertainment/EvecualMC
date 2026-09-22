@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:wire",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electric_chute"
+    },
+    "title": {
+      "text": "Pneumatic Logistics"
+    },
+    "description": {
+      "text": "Craft an Electric Chute for ultra-fast, directional item transport"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_chute": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electric_chute"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "evecualmc:steel_age",
+  "display": {
+    "icon": {
+      "item": "evecualmc:electric_engine"
+    },
+    "title": {
+      "text": "Heart of the Machine"
+    },
+    "description": {
+      "text": "Craft an Electric Engine for vehicular propulsion"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_engine": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evecualmc:electric_engine"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

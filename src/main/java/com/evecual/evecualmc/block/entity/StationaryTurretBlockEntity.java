@@ -42,6 +42,8 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
     private BlockPos linkedAmmoContainerPos = null;
 
     // Client-side animation tracking
+    public float prevYaw = 0.0f;
+    public float prevPitch = 0.0f;
     public float curYaw = 0.0f;
     public float curPitch = 0.0f;
     public float targetYaw = 0.0f;
@@ -64,6 +66,7 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
                 case 8 -> linkedAmmoContainerPos != null ? linkedAmmoContainerPos.getY() : 0;
                 case 9 -> linkedAmmoContainerPos != null ? linkedAmmoContainerPos.getZ() : 0;
                 case 10 -> currentTarget != null ? 1 : 0;
+                case 11 -> targetFilter.getFilterMode() == TurretTargetFilter.FilterMode.WHITELIST ? 0 : 1;
                 default -> 0;
             };
         }
@@ -77,12 +80,13 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
                 case 3 -> targetFilter.setTargetMonsters(value == 1);
                 case 4 -> targetFilter.setTargetAnimals(value == 1);
                 case 5 -> targetFilter.setTargetBosses(value == 1);
+                case 11 -> targetFilter.setFilterMode(value == 0 ? TurretTargetFilter.FilterMode.WHITELIST : TurretTargetFilter.FilterMode.BLACKLIST);
             }
         }
 
         @Override
         public int size() {
-            return 11;
+            return 12;
         }
     };
 
@@ -111,6 +115,9 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, StationaryTurretBlockEntity be) {
+        be.prevYaw = be.curYaw;
+        be.prevPitch = be.curPitch;
+
         if (be.cooldown > 0) {
             be.cooldown--;
         }
@@ -124,15 +131,28 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
         if (be.currentTarget != null && be.currentTarget.isAlive()) {
             Vec3d turretOrigin = Vec3d.ofCenter(pos).add(0, 0.86, 0);
             Vec3d targetEye = be.currentTarget.getEyePos().subtract(0, 0.2, 0);
-            Vec3d aimVec = targetEye.subtract(turretOrigin);
 
+            // Predictive aiming lead
+            double bulletSpeed = 3.8;
+            TurretAmmoContainerBlockEntity ammoContainer = be.getLinkedAmmoContainer();
+            if (ammoContainer != null) {
+                AmmoType bestAmmo = ammoContainer.peekBestAmmo();
+                if (bestAmmo != null) {
+                    bulletSpeed = 3.8 * bestAmmo.getVelocityMultiplier();
+                }
+            }
+            double dist = turretOrigin.distanceTo(targetEye);
+            double flightTicks = dist / Math.max(0.1, bulletSpeed);
+            Vec3d predictedPos = targetEye.add(be.currentTarget.getVelocity().multiply(flightTicks));
+
+            Vec3d aimVec = predictedPos.subtract(turretOrigin);
             double dX = aimVec.x;
             double dY = aimVec.y;
             double dZ = aimVec.z;
             double horizDist = Math.sqrt(dX * dX + dZ * dZ);
 
-            be.targetYaw = (float) Math.toDegrees(Math.atan2(-dX, dZ));
-            be.targetPitch = (float) Math.toDegrees(Math.atan2(-dY, horizDist));
+            be.targetYaw = (float) Math.toDegrees(Math.atan2(dX, dZ));
+            be.targetPitch = MathHelper.clamp((float) Math.toDegrees(Math.atan2(-dY, horizDist)), -60.0F, 45.0F);
 
             // Server-side firing logic
             if (!world.isClient && be.cooldown <= 0) {
@@ -145,8 +165,8 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
         }
 
         // Smooth visual interpolation
-        be.curYaw = MathHelper.lerpAngleDegrees(0.25f, be.curYaw, be.targetYaw);
-        be.curPitch = MathHelper.lerp(0.25f, be.curPitch, be.targetPitch);
+        be.curYaw = MathHelper.lerpAngleDegrees(0.35f, be.curYaw, be.targetYaw);
+        be.curPitch = MathHelper.lerp(0.35f, be.curPitch, be.targetPitch);
     }
 
     private void scanForTarget(World world, BlockPos pos) {
@@ -177,8 +197,8 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
         AmmoType ammo = ammoContainer.consumeBestAmmo();
         if (ammo == null) return;
 
-        // Spawn Projectile
-        TurretBulletEntity bullet = new TurretBulletEntity(world, muzzlePos.x + aimDir.x * 0.6, muzzlePos.y + aimDir.y * 0.6, muzzlePos.z + aimDir.z * 0.6, ammo);
+        // Spawn Projectile outside turret bounding box
+        TurretBulletEntity bullet = new TurretBulletEntity(world, muzzlePos.x + aimDir.x * 1.05, muzzlePos.y + aimDir.y * 1.05, muzzlePos.z + aimDir.z * 1.05, ammo);
         float velocity = 3.8f * ammo.getVelocityMultiplier();
         bullet.setVelocity(aimDir.x * velocity, aimDir.y * velocity, aimDir.z * velocity);
         world.spawnEntity(bullet);
@@ -231,6 +251,8 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
         super.readNbt(nbt);
         targetFilter.readNbt(nbt);
         cooldown = nbt.getInt("Cooldown");
+        if (nbt.contains("TargetYaw")) targetYaw = nbt.getFloat("TargetYaw");
+        if (nbt.contains("TargetPitch")) targetPitch = nbt.getFloat("TargetPitch");
         if (nbt.contains("LinkedContainer")) {
             linkedAmmoContainerPos = NbtHelper.toBlockPos(nbt.getCompound("LinkedContainer"));
         } else {
@@ -243,6 +265,8 @@ public class StationaryTurretBlockEntity extends BlockEntity implements NamedScr
         super.writeNbt(nbt);
         targetFilter.writeNbt(nbt);
         nbt.putInt("Cooldown", cooldown);
+        nbt.putFloat("TargetYaw", targetYaw);
+        nbt.putFloat("TargetPitch", targetPitch);
         if (linkedAmmoContainerPos != null) {
             nbt.put("LinkedContainer", NbtHelper.fromBlockPos(linkedAmmoContainerPos));
         }
