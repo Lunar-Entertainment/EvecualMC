@@ -130,6 +130,13 @@ public class EvecualMCClient implements ClientModInitializer {
             "category.evecualmc.evecual"
     ));
 
+    public static final KeyBinding RAILGUN_IGNITE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.evecualmc.railgun_ignite",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_5,
+            "category.evecualmc.evecual"
+    ));
+
     public static boolean isKeyOrMousePressed(KeyBinding keyBinding, long windowHandle) {
         if (keyBinding == null) return false;
         if (keyBinding.isPressed()) return true;
@@ -900,6 +907,20 @@ public class EvecualMCClient implements ClientModInitializer {
                         }
                         if (!crown.isEmpty() && com.evecual.evecualmc.util.CrownHelper.isCrown(crown)) {
                             ClientPlayNetworking.send(EvecualMC.CROWN_ABILITY_PACKET_ID, PacketByteBufs.create());
+                        }
+                    }
+                }
+
+                // Railgun Ignite Mode Key (Shift+5)
+                while (RAILGUN_IGNITE_KEY.wasPressed()) {
+                    if (client.player != null) {
+                        boolean shiftHeld = client.options.sneakKey.isPressed()
+                                || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT)
+                                || InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+                        boolean holdingRailgun = client.player.getMainHandStack().isOf(EvecualMC.RAILGUN_ITEM)
+                                || client.player.getOffHandStack().isOf(EvecualMC.RAILGUN_ITEM);
+                        if (shiftHeld && holdingRailgun) {
+                            ClientPlayNetworking.send(EvecualMC.TOGGLE_RAILGUN_IGNITE_PACKET_ID, PacketByteBufs.empty());
                         }
                     }
                 }

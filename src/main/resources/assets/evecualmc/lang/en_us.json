@@ -123,5 +123,8 @@
   "subtitles.evecualmc.music_disc.circuit_and_stone": "Circuit & Stone plays",
   "item.evecualmc.music_disc_voltage_valley": "Music Disc",
   "item.evecualmc.music_disc_voltage_valley.desc": "Voltage Valley",
-  "subtitles.evecualmc.music_disc.voltage_valley": "Voltage Valley plays"
+  "subtitles.evecualmc.music_disc.voltage_valley": "Voltage Valley plays",
+  "block.evecualmc.elactorite_block": "Elactorite Block",
+  "key.evecualmc.railgun_ignite": "Railgun Ignite Mode (Shift+5)",
+  "biome.evecualmc.evecual": "Evecual Void"
 }

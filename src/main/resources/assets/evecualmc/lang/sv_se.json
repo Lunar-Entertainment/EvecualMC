@@ -117,5 +117,8 @@
   "item.evecualmc.the_mechanicals_crown": "The Mechanicals",
   "item.evecualmc.the_electricians_crown": "The Electricians",
   "item.evecualmc.the_castles_crown": "The Castles",
-  "key.evecualmc.crown_ability": "Krona Specialförmåga"
+  "key.evecualmc.crown_ability": "Krona Specialförmåga",
+  "block.evecualmc.elactorite_block": "Elactoritblock",
+  "key.evecualmc.railgun_ignite": "Railgun antändningsläge (Shift+5)",
+  "biome.evecualmc.evecual": "Evecual tomrum"
 }

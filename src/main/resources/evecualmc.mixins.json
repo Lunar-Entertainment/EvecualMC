@@ -9,7 +9,9 @@
     "LightningEntityMixin",
     "PlayerEntityCrownMixin",
     "ServerPlayerEntityCrownMixin",
-    "PlayerScreenHandlerMixin"
+    "PlayerScreenHandlerMixin",
+    "SpawnHelperMixin",
+    "MobEntitySpawnMixin"
   ],
   "client": [
     "KeyboardInputMixin",
@@ -18,7 +20,8 @@
     "GameRendererMixin",
     "InGameHudMixin",
     "MinecraftClientMixin",
-    "InventoryScreenCrownMixin"
+    "InventoryScreenCrownMixin",
+    "KeyboardMixin"
   ],
   "injectors": {
     "defaultRequire": 1

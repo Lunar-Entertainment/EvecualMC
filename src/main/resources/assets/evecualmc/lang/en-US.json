@@ -115,5 +115,8 @@
   "item.evecualmc.the_mechanicals_crown": "The Mechanicals",
   "item.evecualmc.the_electricians_crown": "The Electricians",
   "item.evecualmc.the_castles_crown": "The Castles",
-  "key.evecualmc.crown_ability": "Crown Special Ability"
+  "key.evecualmc.crown_ability": "Crown Special Ability",
+  "block.evecualmc.elactorite_block": "Elactorite Block",
+  "key.evecualmc.railgun_ignite": "Railgun Ignite Mode (Shift+5)",
+  "biome.evecualmc.evecual": "Evecual Void"
 }

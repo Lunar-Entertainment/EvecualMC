@@ -2,24 +2,38 @@ package com.evecual.evecualmc.item;
 
 import com.evecual.evecualmc.EvecualMC;
 import com.evecual.evecualmc.energy.ItemEnergyHelper;
+import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class RailgunItem extends Item {
+    public static final String IGNITE_MODE_KEY = "IgniteMode";
     public static final int MAX_ENERGY = 2000;
     public static final int ENERGY_PER_SHOT = 100;
     public static final float BASE_DAMAGE = 36.0F;
@@ -38,9 +53,53 @@ public class RailgunItem extends Item {
         super(settings);
     }
 
+    public static boolean isIgniteMode(ItemStack stack) {
+        return stack.hasNbt() && stack.getNbt().getBoolean(IGNITE_MODE_KEY);
+    }
+
+    public static void setIgniteMode(ItemStack stack, boolean ignite) {
+        stack.getOrCreateNbt().putBoolean(IGNITE_MODE_KEY, ignite);
+    }
+
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        BlockPos pos = context.getBlockPos();
+        BlockState state = world.getBlockState(pos);
+        ItemStack stack = context.getStack();
+        PlayerEntity player = context.getPlayer();
+
+        if (state.isOf(EvecualMC.ELACTORITE_BLOCK) && isIgniteMode(stack)) {
+            if (!world.isClient() && player instanceof ServerPlayerEntity serverPlayer) {
+                teleportToEvecualDimension(serverPlayer, pos);
+            }
+            return ActionResult.success(world.isClient());
+        }
+        return super.useOnBlock(context);
+    }
+
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
+
+        // Ignite Mode handling: clicking on elactorite block triggers rift
+        if (isIgniteMode(stack)) {
+            HitResult hit = user.raycast(6.0, 0.0F, false);
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                BlockPos hitPos = ((BlockHitResult) hit).getBlockPos();
+                if (world.getBlockState(hitPos).isOf(EvecualMC.ELACTORITE_BLOCK)) {
+                    if (!world.isClient() && user instanceof ServerPlayerEntity serverPlayer) {
+                        teleportToEvecualDimension(serverPlayer, hitPos);
+                    }
+                    return TypedActionResult.success(stack, world.isClient());
+                }
+            }
+            if (!world.isClient()) {
+                user.sendMessage(Text.literal("§d🔥 Railgun in Ignite Mode: §eRight-click an Elactorite Block to ignite the rift."), true);
+            }
+            return TypedActionResult.fail(stack);
+        }
+
         long energy = ItemEnergyHelper.getEnergy(stack);
 
         if (!user.isCreative() && energy < ENERGY_PER_SHOT) {
@@ -163,6 +222,92 @@ public class RailgunItem extends Item {
         return TypedActionResult.success(stack, world.isClient());
     }
 
+    public static void teleportToEvecualDimension(ServerPlayerEntity player, BlockPos clickedPos) {
+        MinecraftServer server = player.getServer();
+        if (server == null) return;
+
+        ServerWorld currentWorld = player.getServerWorld();
+        RegistryKey<World> EVECUAL_WORLD_KEY = RegistryKey.of(RegistryKeys.WORLD, new Identifier(EvecualMC.MOD_ID, "evecual"));
+
+        boolean inEvecual = currentWorld.getRegistryKey().equals(EVECUAL_WORLD_KEY);
+
+        if (inEvecual) {
+            // Return to Overworld
+            ServerWorld overworld = server.getWorld(World.OVERWORLD);
+            if (overworld == null) return;
+
+            BlockPos destPos = clickedPos;
+            int topY = overworld.getTopY(Heightmap.Type.MOTION_BLOCKING, destPos.getX(), destPos.getZ());
+            if (topY <= overworld.getBottomY()) {
+                topY = overworld.getSeaLevel() + 1;
+            }
+
+            // FX in departure dimension
+            currentWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.BLOCK_PORTAL_TRAVEL, SoundCategory.PLAYERS, 0.8F, 1.3F);
+            currentWorld.spawnParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.5, 0.5, 0.5, 0.1);
+
+            Vec3d targetVec = new Vec3d(destPos.getX() + 0.5, topY, destPos.getZ() + 0.5);
+            FabricDimensions.teleport(player, overworld, new TeleportTarget(
+                    targetVec,
+                    Vec3d.ZERO,
+                    player.getYaw(),
+                    player.getPitch()
+            ));
+
+            // FX in arrival dimension
+            overworld.playSound(null, targetVec.x, targetVec.y, targetVec.z,
+                    SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0F, 1.5F);
+            overworld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, targetVec.x, targetVec.y + 1.0, targetVec.z, 40, 0.6, 0.6, 0.6, 0.15);
+            overworld.spawnParticles(ParticleTypes.FLASH, targetVec.x, targetVec.y + 1.0, targetVec.z, 1, 0, 0, 0, 0);
+
+            player.sendMessage(Text.literal("§b⚡ Dimensional Rift: §fReturned to the §aOverworld§f!"), true);
+        } else {
+            // Travel to Evecual Dimension
+            ServerWorld evecualWorld = server.getWorld(EVECUAL_WORLD_KEY);
+            if (evecualWorld == null) {
+                player.sendMessage(Text.literal("§c⚠️ Dimension 'evecual' could not be found!"), true);
+                return;
+            }
+
+            // FX in departure dimension
+            currentWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.BLOCK_PORTAL_TRAVEL, SoundCategory.PLAYERS, 0.8F, 1.1F);
+            currentWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.PLAYERS, 0.4F, 1.8F);
+            currentWorld.spawnParticles(ParticleTypes.PORTAL, player.getX(), player.getY() + 1.0, player.getZ(), 40, 0.5, 0.5, 0.5, 0.1);
+            currentWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, player.getX(), player.getY() + 1.0, player.getZ(), 25, 0.5, 0.5, 0.5, 0.1);
+
+            int targetX = clickedPos.getX();
+            int targetZ = clickedPos.getZ();
+
+            // Safe landing: superflat surface is y=4 (bedrock=0, dirt=1..2, grass=3).
+            // Place an Elactorite block at surface (y=3) right under the player's feet so they have a rift return point!
+            int surfaceY = 3;
+            BlockPos basePlatformPos = new BlockPos(targetX, surfaceY, targetZ);
+            evecualWorld.setBlockState(basePlatformPos, EvecualMC.ELACTORITE_BLOCK.getDefaultState(), Block.NOTIFY_ALL);
+            evecualWorld.setBlockState(basePlatformPos.up(), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            evecualWorld.setBlockState(basePlatformPos.up(2), Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+
+            Vec3d targetVec = new Vec3d(targetX + 0.5, surfaceY + 1.0, targetZ + 0.5);
+            FabricDimensions.teleport(player, evecualWorld, new TeleportTarget(
+                    targetVec,
+                    Vec3d.ZERO,
+                    player.getYaw(),
+                    player.getPitch()
+            ));
+
+            // FX in arrival dimension
+            evecualWorld.playSound(null, targetVec.x, targetVec.y, targetVec.z,
+                    SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.PLAYERS, 1.0F, 1.4F);
+            evecualWorld.spawnParticles(ParticleTypes.REVERSE_PORTAL, targetVec.x, targetVec.y + 1.0, targetVec.z, 50, 0.6, 0.6, 0.6, 0.1);
+            evecualWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, targetVec.x, targetVec.y + 1.0, targetVec.z, 30, 0.6, 0.6, 0.6, 0.1);
+            evecualWorld.spawnParticles(ParticleTypes.FLASH, targetVec.x, targetVec.y + 1.0, targetVec.z, 1, 0, 0, 0, 0);
+
+            player.sendMessage(Text.literal("§d🌌 Dimensional Rift: §fWelcome to the §5Evecual Dimension§f!"), true);
+        }
+    }
+
     private ItemStack findAmmo(PlayerEntity player) {
         // Priority order: Elactorite -> Steel Rod -> Steel Ammo -> Iron Ammo -> Copper Ammo
         Item[] ammoPriority = new Item[]{
@@ -243,6 +388,14 @@ public class RailgunItem extends Item {
         int pct = (int) (energy * 100 / MAX_ENERGY);
 
         tooltip.add(Text.literal("§6⚡ Hypervelocity Lorentz Accelerator"));
+        if (isIgniteMode(stack)) {
+            tooltip.add(Text.literal("§d🔥 Mode: §6IGNITE MODE §7(Dimensional Ignition)"));
+            tooltip.add(Text.literal("§d• Right-Click Elactorite Block: §fIgnite Rift to Evecual Dimension"));
+            tooltip.add(Text.literal("§e• Shift + 5: §fSwitch back to Kinetic Accelerator"));
+        } else {
+            tooltip.add(Text.literal("§b⚡ Mode: §fKinetic Accelerator"));
+            tooltip.add(Text.literal("§e• Shift + 5: §fEnter Ignite Mode"));
+        }
         tooltip.add(Text.literal("§e⚡ Energy: §f" + energy + " / " + MAX_ENERGY + " EU §7(" + pct + "%)"));
         tooltip.add(Text.literal("§e• Right-Click (RMB): §fFire Supersonic Kinetic Beam (-100 EU)"));
         tooltip.add(Text.literal("§e• Penetration: §fPierces through all targets in line of fire"));

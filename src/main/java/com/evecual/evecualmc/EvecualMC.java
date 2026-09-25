@@ -257,6 +257,16 @@ public class EvecualMC implements ModInitializer {
     );
 
     // Blocks (All mineable by hand and drop themselves!)
+    public static final Block ELACTORITE_BLOCK = Registry.register(
+            Registries.BLOCK,
+            new Identifier(MOD_ID, "elactorite_block"),
+            new com.evecual.evecualmc.block.ElactoriteBlock(FabricBlockSettings.create().strength(4.0f, 6.0f).sounds(BlockSoundGroup.METAL).requiresTool()));
+
+    public static final Item ELACTORITE_BLOCK_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "elactorite_block"),
+            new BlockItem(ELACTORITE_BLOCK, new Item.Settings().rarity(Rarity.RARE)));
+
     public static final Block SOLAR_PANEL_BLOCK = Registry.register(
             Registries.BLOCK,
             new Identifier(MOD_ID, "solar_panel"),
@@ -912,6 +922,7 @@ public class EvecualMC implements ModInitializer {
                 entries.add(ELECTRIC_GRINDER_ITEM);
                 entries.add(ITEM_CHARGER_ITEM);
                 entries.add(ELACTORITE);
+                entries.add(ELACTORITE_BLOCK_ITEM);
                 entries.add(STEEL_ROD);
                 entries.add(ELECTRONIC_ZAPPER);
                 entries.add(COPPER_PLATE);
@@ -977,6 +988,7 @@ public class EvecualMC implements ModInitializer {
     public static final Identifier TURRET_FILTER_UPDATE_PACKET_ID = new Identifier(MOD_ID, "turret_filter_update");
     public static final Identifier TURRET_FILTER_SYNC_S2C_PACKET_ID = new Identifier(MOD_ID, "turret_filter_sync");
     public static final Identifier CROWN_SLOT_CLICK_PACKET_ID = new Identifier(MOD_ID, "crown_slot_click");
+    public static final Identifier TOGGLE_RAILGUN_IGNITE_PACKET_ID = new Identifier(MOD_ID, "toggle_railgun_ignite");
 
     public static void sendTurretFilterSync(net.minecraft.server.network.ServerPlayerEntity player, com.evecual.evecualmc.block.entity.StationaryTurretBlockEntity turret) {
         net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -1754,6 +1766,31 @@ public class EvecualMC implements ModInitializer {
                             }
                             com.evecual.evecualmc.util.CrownHelper.syncCrownToTracking(player);
                             player.currentScreenHandler.syncState();
+                        }
+                    });
+                });
+
+        // Toggle Railgun Ignite Mode (Shift+5) Receiver
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(TOGGLE_RAILGUN_IGNITE_PACKET_ID,
+                (server, player, handler, buf, responseSender) -> {
+                    server.execute(() -> {
+                        ItemStack mainStack = player.getMainHandStack();
+                        ItemStack offStack = player.getOffHandStack();
+                        ItemStack railgunStack = mainStack.isOf(RAILGUN_ITEM) ? mainStack
+                                : (offStack.isOf(RAILGUN_ITEM) ? offStack : ItemStack.EMPTY);
+                        if (!railgunStack.isEmpty()) {
+                            boolean current = com.evecual.evecualmc.item.RailgunItem.isIgniteMode(railgunStack);
+                            boolean newMode = !current;
+                            com.evecual.evecualmc.item.RailgunItem.setIgniteMode(railgunStack, newMode);
+                            if (newMode) {
+                                player.sendMessage(net.minecraft.text.Text.literal("§d🔥 Railgun: §6IGNITE MODE §aACTIVATED §7[Right-click Elactorite Block to open Rift]"), true);
+                                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                        net.minecraft.sound.SoundEvents.ITEM_FIRECHARGE_USE, net.minecraft.sound.SoundCategory.PLAYERS, 0.85F, 1.2F);
+                            } else {
+                                player.sendMessage(net.minecraft.text.Text.literal("§b⚡ Railgun: §7Standard Mode"), true);
+                                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(),
+                                        net.minecraft.sound.SoundEvents.BLOCK_RESPAWN_ANCHOR_DEPLETE.value(), net.minecraft.sound.SoundCategory.PLAYERS, 0.8F, 1.5F);
+                            }
                         }
                     });
                 });

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "evecualmc:elactorite_block"
+    }
+  ],
+  "result": {
+    "item": "evecualmc:elactorite",
+    "count": 9
+  }
+}

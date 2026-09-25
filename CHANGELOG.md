@@ -1,5 +1,24 @@
 # EvecualMC Updates & Changelog
 
+## [1.8.38] - 2026-09-25
+### Added & Improved
+- **Elactorite Block**:
+  - Added new solid crystal block: `Elactorite Block` (`evecualmc:elactorite_block`).
+  - Decorative and structural crystal block crafted from 9 Elactorite crystals (and unpackable back into 9 crystals).
+  - Pure decorative and portal conduit: does not consume electricity, does not require energy connections, does not display HUD overlay tips, and omits field guide help pages.
+  - Mineable with pickaxes (iron or higher tier).
+- **Railgun Ignite Mode & Dimensional Rift**:
+  - Added "Ignite Mode" to the Lorentz Railgun.
+  - Pressing `Shift + 5` while holding the railgun toggles between Standard kinetic weapon mode and Ignite Mode.
+  - Intercepted seamlessly via `KeyboardMixin` so hotbar slots do not accidentally switch while activating Ignite Mode.
+  - When in Ignite Mode, right-clicking on an Elactorite Block activates a dimensional rift transporting the player to the Evecual Dimension.
+  - Right-clicking an Elactorite Block in the Evecual Dimension safely teleports the player back to the Overworld.
+- **The Evecual Dimension**:
+  - Added custom superflat dimension: `evecualmc:evecual`.
+  - Pristine superflat generation with 1 layer of bedrock, 2 layers of dirt, and 1 surface layer of grass block, anchored at `y=3` with an arrival Elactorite return block.
+  - Totally devoid of structures (`structure_overrides: []`), trees, and features (`features: false`, `lakes: false`).
+  - Zero natural mob spawns (`spawners` emptied, monster light level clamped to 0, backed by `SpawnHelperMixin` and `MobEntitySpawnMixin` preventing all natural and ambient entity spawns).
+
 ## [1.8.37] - 2026-09-22
 ### Added & Improved
 - **Turret Whitelist & Blacklist Player Filtering**:
